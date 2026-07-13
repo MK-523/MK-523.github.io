@@ -69,7 +69,7 @@ const experienceScenes: ExperienceScene[] = [
   {
     organization: "Flex",
     dates: "Summer 2026",
-    role: "Software Engineering / Machine Learning Engineering Intern",
+    role: "Software Engineering Intern",
     focus: "Underwriting infrastructure · Financial risk tooling",
     summary: "Built inspectable decision traces across two production underwriting workflows and 41 calculation steps.",
     result: "30–60 min → under 5 min",

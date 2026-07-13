@@ -4,7 +4,7 @@ import BladeExperience from "./BladeExperience";
 const roleHighlights = [
   {
     label: "Current role",
-    role: "Software Engineering / Machine Learning Engineering Intern",
+    role: "Software Engineering Intern",
     organization: "Flex",
     result: "30–60 min → under 5 min",
     resultLabel: "workflow walkthroughs",
@@ -31,7 +31,7 @@ const roles = [
     track: "experience",
     organization: "Flex",
     dates: "Summer 2026",
-    role: "Software Engineering / Machine Learning Engineering Intern",
+    role: "Software Engineering Intern",
     focus: "Underwriting infrastructure · Financial risk tooling",
     summary:
       "Built backend and visualization tooling that made dense production underwriting logic inspectable for engineers and operators.",
