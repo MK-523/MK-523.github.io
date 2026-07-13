@@ -183,8 +183,8 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
     };
 
     const buildField = () => {
-      const targetCount = coarsePointer ? 6000 : 12000;
-      const tile = Math.max(coarsePointer ? 7 : 9, Math.ceil(Math.sqrt((width * height) / targetCount)));
+      const targetCount = coarsePointer ? 16000 : 42000;
+      const tile = Math.max(coarsePointer ? 5 : 6, Math.ceil(Math.sqrt((width * height) / targetCount)));
       const swordHeight = Math.min(height * 0.78, width * 1.22, 820);
       const swordCenterX = width / 2;
       const swordCenterY = height / 2;
@@ -518,7 +518,10 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
           onPointerDown={start}
           onClick={(event) => startRef.current(event.clientX, event.clientY)}
         >
-          <span className="blade-entry-name">Mahesh Karthikeyan</span>
+          <span className="blade-entry-name" aria-hidden="true">
+            <span data-text="Mahesh">Mahesh</span>
+            <span data-text="Karthikeyan">Karthikeyan</span>
+          </span>
         </button>
       )}
       <span className="sr-only" aria-live="polite">

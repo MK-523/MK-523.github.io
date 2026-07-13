@@ -112,7 +112,13 @@ export default function App() {
       <main className="portfolio-shell" inert={!ready ? true : undefined} aria-busy={!ready}>
         <section className="hero" id="top">
           <p className="eyebrow">Software engineer · UCLA Computer Science</p>
-          <h1 tabIndex={-1}>Systems that remember.<br />Products that explain themselves.</h1>
+          <div className="hero-display">
+            <h1 className="hero-name" tabIndex={-1} aria-label="Mahesh Karthikeyan">
+              <span data-text="Mahesh">Mahesh</span>
+              <span data-text="Karthikeyan">Karthikeyan</span>
+            </h1>
+            <p className="hero-thesis">Systems that remember. Products that explain themselves.</p>
+          </div>
           <div className="hero-bottom">
             <p>
               I’m Mahesh. I work across runtime performance, decision systems,
