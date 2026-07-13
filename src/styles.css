@@ -183,7 +183,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .chronicle-shell.is-scene::before,
 .chronicle-shell.is-finale::before { opacity: 1; }
 
-.chronicle-shell .blade-entry { z-index: 1; }
+.chronicle-shell .blade-entry {
+  z-index: 1;
+  pointer-events: auto;
+}
 
 .chronicle-advance {
   position: fixed;
