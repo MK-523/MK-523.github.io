@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Sora:wght@300..800&family=Spline+Sans+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600&family=Manrope:wght@400;500;600&family=Sora:wght@300..800&display=swap");
 
 :root {
   --ink: #07090d;
@@ -10,7 +10,7 @@
   --arcane: "Sora", Arial, sans-serif;
   --display: "Sora", Arial, sans-serif;
   --sans: "Manrope", Arial, sans-serif;
-  --mono: "Spline Sans Mono", "SFMono-Regular", Consolas, monospace;
+  --mono: "Chakra Petch", "Trebuchet MS", sans-serif;
 }
 
 * { box-sizing: border-box; }
