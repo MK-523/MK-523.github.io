@@ -153,9 +153,10 @@ const projects = [
 ];
 
 const tools = [
-  ["Languages", "Python, TypeScript, JavaScript, Java, C++, SQL, Rust, OCaml"],
-  ["Systems", "Linux, Docker, Kubernetes, OpenFaaS, Redis, TCP/IP, gdb, Git"],
-  ["Product + ML", "React, ReactFlow, PyTorch, JAX/XLA, BERT, OpenCV, benchmarking"],
+  ["Languages", "Python, TypeScript, JavaScript, Java, C++, SQL, Rust, Shell, OCaml"],
+  ["Product + ML", "React, ReactFlow, PyTorch, JAX/Flax/XLA, BERT, NLP, OpenCV"],
+  ["Systems + Databases", "Linux, Git, Docker, Kubernetes, OpenFaaS, Redis, TCP/IP, serverless computing, SQL backends, query execution, gdb, Prometheus-style monitoring"],
+  ["Security + Core CS", "Access control, network security, data structures, algorithms, object-oriented programming, distributed systems, performance benchmarking"],
 ];
 
 const recognition = [
