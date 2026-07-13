@@ -69,14 +69,19 @@ button, a { -webkit-tap-highlight-color: transparent; }
   position: fixed;
   z-index: 910;
   inset: 0;
-  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: crosshair;
 }
 
-.blade-entry > p {
+.blade-entry-name {
   position: absolute;
   top: 30px;
   left: 36px;
-  margin: 0;
   color: rgba(238, 241, 242, .76);
   font-family: var(--mono);
   font-size: 10px;
@@ -84,49 +89,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   text-transform: uppercase;
 }
 
-.blade-entry-trigger {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  min-width: 190px;
-  padding: 18px 22px;
-  border: 1px solid rgba(217, 245, 255, .46);
-  color: var(--ion-strong);
-  background: rgba(7, 9, 13, .28);
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-  transition: color 180ms ease, background 180ms ease, border-color 180ms ease;
-}
-
-.blade-entry-trigger:hover,
-.blade-entry-trigger:focus-visible {
-  color: var(--ink);
-  background: var(--ion-strong);
-  border-color: var(--ion-strong);
-  outline: 0;
-}
-
-.blade-entry-skip {
-  position: absolute;
-  right: 24px;
-  bottom: 24px;
-  padding: 12px;
-  border: 0;
-  color: rgba(238, 241, 242, .52);
-  background: transparent;
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.blade-entry-skip:hover,
-.blade-entry-skip:focus-visible { color: var(--paper); outline: 0; }
+.blade-entry:focus-visible { outline: 1px solid rgba(140, 221, 255, .5); outline-offset: -8px; }
 
 .site-header {
   position: fixed;
@@ -435,7 +398,7 @@ footer span:last-child { justify-self: end; }
   .site-name { max-width: 110px; line-height: 1.4; }
   .site-header nav { gap: 16px; }
   .site-header nav a { font-size: 9px; }
-  .blade-entry > p { top: 22px; left: 22px; }
+  .blade-entry-name { top: 22px; left: 22px; }
   .hero { min-height: 94svh; padding-top: 104px; }
   .hero h1 { font-size: clamp(56px, 16vw, 82px); line-height: .88; }
   .hero-bottom { grid-template-columns: 1fr; gap: 30px; }

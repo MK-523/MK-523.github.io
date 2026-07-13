@@ -499,7 +499,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
     };
   }, []);
 
-  const start = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const start = (event: ReactPointerEvent<HTMLButtonElement>) => {
     startRef.current(event.clientX, event.clientY);
   };
 
@@ -511,24 +511,15 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
         aria-hidden="true"
       />
       {phase === "waiting" && (
-        <div className="blade-entry" onPointerDown={start}>
-          <p>Mahesh Karthikeyan</p>
-          <button
-            type="button"
-            className="blade-entry-trigger"
-            onClick={(event) => startRef.current(event.clientX, event.clientY)}
-          >
-            Click to reforge
-          </button>
-          <button
-            type="button"
-            className="blade-entry-skip"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={() => startRef.current(0, 0, true)}
-          >
-            Skip
-          </button>
-        </div>
+        <button
+          type="button"
+          className="blade-entry"
+          aria-label="Reveal Mahesh Karthikeyan's portfolio"
+          onPointerDown={start}
+          onClick={(event) => startRef.current(event.clientX, event.clientY)}
+        >
+          <span className="blade-entry-name">Mahesh Karthikeyan</span>
+        </button>
       )}
       <span className="sr-only" aria-live="polite">
         {phase === "exploring" ? "Blade forged. Portfolio ready." : "A field of pixels. Click to reveal the portfolio."}
