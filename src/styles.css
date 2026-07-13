@@ -475,6 +475,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
   text-transform: uppercase;
 }
 
+.eyebrow {
+  font-size: 11px;
+}
+
 .hero-display { align-self: center; }
 
 .hero-name {
