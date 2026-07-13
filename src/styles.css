@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600&family=Manrope:wght@400;500;600&family=Sora:wght@300..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Sora:wght@300..800&family=Zilla+Slab:wght@400;500;600&display=swap");
 
 :root {
   --ink: #07090d;
@@ -10,7 +10,7 @@
   --arcane: "Sora", Arial, sans-serif;
   --display: "Sora", Arial, sans-serif;
   --sans: "Manrope", Arial, sans-serif;
-  --mono: "Chakra Petch", "Trebuchet MS", sans-serif;
+  --technical: "Zilla Slab", Georgia, serif;
 }
 
 * { box-sizing: border-box; }
@@ -261,7 +261,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .chronicle-focus,
 .chronicle-card > small {
   color: var(--muted);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 8px;
   letter-spacing: .13em;
   line-height: 1.6;
@@ -328,7 +328,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   align-items: center;
   gap: 16px;
   color: var(--muted);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 8px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -379,7 +379,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   border-bottom: 1px solid rgba(238, 241, 242, .16);
   color: #69727b;
   background: transparent;
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 8px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -443,7 +443,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 
 .site-name {
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: .14em;
@@ -476,7 +476,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .work-index {
   margin: 0;
   color: var(--muted);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 9px;
   letter-spacing: .15em;
   text-transform: uppercase;
@@ -520,7 +520,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .hero-role > small {
   margin: 0;
   color: var(--muted);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 8px;
   letter-spacing: .11em;
   line-height: 1.55;
@@ -578,7 +578,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   gap: 22px;
   padding-bottom: 8px;
   border-bottom: 1px solid rgba(140, 221, 255, .45);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 10px;
   letter-spacing: .08em;
   transition: color 160ms ease, border-color 160ms ease;
@@ -619,7 +619,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   display: block;
   margin-top: 18px;
   color: var(--muted);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 9px;
   letter-spacing: .08em;
   line-height: 1.65;
@@ -642,7 +642,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .subsection-heading p {
   margin: 0;
   color: var(--ion);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 8px;
   letter-spacing: .13em;
   text-transform: uppercase;
@@ -678,7 +678,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .work-meta time {
   color: #68727c;
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 8px;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -696,7 +696,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .work-focus {
   margin: 18px 0 0;
   color: var(--ion);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 9px;
   letter-spacing: .08em;
   line-height: 1.6;
@@ -745,7 +745,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .work-results > p {
   margin: 0 0 18px;
   color: var(--ion);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 8px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -771,7 +771,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   max-width: 260px;
   margin-top: 9px;
   color: var(--muted);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 8px;
   letter-spacing: .1em;
   line-height: 1.55;
@@ -796,10 +796,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .experiment:hover,
 .experiment:focus-visible { padding-inline: 22px; color: var(--ion-strong); outline: 0; }
-.experiment > span { color: var(--ion); font-family: var(--mono); font-size: 9px; }
+.experiment > span { color: var(--ion); font-family: var(--technical); font-size: 9px; }
 .experiment h3 { margin: 8px 0 0; font-family: var(--display); font-size: 36px; font-weight: 500; letter-spacing: -.025em; }
 .experiment p { margin: 0; color: #a5adb5; font-size: 13px; line-height: 1.7; }
-.experiment small { color: #69727c; font-family: var(--mono); font-size: 8px; letter-spacing: .08em; line-height: 1.7; text-transform: uppercase; }
+.experiment small { color: #69727c; font-family: var(--technical); font-size: 8px; letter-spacing: .08em; line-height: 1.7; text-transform: uppercase; }
 .experiment-identity > small { color: var(--ion); }
 .experiment-result strong { display: block; color: var(--ion-strong); font-size: 16px; font-weight: 500; line-height: 1.45; }
 .experiment-result small { display: block; margin-top: 10px; }
@@ -817,7 +817,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .section-label { padding: 22px 0 70px; color: #5f6972; }
 .about-row { padding: 28px 0; border-top: 1px solid rgba(7, 9, 13, .16); }
 .about-row h3 { margin: 0; font-family: var(--display); font-size: 34px; font-weight: 500; letter-spacing: -.025em; }
-.about-row p { margin: 10px 0 0; color: #59636c; font-family: var(--mono); font-size: 9px; line-height: 1.8; }
+.about-row p { margin: 10px 0 0; color: #59636c; font-family: var(--technical); font-size: 9px; line-height: 1.8; }
 
 .contact-section {
   min-height: 86svh;
@@ -829,7 +829,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   border-top: 1px solid var(--line);
 }
 
-.contact-section > p { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+.contact-section > p { margin: 0; color: var(--muted); font-family: var(--technical); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
 .contact-section h2 {
   margin: 34px 0 0;
   font-family: var(--display);
@@ -840,7 +840,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 .contact-link { margin-top: 70px; font-size: 12px; }
 .social-links { display: flex; gap: 28px; margin-top: 58px; }
-.social-links a { color: var(--muted); font-family: var(--mono); font-size: 9px; transition: color 160ms ease; }
+.social-links a { color: var(--muted); font-family: var(--technical); font-size: 9px; transition: color 160ms ease; }
 .social-links a:hover { color: var(--ion); }
 
 footer {
@@ -853,7 +853,7 @@ footer {
   border-top: 1px solid var(--line);
   color: #626b75;
   background: var(--ink);
-  font-family: var(--mono);
+  font-family: var(--technical);
   font-size: 8px;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -1044,4 +1044,35 @@ footer span:last-child { justify-self: end; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+
+.chronicle-card-topline span,
+.chronicle-card-topline time,
+.chronicle-focus,
+.chronicle-proof > small,
+.chronicle-forging,
+.chronicle-finale,
+.chronicle-skip,
+.site-name,
+.eyebrow,
+.section-heading > p,
+.section-label,
+.work-context,
+.work-index,
+.hero-role > p:first-child,
+.hero-role-proof small,
+.section-heading > div > span,
+.subsection-heading p,
+.work-meta time,
+.work-focus,
+.result-row span,
+.experiment small,
+.campus-meta,
+.campus-identity > p,
+.campus-proof > small,
+.contact-section > p,
+footer {
+  letter-spacing: .025em;
+  text-transform: none;
 }
