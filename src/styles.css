@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Cinzel+Decorative:wght@400;700;900&family=Manrope:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600&family=Sora:wght@300..800&display=swap");
 
 :root {
   --ink: #07090d;
@@ -7,10 +7,10 @@
   --line: rgba(238, 241, 242, .14);
   --ion: #8cddff;
   --ion-strong: #d9f5ff;
-  --arcane: "Cinzel Decorative", "Palatino Linotype", "Book Antiqua", serif;
-  --display: "Bricolage Grotesque", "Arial Narrow", sans-serif;
+  --arcane: "Sora", Arial, sans-serif;
+  --display: "Sora", Arial, sans-serif;
   --sans: "Manrope", Arial, sans-serif;
-  --mono: "Space Mono", monospace;
+  --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -33,6 +33,13 @@ body {
   background: var(--ink);
   font-family: var(--sans);
   overflow-x: hidden;
+}
+
+.chronicle-role,
+.hero-role-title,
+.work-role {
+  font-family: var(--display);
+  font-weight: 400;
 }
 
 a { color: inherit; text-decoration: none; }
