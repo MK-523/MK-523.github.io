@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 type Phase = "waiting" | "assembling" | "scene" | "finale" | "exploring";
 type ParticleGroup = "body" | "sword";
 
-type ChronicleScene = {
+type ExperienceScene = {
   organization: string;
   dates: string;
   role: string;
@@ -65,7 +65,7 @@ type Layout = {
   handY: number;
 };
 
-const chronicleScenes: ChronicleScene[] = [
+const experienceScenes: ExperienceScene[] = [
   {
     organization: "Flex",
     dates: "Summer 2026",
@@ -542,7 +542,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       }
       if (currentPhase !== "scene" || now - phaseStart < 960 || now - lastAdvance < 960) return;
       lastAdvance = now;
-      if (currentScene < chronicleScenes.length - 1) {
+      if (currentScene < experienceScenes.length - 1) {
         currentScene += 1;
         phaseStart = now;
         setSceneIndex(currentScene);
@@ -945,12 +945,12 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
     };
   }, []);
 
-  const scene = chronicleScenes[sceneIndex];
-  const nextScene = chronicleScenes[Math.min(sceneIndex + 1, chronicleScenes.length - 1)];
+  const scene = experienceScenes[sceneIndex];
+  const nextScene = experienceScenes[Math.min(sceneIndex + 1, experienceScenes.length - 1)];
   const liveMessage = phase === "scene"
     ? `${scene.organization}. ${scene.role}. ${scene.result}.`
     : phase === "exploring"
-      ? "Career chronicle complete. Portfolio ready."
+      ? "Experience overview complete. Portfolio ready."
       : phase === "finale"
         ? "Combining all four experience animations."
         : "A field of pixels waits to assemble.";
@@ -968,10 +968,10 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
           className={`chronicle-shell is-${phase}`}
           role="dialog"
           aria-modal="true"
-          aria-label="Mahesh Karthikeyan career chronicle"
-          aria-describedby="chronicle-help"
+          aria-label="Mahesh Karthikeyan experience overview"
+          aria-describedby="experience-help"
         >
-          <span className="sr-only" id="chronicle-help">
+          <span className="sr-only" id="experience-help">
             Activate the screen to advance one role at a time. Press Escape or use Skip to open the full portfolio.
           </span>
           {phase === "waiting" && (
@@ -993,7 +993,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
               <button
                 type="button"
                 className="chronicle-advance"
-                aria-label={sceneIndex < chronicleScenes.length - 1
+                aria-label={sceneIndex < experienceScenes.length - 1
                   ? `Show ${nextScene.organization} experience, ${sceneIndex + 2} of 4`
                   : "Play the combined finale and open the full portfolio"}
                 onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
@@ -1030,7 +1030,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
           <button
             type="button"
             className="chronicle-skip"
-            aria-label="Skip career chronicle and open the full portfolio"
+            aria-label="Skip experience overview and open the full portfolio"
             onClick={(event) => {
               event.stopPropagation();
               advanceRef.current(0, 0, true);
