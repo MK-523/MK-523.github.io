@@ -25,9 +25,10 @@ const roleHighlights = [
   },
 ];
 
-const experience = [
+const roles = [
   {
     number: "01",
+    track: "experience",
     organization: "Flex",
     dates: "Summer 2026",
     role: "Software Engineering / Machine Learning Engineering Intern",
@@ -46,7 +47,8 @@ const experience = [
     ],
   },
   {
-    number: "02",
+    number: "01",
+    track: "research",
     organization: "UCLA Programmable Software Systems Lab",
     dates: "2025 — Present",
     role: "Undergraduate Research Assistant",
@@ -67,7 +69,8 @@ const experience = [
     linkLabel: "View runtime experiments",
   },
   {
-    number: "03",
+    number: "02",
+    track: "experience",
     organization: "US Chess",
     dates: "2023 — 2024",
     role: "Web Developer Intern",
@@ -87,7 +90,8 @@ const experience = [
     linkLabel: "Open Chess Life archive",
   },
   {
-    number: "04",
+    number: "02",
+    track: "research",
     organization: "UC Santa Barbara",
     dates: "2022 — 2025",
     role: "Research Assistant",
@@ -109,6 +113,7 @@ const experience = [
 
 const projects = [
   {
+    track: "experience",
     role: "Co-founder / Full-stack Engineer",
     title: "ChessStalker",
     description:
@@ -118,6 +123,7 @@ const projects = [
     href: "https://chessstalker.com/",
   },
   {
+    track: "experience",
     role: "Co-creator / Computer Vision Engineer",
     title: "A-Eye",
     description:
@@ -127,6 +133,7 @@ const projects = [
     href: "https://devpost.com/software/a-eye-pk9sdw",
   },
   {
+    track: "research",
     role: "Model Evaluation / Reliability",
     title: "SAT Policy Audit",
     description: "Found a tensor-shape failure and formula-independent behavior, then built deterministic evaluation over 600 held-out 3-CNF formulas.",
@@ -135,6 +142,7 @@ const projects = [
     href: "https://github.com/MK-523/BooleanSatisfiability/tree/main/benchmark",
   },
   {
+    track: "research",
     role: "Applied ML Prototype Builder",
     title: "Sentiment → Music",
     description: "Explored language-model sentiment representations, expressive music generation, and a tokenized Braille-to-music interface.",
@@ -156,6 +164,76 @@ const recognition = [
   ["USNCO Finalist", "Chemistry"],
 ];
 
+type Role = (typeof roles)[number];
+type Project = (typeof projects)[number];
+
+function RoleList({ items }: { items: Role[] }) {
+  return (
+    <div className="work-list">
+      {items.map((item) => (
+        <article className="work-item" key={`${item.track}-${item.number}`} data-blade-target>
+          <div className="work-index">{item.number}</div>
+          <div className="work-copy">
+            <div className="work-meta">
+              <p className="work-context">{item.organization}</p>
+              <time>{item.dates}</time>
+            </div>
+            <h3>{item.role}</h3>
+            <p className="work-focus">{item.focus}</p>
+            <p className="work-story">{item.summary}</p>
+            <ul className="work-responsibilities">
+              {item.responsibilities.map((detail) => <li key={detail}>{detail}</li>)}
+            </ul>
+          </div>
+          <aside className="work-results" aria-label={`${item.organization} results`}>
+            <p>Results</p>
+            {item.results.map((result) => (
+              <div className="result-row" key={`${result.value}-${result.label}`}>
+                <strong>{result.value}</strong>
+                <span>{result.label}</span>
+              </div>
+            ))}
+            {item.link && (
+              <a href={item.link} target="_blank" rel="noreferrer" className="case-link" data-blade-target>
+                {item.linkLabel} <span>↗</span>
+              </a>
+            )}
+          </aside>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function ProjectList({ items }: { items: Project[] }) {
+  return (
+    <div className="experiment-list">
+      {items.map((project, index) => (
+        <a
+          href={project.href}
+          target="_blank"
+          rel="noreferrer"
+          className="experiment"
+          key={project.title}
+          data-blade-target
+        >
+          <span>{String(index + 1).padStart(2, "0")}</span>
+          <div className="experiment-identity">
+            <small>{project.role}</small>
+            <h3>{project.title}</h3>
+          </div>
+          <p>{project.description}</p>
+          <div className="experiment-result">
+            <strong>{project.result}</strong>
+            <small>{project.stack}</small>
+          </div>
+          <b>↗</b>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 export default function App() {
   const [ready, setReady] = useState(false);
 
@@ -163,12 +241,13 @@ export default function App() {
     <>
       <BladeExperience onReady={() => setReady(true)} />
 
-      <header className="site-header">
+      <header className={ready ? "site-header is-ready" : "site-header"} aria-hidden={!ready} inert={!ready ? true : undefined}>
         <a href="#top" className="site-name" data-blade-target>Mahesh Karthikeyan</a>
         <nav aria-label="Primary navigation">
-          <a href="#work" data-blade-target>Experience</a>
-          <a href="#projects" data-blade-target>Projects</a>
-          <a href="#about" data-blade-target>About</a>
+          <a href="#experience" data-blade-target>Experience</a>
+          <a href="#research" data-blade-target>Research</a>
+          <a href="#awards" data-blade-target>Awards</a>
+          <a href="#contact" data-blade-target>Contact</a>
         </nav>
       </header>
 
@@ -194,100 +273,47 @@ export default function App() {
           </div>
           <div className="hero-bottom">
             <p>Also: Web Developer Intern at US Chess · Research Assistant at UC Santa Barbara</p>
-            <a href="#work" className="text-action" data-blade-target>View experience <span>↓</span></a>
+            <a href="#experience" className="text-action" data-blade-target>View experience <span>↓</span></a>
           </div>
         </section>
 
-        <section className="work-section" id="work">
+        <section className="work-section" id="experience" tabIndex={-1}>
           <div className="section-heading">
             <p>Experience</p>
             <div>
-              <h2>Professional and research roles</h2>
-              <span>Flex · UCLA PSS Lab · US Chess · UC Santa Barbara</span>
+              <h2>Engineering and product roles</h2>
+              <span>Flex · US Chess · ChessStalker · A-Eye</span>
             </div>
           </div>
+          <RoleList items={roles.filter((item) => item.track === "experience")} />
 
-          <div className="work-list">
-            {experience.map((item) => (
-              <article className="work-item" key={item.number} data-blade-target>
-                <div className="work-index">{item.number}</div>
-                <div className="work-copy">
-                  <div className="work-meta">
-                    <p className="work-context">{item.organization}</p>
-                    <time>{item.dates}</time>
-                  </div>
-                  <h3>{item.role}</h3>
-                  <p className="work-focus">{item.focus}</p>
-                  <p className="work-story">{item.summary}</p>
-                  <ul className="work-responsibilities">
-                    {item.responsibilities.map((detail) => <li key={detail}>{detail}</li>)}
-                  </ul>
-                </div>
-                <aside className="work-results" aria-label={`${item.organization} results`}>
-                  <p>Results</p>
-                  {item.results.map((result) => (
-                    <div className="result-row" key={`${result.value}-${result.label}`}>
-                      <strong>{result.value}</strong>
-                      <span>{result.label}</span>
-                    </div>
-                  ))}
-                  {item.link && (
-                    <a href={item.link} target="_blank" rel="noreferrer" className="case-link" data-blade-target>
-                      {item.linkLabel} <span>↗</span>
-                    </a>
-                  )}
-                </aside>
-              </article>
-            ))}
+          <div className="subsection-heading">
+            <p>Selected products</p>
+            <h3>Product engineering</h3>
           </div>
+          <ProjectList items={projects.filter((item) => item.track === "experience")} />
         </section>
 
-        <section className="experiments-section" id="projects">
+        <section className="work-section research-section" id="research" tabIndex={-1}>
           <div className="section-heading compact">
-            <p>Projects</p>
+            <p>Research</p>
             <div>
-              <h2>Products and technical investigations</h2>
-              <span>Role, scope, and concrete output for each build.</span>
+              <h2>Runtime and network systems research</h2>
+              <span>UCLA PSS Lab · UC Santa Barbara</span>
             </div>
           </div>
-          <div className="experiment-list">
-            {projects.map((project, index) => (
-              <a
-                href={project.href}
-                target="_blank"
-                rel="noreferrer"
-                className="experiment"
-                key={project.title}
-                data-blade-target
-              >
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <div className="experiment-identity">
-                  <small>{project.role}</small>
-                  <h3>{project.title}</h3>
-                </div>
-                <p>{project.description}</p>
-                <div className="experiment-result">
-                  <strong>{project.result}</strong>
-                  <small>{project.stack}</small>
-                </div>
-                <b>↗</b>
-              </a>
-            ))}
+          <RoleList items={roles.filter((item) => item.track === "research")} />
+
+          <div className="subsection-heading">
+            <p>Technical investigations</p>
+            <h3>Model evaluation and applied ML</h3>
           </div>
+          <ProjectList items={projects.filter((item) => item.track === "research")} />
         </section>
 
-        <section className="about-section" id="about">
+        <section className="about-section awards-section" id="awards" tabIndex={-1}>
           <div className="about-column">
-            <p className="section-label">Tools</p>
-            {tools.map(([title, list]) => (
-              <div className="about-row" key={title}>
-                <h3>{title}</h3>
-                <p>{list}</p>
-              </div>
-            ))}
-          </div>
-          <div className="about-column">
-            <p className="section-label">Recognition</p>
+            <p className="section-label">Awards and recognition</p>
             {recognition.map(([title, context]) => (
               <div className="about-row" key={title}>
                 <h3>{title}</h3>
@@ -295,9 +321,18 @@ export default function App() {
               </div>
             ))}
           </div>
+          <div className="about-column">
+            <p className="section-label">Technical range</p>
+            {tools.map(([title, list]) => (
+              <div className="about-row" key={title}>
+                <h3>{title}</h3>
+                <p>{list}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
-        <section className="contact-section">
+        <section className="contact-section" id="contact" tabIndex={-1}>
           <p>Systems engineering · Applied ML · Research collaboration</p>
           <h2>Email Mahesh.</h2>
           <a href="mailto:mahesh523k@gmail.com" className="contact-link" data-blade-target>
@@ -311,7 +346,7 @@ export default function App() {
         </section>
       </main>
 
-      <footer>
+      <footer aria-hidden={!ready} inert={!ready ? true : undefined}>
         <span>Mahesh Karthikeyan</span>
         <span>UCLA CS · Systems · Product · Chess</span>
         <span>© {new Date().getFullYear()}</span>
