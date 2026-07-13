@@ -1,83 +1,146 @@
 import { useState } from "react";
 import BladeExperience from "./BladeExperience";
 
-const work = [
+const roleHighlights = [
   {
-    number: "01",
-    context: "UCLA PSS Lab · Runtime systems",
-    metric: "337 → 125 ms",
-    metricLabel: "first-request latency",
-    title: "Giving serverless runtimes a memory.",
-    story:
-      "Bursty workloads repeatedly pay for the same profiling and compilation work. I research how runtime artifacts can survive across cold starts, turning a blank process into one that remembers.",
-    details: ["2.7× faster first request", "Redis-backed compilation cache", "Traced and validated with gdb"],
-    link: "https://github.com/MK-523/hivejit-openfaas",
-    linkLabel: "Runtime experiments",
+    label: "Current role",
+    role: "Software Engineering / Machine Learning Engineering Intern",
+    organization: "Flex",
+    result: "30–60 min → under 5 min",
+    resultLabel: "workflow walkthroughs",
   },
   {
-    number: "02",
-    context: "Flex · Decision systems",
-    metric: "<5 min",
-    metricLabel: "from 30–60 minute reviews",
-    title: "Making financial decisions inspectable.",
-    story:
-      "At Flex, I turned dense underwriting paths into interactive decision traces so engineers and operators could follow the route from an applicant input to an outcome.",
-    details: ["Python and TypeScript workflows", "ReactFlow decision traces", "Type-safe rules built for auditability"],
+    label: "Research",
+    role: "Undergraduate Research Assistant",
+    organization: "UCLA PSS Lab",
+    result: "337 → 125 ms",
+    resultLabel: "first-request latency",
   },
   {
-    number: "03",
-    context: "ChessStalker · Competitive intelligence",
-    metric: "11M+",
-    metricLabel: "official games indexed",
-    title: "Preparation at grandmaster scale.",
-    story:
-      "ChessStalker combines Lichess, Chess.com, and FIDE histories, then turns millions of games into concrete Stockfish-backed opponent preparation.",
-    details: ["Used by Hikaru Nakamura", "100K+ player analyses", "Identity resolution and engine analysis"],
-    link: "https://chessstalker.com/",
-    linkLabel: "Open ChessStalker",
-  },
-  {
-    number: "04",
-    context: "A-Eye · Machine perception",
-    metric: "1 / 76",
-    metricLabel: "LA Hacks track winner",
-    title: "Turning a camera feed into a safer next step.",
-    story:
-      "A-Eye converts a wearable camera stream into priority-aware spoken guidance for blind and low-vision users. I co-created it with Arya Kunisetty, Krishay Garg, and Hui-Peng-John-Yao at LA Hacks 2026.",
-    details: ["YOLOv8 and ByteTrack", "Route-aware spoken guidance", "MLH Best Use of ElevenLabs"],
-    link: "https://devpost.com/software/a-eye-pk9sdw",
-    linkLabel: "See the winning build",
-  },
-  {
-    number: "05",
-    context: "UC Santa Barbara · Network experiments",
-    metric: "10K+",
-    metricLabel: "packet samples analyzed",
-    title: "Reading the system through its packets.",
-    story:
-      "I studied how adaptive bitrate strategies behave when throughput and latency stop being friendly, turning three years of experiments into comparable traces and congestion evidence.",
-    details: ["6+ adaptive bitrate variants", "OCaml/ML and TCP/IP simulations", "Work supporting SIGCOMM ’24 research"],
+    label: "Product",
+    role: "Co-founder / Full-stack Engineer",
+    organization: "ChessStalker",
+    result: "11M+ games",
+    resultLabel: "indexed for opponent preparation",
   },
 ];
 
-const experiments = [
+const experience = [
   {
+    number: "01",
+    organization: "Flex",
+    dates: "Summer 2026",
+    role: "Software Engineering / Machine Learning Engineering Intern",
+    focus: "Underwriting infrastructure · Financial risk tooling",
+    summary:
+      "Built backend and visualization tooling that made dense production underwriting logic inspectable for engineers and operators.",
+    responsibilities: [
+      "Built Python and TypeScript workflows with React and ReactFlow decision traces.",
+      "Connected applicant inputs, rules, calculations, and outcomes in one review path.",
+      "Structured type-safe decision logic for auditability and operator use.",
+    ],
+    results: [
+      { value: "30–60 min → <5 min", label: "workflow walkthroughs" },
+      { value: "2 workflows", label: "41 calculation steps visualized" },
+      { value: "10 models", label: "approval, decline, and credit-limit logic" },
+    ],
+  },
+  {
+    number: "02",
+    organization: "UCLA Programmable Software Systems Lab",
+    dates: "2025 — Present",
+    role: "Undergraduate Research Assistant",
+    focus: "JVM / Serverless runtime performance",
+    summary:
+      "Researching how profiling and compilation artifacts can persist across OpenFaaS cold starts instead of being rebuilt for every bursty workload.",
+    responsibilities: [
+      "Designed Redis-backed caching for runtime and compilation artifacts.",
+      "Benchmarked first-request behavior in Dockerized OpenFaaS workloads.",
+      "Traced and validated runtime behavior with gdb.",
+    ],
+    results: [
+      { value: "337 → 125 ms", label: "first-request latency" },
+      { value: "2.7×", label: "faster first request" },
+      { value: "31.6%", label: "less startup compile / load time" },
+    ],
+    link: "https://github.com/MK-523/hivejit-openfaas",
+    linkLabel: "View runtime experiments",
+  },
+  {
+    number: "03",
+    organization: "US Chess",
+    dates: "2023 — 2024",
+    role: "Web Developer Intern",
+    focus: "Chess Life archive · Data and editorial systems",
+    summary:
+      "Helped build a searchable digital archive and SQL-backed retrieval workflow for decades of Chess Life issues.",
+    responsibilities: [
+      "Developed database-backed search and retrieval for archived magazine issues.",
+      "Supported the Drupal and Pantheon editorial publishing workflow.",
+      "Made historical content easier for readers and editors to locate and explore.",
+    ],
+    results: [
+      { value: "250K+", label: "monthly readers served by the platform" },
+      { value: "SQL-backed", label: "archive search and retrieval" },
+    ],
+    link: "https://new.uschess.org/chess-life-magazine",
+    linkLabel: "Open Chess Life archive",
+  },
+  {
+    number: "04",
+    organization: "UC Santa Barbara",
+    dates: "2022 — 2025",
+    role: "Research Assistant",
+    focus: "Network systems · Adaptive bitrate experiments",
+    summary:
+      "Studied adaptive bitrate behavior under changing throughput and latency, turning multi-year experiments into comparable congestion evidence.",
+    responsibilities: [
+      "Compared adaptive bitrate strategies across controlled network conditions.",
+      "Analyzed packet traces and TCP/IP simulation output.",
+      "Produced comparable evidence from three years of experiments.",
+    ],
+    results: [
+      { value: "10K+", label: "packet samples analyzed" },
+      { value: "6+", label: "adaptive bitrate variants compared" },
+      { value: "SIGCOMM ’24", label: "research supported" },
+    ],
+  },
+];
+
+const projects = [
+  {
+    role: "Co-founder / Full-stack Engineer",
+    title: "ChessStalker",
+    description:
+      "Combined Lichess, Chess.com, and FIDE histories with identity resolution and Stockfish analysis for concrete opponent preparation.",
+    result: "11M+ official games · 100K+ analyses · used by Hikaru Nakamura",
+    stack: "Product engineering · data integration · chess engines",
+    href: "https://chessstalker.com/",
+  },
+  {
+    role: "Co-creator / Computer Vision Engineer",
+    title: "A-Eye",
+    description:
+      "Built priority-aware spoken guidance from a wearable camera with Arya Kunisetty, Krishay Garg, and Hui-Peng-John-Yao.",
+    result: "1st of 76 teams · MLH Best Use of ElevenLabs",
+    stack: "YOLOv8 · ByteTrack · route-aware audio guidance",
+    href: "https://devpost.com/software/a-eye-pk9sdw",
+  },
+  {
+    role: "Model Evaluation / Reliability",
     title: "SAT Policy Audit",
     description: "Found a tensor-shape failure and formula-independent behavior, then built deterministic evaluation over 600 held-out 3-CNF formulas.",
+    result: "600 held-out formulas · deterministic evaluation",
     stack: "PyTorch · reinforcement learning · exact evaluation",
     href: "https://github.com/MK-523/BooleanSatisfiability/tree/main/benchmark",
   },
   {
+    role: "Applied ML Prototype Builder",
     title: "Sentiment → Music",
     description: "Explored language-model sentiment representations, expressive music generation, and a tokenized Braille-to-music interface.",
+    result: "End-to-end multimodal prototype",
     stack: "BERT · NLTK · music AI",
     href: "https://github.com/MK-523/NLP-music-sentimentanalysis",
-  },
-  {
-    title: "Chess Life Archive",
-    description: "Helped shape a SQL-backed archive and editorial workflow that makes decades of Chess Life issues easier to retrieve and explore.",
-    stack: "SQL · Drupal · Pantheon",
-    href: "https://new.uschess.org/chess-life-magazine",
   },
 ];
 
@@ -103,82 +166,110 @@ export default function App() {
       <header className="site-header">
         <a href="#top" className="site-name" data-blade-target>Mahesh Karthikeyan</a>
         <nav aria-label="Primary navigation">
-          <a href="#work" data-blade-target>Work</a>
-          <a href="#experiments" data-blade-target>Experiments</a>
+          <a href="#work" data-blade-target>Experience</a>
+          <a href="#projects" data-blade-target>Projects</a>
           <a href="#about" data-blade-target>About</a>
         </nav>
       </header>
 
       <main className="portfolio-shell" inert={!ready ? true : undefined} aria-busy={!ready}>
         <section className="hero" id="top">
-          <p className="eyebrow">Software engineer · UCLA Computer Science</p>
+          <p className="eyebrow">UCLA Computer Science · Expected 2028</p>
           <div className="hero-display">
             <h1 className="hero-name" tabIndex={-1} aria-label="Mahesh Karthikeyan">
               <span data-text="Mahesh">Mahesh</span>
               <span data-text="Karthikeyan">Karthikeyan</span>
             </h1>
-            <p className="hero-thesis">Systems that remember. Products that explain themselves.</p>
+            <div className="hero-role-grid" aria-label="Current roles and selected results">
+              {roleHighlights.map((item) => (
+                <article className="hero-role" key={item.organization}>
+                  <p>{item.label}</p>
+                  <h2>{item.role}</h2>
+                  <span>{item.organization}</span>
+                  <strong>{item.result}</strong>
+                  <small>{item.resultLabel}</small>
+                </article>
+              ))}
+            </div>
           </div>
           <div className="hero-bottom">
-            <p>
-              I’m Mahesh. I work across runtime performance, decision systems,
-              machine perception, and competitive chess.
-            </p>
-            <a href="#work" className="text-action" data-blade-target>Selected work <span>↓</span></a>
+            <p>Also: Web Developer Intern at US Chess · Research Assistant at UC Santa Barbara</p>
+            <a href="#work" className="text-action" data-blade-target>View experience <span>↓</span></a>
           </div>
         </section>
 
         <section className="work-section" id="work">
           <div className="section-heading">
-            <p>Selected work</p>
-            <h2>Five systems.<br />Five measurable outcomes.</h2>
+            <p>Experience</p>
+            <div>
+              <h2>Professional and research roles</h2>
+              <span>Flex · UCLA PSS Lab · US Chess · UC Santa Barbara</span>
+            </div>
           </div>
 
           <div className="work-list">
-            {work.map((item) => (
+            {experience.map((item) => (
               <article className="work-item" key={item.number} data-blade-target>
                 <div className="work-index">{item.number}</div>
                 <div className="work-copy">
-                  <p className="work-context">{item.context}</p>
-                  <h3>{item.title}</h3>
-                  <p className="work-story">{item.story}</p>
-                  <ul>
-                    {item.details.map((detail) => <li key={detail}>{detail}</li>)}
+                  <div className="work-meta">
+                    <p className="work-context">{item.organization}</p>
+                    <time>{item.dates}</time>
+                  </div>
+                  <h3>{item.role}</h3>
+                  <p className="work-focus">{item.focus}</p>
+                  <p className="work-story">{item.summary}</p>
+                  <ul className="work-responsibilities">
+                    {item.responsibilities.map((detail) => <li key={detail}>{detail}</li>)}
                   </ul>
+                </div>
+                <aside className="work-results" aria-label={`${item.organization} results`}>
+                  <p>Results</p>
+                  {item.results.map((result) => (
+                    <div className="result-row" key={`${result.value}-${result.label}`}>
+                      <strong>{result.value}</strong>
+                      <span>{result.label}</span>
+                    </div>
+                  ))}
                   {item.link && (
                     <a href={item.link} target="_blank" rel="noreferrer" className="case-link" data-blade-target>
                       {item.linkLabel} <span>↗</span>
                     </a>
                   )}
-                </div>
-                <div className="work-metric">
-                  <strong>{item.metric}</strong>
-                  <span>{item.metricLabel}</span>
-                </div>
+                </aside>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="experiments-section" id="experiments">
+        <section className="experiments-section" id="projects">
           <div className="section-heading compact">
-            <p>Experiments</p>
-            <h2>Questions worth taking apart.</h2>
+            <p>Projects</p>
+            <div>
+              <h2>Products and technical investigations</h2>
+              <span>Role, scope, and concrete output for each build.</span>
+            </div>
           </div>
           <div className="experiment-list">
-            {experiments.map((experiment, index) => (
+            {projects.map((project, index) => (
               <a
-                href={experiment.href}
+                href={project.href}
                 target="_blank"
                 rel="noreferrer"
                 className="experiment"
-                key={experiment.title}
+                key={project.title}
                 data-blade-target
               >
                 <span>{String(index + 1).padStart(2, "0")}</span>
-                <h3>{experiment.title}</h3>
-                <p>{experiment.description}</p>
-                <small>{experiment.stack}</small>
+                <div className="experiment-identity">
+                  <small>{project.role}</small>
+                  <h3>{project.title}</h3>
+                </div>
+                <p>{project.description}</p>
+                <div className="experiment-result">
+                  <strong>{project.result}</strong>
+                  <small>{project.stack}</small>
+                </div>
                 <b>↗</b>
               </a>
             ))}
@@ -207,8 +298,8 @@ export default function App() {
         </section>
 
         <section className="contact-section">
-          <p>Have a hard systems problem?</p>
-          <h2>Let’s make it<br />measurably better.</h2>
+          <p>Systems engineering · Applied ML · Research collaboration</p>
+          <h2>Email Mahesh.</h2>
           <a href="mailto:mahesh523k@gmail.com" className="contact-link" data-blade-target>
             mahesh523k@gmail.com <span>↗</span>
           </a>
