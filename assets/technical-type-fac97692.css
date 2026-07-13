@@ -1,0 +1,54 @@
+@font-face {
+  font-family: "Unbounded Local";
+  src: url("/assets/fonts/unbounded-22f9b928.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+:root {
+  --technical: "Unbounded Local", "Arial Black", sans-serif;
+}
+
+.chronicle-card-topline span,
+.chronicle-card-topline time,
+.chronicle-focus,
+.chronicle-proof > small,
+.chronicle-proof > strong,
+.chronicle-forging,
+.chronicle-finale,
+.chronicle-skip,
+.site-name,
+.eyebrow,
+.section-heading > p,
+.section-label,
+.work-context,
+.work-index,
+.hero-role > p:first-child,
+.hero-role-proof strong,
+.hero-role-proof small,
+.text-action,
+.case-link,
+.contact-link,
+.section-heading > div > span,
+.subsection-heading p,
+.work-meta time,
+.work-focus,
+.result-row strong,
+.result-row span,
+.experiment > span,
+.experiment small,
+.experiment-result strong,
+.campus-meta,
+.campus-identity > p,
+.campus-proof > small,
+.about-row p,
+.contact-section > p,
+.social-links a,
+footer {
+  font-family: var(--technical) !important;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
