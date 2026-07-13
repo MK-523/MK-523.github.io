@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Manrope:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap");
 
 :root {
   --ink: #07090d;
@@ -7,9 +7,9 @@
   --line: rgba(238, 241, 242, .14);
   --ion: #8cddff;
   --ion-strong: #d9f5ff;
-  --serif: "Instrument Serif", Georgia, serif;
-  --sans: "Inter", Arial, sans-serif;
-  --mono: "IBM Plex Mono", monospace;
+  --display: "Bricolage Grotesque", "Arial Narrow", sans-serif;
+  --sans: "Manrope", Arial, sans-serif;
+  --mono: "Space Mono", monospace;
 }
 
 * { box-sizing: border-box; }
@@ -150,11 +150,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
   align-self: center;
   max-width: 1240px;
   margin: 0;
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: clamp(66px, 9.4vw, 154px);
-  font-weight: 400;
-  letter-spacing: -.055em;
-  line-height: .82;
+  font-weight: 500;
+  letter-spacing: -.05em;
+  line-height: .88;
 }
 
 .hero-bottom {
@@ -210,11 +210,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .section-heading h2 {
   max-width: 1000px;
   margin: 0;
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: clamp(58px, 7.5vw, 116px);
-  font-weight: 400;
-  letter-spacing: -.045em;
-  line-height: .9;
+  font-weight: 500;
+  letter-spacing: -.04em;
+  line-height: .94;
 }
 
 .work-list { border-top: 1px solid var(--line); }
@@ -234,11 +234,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .work-copy h3 {
   margin: 0;
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: clamp(48px, 5.4vw, 84px);
-  font-weight: 400;
-  letter-spacing: -.04em;
-  line-height: .95;
+  font-weight: 500;
+  letter-spacing: -.035em;
+  line-height: .98;
 }
 
 .work-story {
@@ -275,11 +275,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .work-metric strong {
   display: block;
   color: var(--ion-strong);
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: clamp(50px, 6.8vw, 104px);
-  font-weight: 400;
-  letter-spacing: -.055em;
-  line-height: .88;
+  font-weight: 450;
+  letter-spacing: -.045em;
+  line-height: .92;
 }
 
 .work-metric span {
@@ -314,7 +314,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .experiment:hover,
 .experiment:focus-visible { padding-inline: 22px; color: var(--ion-strong); outline: 0; }
 .experiment > span { color: var(--ion); font-family: var(--mono); font-size: 9px; }
-.experiment h3 { margin: 0; font-family: var(--serif); font-size: 36px; font-weight: 400; }
+.experiment h3 { margin: 0; font-family: var(--display); font-size: 36px; font-weight: 500; letter-spacing: -.025em; }
 .experiment p { margin: 0; color: #929aa4; font-size: 12px; line-height: 1.7; }
 .experiment small { color: #69727c; font-family: var(--mono); font-size: 8px; line-height: 1.7; }
 .experiment b { color: var(--ion); font-weight: 400; }
@@ -330,7 +330,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .about-column { border-top: 1px solid rgba(7, 9, 13, .28); }
 .section-label { padding: 22px 0 70px; color: #5f6972; }
 .about-row { padding: 28px 0; border-top: 1px solid rgba(7, 9, 13, .16); }
-.about-row h3 { margin: 0; font-family: var(--serif); font-size: 34px; font-weight: 400; }
+.about-row h3 { margin: 0; font-family: var(--display); font-size: 34px; font-weight: 500; letter-spacing: -.025em; }
 .about-row p { margin: 10px 0 0; color: #59636c; font-family: var(--mono); font-size: 9px; line-height: 1.8; }
 
 .contact-section {
@@ -346,11 +346,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .contact-section > p { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
 .contact-section h2 {
   margin: 34px 0 0;
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: clamp(70px, 10vw, 158px);
-  font-weight: 400;
-  letter-spacing: -.055em;
-  line-height: .82;
+  font-weight: 500;
+  letter-spacing: -.05em;
+  line-height: .88;
 }
 .contact-link { margin-top: 70px; font-size: 12px; }
 .social-links { display: flex; gap: 28px; margin-top: 58px; }
