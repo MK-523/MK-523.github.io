@@ -1,87 +1,83 @@
 (() => {
   const skills = [
-    {
-      title: "Production engineering",
-      list: "Python · TypeScript · React · ReactFlow · SQL",
-      evidence: "Flex · ChessStalker · US Chess",
-    },
-    {
-      title: "Systems and runtime research",
-      list: "Linux · Docker · Kubernetes · OpenFaaS · Redis · gdb",
-      evidence: "UCLA PSS Lab · serverless artifact caching",
-    },
-    {
-      title: "Applied ML and computer vision",
-      list: "PyTorch · JAX / Flax / XLA · OpenCV · BERT · NLP",
-      evidence: "A-Eye · SAT policy audit · sentiment-to-music",
-    },
-    {
-      title: "Languages and foundations",
-      list: "Java · C++ · Rust · Shell · OCaml · TCP/IP · distributed systems · network security",
-      evidence: "Research tooling · systems coursework · independent builds",
-    },
+    ["Production", "Python · TypeScript · React · ReactFlow · SQL"],
+    ["Systems", "Linux · Docker · Kubernetes · OpenFaaS · Redis · gdb"],
+    ["Applied ML", "PyTorch · JAX / Flax / XLA · OpenCV · BERT · NLP"],
+    ["Additional", "Java · C++ · Rust · Shell · OCaml · TCP/IP · distributed systems · network security"],
   ];
 
-  const caseStudies = [
+  const projects = [
     {
-      number: "01",
-      category: "Product engineering",
       title: "ChessStalker",
       role: "Co-founder / Full-stack Engineer",
       summary:
-        "A cross-platform opponent-preparation system that resolves player identities across FIDE, Lichess, and Chess.com, then turns fragmented game histories into searchable profiles and Stockfish-backed preparation.",
-      metrics: [
-        ["11M+", "official games indexed"],
-        ["100K+", "engine analyses produced"],
-        ["3 sources", "FIDE · Lichess · Chess.com"],
+        "Built a cross-platform opponent-preparation product that resolves player identities across FIDE, Lichess, and Chess.com and turns fragmented game histories into searchable, Stockfish-backed preparation.",
+      bullets: [
+        "Designed ingestion and identity-resolution workflows across official and online chess data.",
+        "Built searchable player profiles and analysis flows for concrete opponent preparation.",
+        "Worked across product design, data integration, engine analysis, and the user-facing application.",
       ],
-      details: [
-        [
-          "Challenge",
-          "A player’s competitive history is split across official ratings and multiple online identities, which makes useful opponent research slow and incomplete.",
-        ],
-        [
-          "System",
-          "Combined source-specific ingestion, identity resolution, searchable player histories, and Stockfish analysis into one preparation workflow.",
-        ],
-        [
-          "My contribution",
-          "Co-designed the product and built full-stack features across data integration, analysis workflows, and the player-facing preparation experience.",
-        ],
-      ],
-      flow: ["Resolve identity", "Ingest games", "Run analysis", "Build opponent brief"],
+      impact: "11M+ official games indexed · 100K+ engine analyses · 3 integrated data sources",
+      stack: "Product engineering · data integration · Stockfish",
       href: "https://chessstalker.com/",
       linkLabel: "Open ChessStalker",
     },
     {
-      number: "02",
-      category: "Runtime research",
-      title: "Persisting JIT state across serverless cold starts",
+      title: "JIT State Persistence for OpenFaaS",
       role: "Undergraduate Research Assistant · UCLA PSS Lab",
       summary:
-        "A Redis-backed artifact path for OpenFaaS workloads that preserves profiling and compilation work instead of rebuilding it for every bursty first request.",
-      metrics: [
-        ["337 → 125 ms", "first-request latency"],
-        ["2.7×", "faster first request"],
-        ["31.6%", "less compile / load time"],
+        "Built a Redis-backed artifact path that preserves profiling and compilation work across serverless cold starts instead of rebuilding it for every bursty first request.",
+      bullets: [
+        "Added artifact lookup and restore to the OpenFaaS runtime path.",
+        "Containerized benchmark workloads and traced runtime behavior with gdb.",
+        "Separated first-request latency from startup compile and load costs against an uncached baseline.",
       ],
-      details: [
-        [
-          "Challenge",
-          "Serverless instances repeatedly paid startup costs for runtime profiling and compilation artifacts that had already been produced by earlier instances.",
-        ],
-        [
-          "System",
-          "Added Redis-backed persistence to the OpenFaaS runtime path, containerized the benchmark workloads, and traced artifact behavior with gdb.",
-        ],
-        [
-          "Measurement",
-          "Compared first-request behavior against the uncached baseline and separated end-to-end latency from startup compile and load time.",
-        ],
-      ],
-      flow: ["Cold request", "Artifact lookup", "Redis-backed restore", "Execute with reused state"],
+      impact: "337 → 125 ms first request · 2.7× faster · 31.6% less compile / load time",
+      stack: "OpenFaaS · Redis · Docker · gdb · runtime benchmarking",
       href: "https://github.com/MK-523/hivejit-openfaas",
       linkLabel: "View runtime experiments",
+    },
+    {
+      title: "A-Eye",
+      role: "Co-creator / Computer Vision Engineer",
+      summary:
+        "Built priority-aware spoken guidance from a wearable camera with Arya Kunisetty, Krishay Garg, and Hui-Peng-John-Yao.",
+      bullets: [
+        "Combined YOLOv8 detections with ByteTrack to preserve object identity across frames.",
+        "Designed route-aware audio guidance that prioritized actionable obstacles instead of narrating every detection.",
+      ],
+      impact: "1st of 76 teams · MLH Best Use of ElevenLabs",
+      stack: "YOLOv8 · ByteTrack · computer vision · audio guidance",
+      href: "https://devpost.com/software/a-eye-pk9sdw",
+      linkLabel: "Open project",
+    },
+    {
+      title: "SAT Policy Audit",
+      role: "Model Evaluation / Reliability",
+      summary:
+        "Audited a reinforcement-learning SAT policy and built deterministic evaluation to separate implementation failures from policy quality.",
+      bullets: [
+        "Found a tensor-shape failure and formula-independent behavior in the evaluation path.",
+        "Tested the corrected system over 600 held-out 3-CNF formulas with exact, repeatable scoring.",
+      ],
+      impact: "600 held-out formulas · deterministic evaluation",
+      stack: "PyTorch · reinforcement learning · exact evaluation",
+      href: "https://github.com/MK-523/BooleanSatisfiability/tree/main/benchmark",
+      linkLabel: "View benchmark",
+    },
+    {
+      title: "Sentiment → Music",
+      role: "Applied ML Prototype Builder",
+      summary:
+        "Built an end-to-end prototype connecting language-model sentiment representations, expressive music generation, and an alternate Braille-to-music interaction layer.",
+      bullets: [
+        "Mapped sentiment features from language models into controllable musical output.",
+        "Explored a tokenized Braille interface as an alternate input and composition mechanism.",
+      ],
+      impact: "End-to-end multimodal prototype",
+      stack: "BERT · NLTK · music AI",
+      href: "https://github.com/MK-523/NLP-music-sentimentanalysis",
+      linkLabel: "View project",
     },
   ];
 
@@ -92,123 +88,193 @@
     return node;
   };
 
-  const buildCaseStudy = (study) => {
-    const article = element("article", "case-study");
-    article.dataset.bladeTarget = "";
-    article.append(element("div", "case-study-index", study.number));
+  const buildSectionHeading = (title) => {
+    const heading = element("div", "resume-section-heading");
+    heading.append(element("h2", "", title));
+    return heading;
+  };
 
-    const main = element("div", "case-study-main");
-    const top = element("div", "case-study-top");
-    const heading = element("div", "case-study-heading");
-    heading.append(
-      element("p", "case-study-kicker", study.category),
-      element("h3", "", study.title),
-      element("p", "case-study-role", study.role),
-      element("p", "case-study-summary", study.summary),
+  const replaceSectionHeading = (section, title) => {
+    const existing = section.querySelector(":scope > .section-heading, :scope > .resume-section-heading");
+    if (!existing || existing.classList.contains("resume-section-heading")) return;
+    existing.replaceWith(buildSectionHeading(title));
+  };
+
+  const removeLegacyProjects = (section) => {
+    section.querySelectorAll(":scope > .subsection-heading, :scope > .experiment-list").forEach((node) => node.remove());
+  };
+
+  const buildResumeEntry = (item) => {
+    const copy = item.querySelector(".work-copy");
+    const results = item.querySelector(".work-results");
+    if (!copy || !results) return null;
+
+    const role = copy.querySelector("h3")?.textContent?.trim();
+    const organization = copy.querySelector(".work-context")?.textContent?.trim();
+    const dates = copy.querySelector("time")?.textContent?.trim();
+    const focus = copy.querySelector(".work-focus")?.textContent?.trim();
+    const summary = copy.querySelector(".work-story")?.textContent?.trim();
+    if (!role || !organization || !dates || !focus || !summary) return null;
+
+    const article = element("article", "resume-entry");
+    article.dataset.bladeTarget = "";
+
+    const header = element("div", "resume-entry-header");
+    const identity = element("div");
+    identity.append(
+      element("h3", "", role),
+      element("p", "resume-entry-organization", organization),
+    );
+    header.append(identity, element("time", "", dates));
+
+    const bullets = element("ul", "resume-entry-bullets");
+    copy.querySelectorAll(".work-responsibilities li").forEach((detail) => {
+      const text = detail.textContent?.trim();
+      if (text) bullets.append(element("li", "", text));
+    });
+
+    const resultList = element("div", "resume-entry-results");
+    resultList.setAttribute("aria-label", `${organization} results`);
+    results.querySelectorAll(".result-row").forEach((row) => {
+      const value = row.querySelector("strong")?.textContent?.trim();
+      const label = row.querySelector("span")?.textContent?.trim();
+      if (!value || !label) return;
+      const result = element("div", "resume-result");
+      result.append(element("strong", "", value), element("span", "", label));
+      resultList.append(result);
+    });
+
+    article.append(
+      header,
+      element("p", "resume-entry-focus", focus),
+      element("p", "resume-entry-summary", summary),
+      bullets,
+      resultList,
     );
 
-    const metrics = element("aside", "case-study-metrics");
-    metrics.setAttribute("aria-label", `${study.title} results`);
-    metrics.append(element("p", "", "Evidence"));
-    study.metrics.forEach(([value, label]) => {
-      const metric = element("div", "case-study-metric");
-      metric.append(element("strong", "", value), element("span", "", label));
-      metrics.append(metric);
-    });
-    top.append(heading, metrics);
+    const originalLink = results.querySelector(".case-link");
+    if (originalLink instanceof HTMLAnchorElement) {
+      const link = element("a", "case-link resume-entry-link");
+      link.href = originalLink.href;
+      link.target = "_blank";
+      link.rel = "noreferrer";
+      link.dataset.bladeTarget = "";
+      const label = originalLink.textContent?.replace("↗", "").trim() || "View work";
+      link.append(document.createTextNode(`${label} `), element("span", "", "↗"));
+      article.append(link);
+    }
 
-    const detailGrid = element("div", "case-study-detail-grid");
-    study.details.forEach(([label, text]) => {
-      const detail = element("div", "case-study-detail");
-      detail.append(element("h4", "", label), element("p", "", text));
-      detailGrid.append(detail);
-    });
-
-    const flow = element("div", "case-study-flow");
-    flow.setAttribute("aria-label", `${study.title} system flow`);
-    study.flow.forEach((step, index) => {
-      const flowStep = element("div", "case-study-step");
-      flowStep.append(
-        element("span", "", String(index + 1).padStart(2, "0")),
-        element("strong", "", step),
-      );
-      flow.append(flowStep);
-    });
-
-    const link = element("a", "case-link case-study-link");
-    link.href = study.href;
-    link.target = "_blank";
-    link.rel = "noreferrer";
-    link.dataset.bladeTarget = "";
-    link.append(document.createTextNode(`${study.linkLabel} `), element("span", "", "↗"));
-
-    main.append(top, detailGrid, flow, link);
-    article.append(main);
     return article;
   };
 
-  const addCaseStudies = () => {
-    if (document.getElementById("case-studies")) return;
+  const flattenRoles = (section) => {
+    const list = section.querySelector(":scope > .work-list, :scope > .resume-list");
+    if (!list || list.classList.contains("resume-list")) return;
 
-    const research = document.getElementById("research");
-    if (!research) return;
-
-    const section = element("section", "case-studies-section");
-    section.id = "case-studies";
-    section.tabIndex = -1;
-
-    const sectionHeading = element("div", "section-heading compact");
-    const headingText = element("div");
-    headingText.append(
-      element("h2", "", "How the systems work"),
-      element("span", "", "Product architecture · runtime research · measurable evidence"),
-    );
-    sectionHeading.append(element("p", "", "Case studies"), headingText);
-
-    const list = element("div", "case-study-list");
-    caseStudies.forEach((study) => list.append(buildCaseStudy(study)));
-    section.append(sectionHeading, list);
-    research.before(section);
-
-    const simpleChessStalker = Array.from(document.querySelectorAll("a.experiment")).find(
-      (project) => project.querySelector("h3")?.textContent?.trim() === "ChessStalker",
-    );
-    simpleChessStalker?.remove();
+    const replacement = element("div", "resume-list");
+    list.querySelectorAll(":scope > .work-item").forEach((item) => {
+      const entry = buildResumeEntry(item);
+      if (entry) replacement.append(entry);
+    });
+    list.replaceWith(replacement);
   };
 
-  const categorizeSkills = () => {
-    const awards = document.getElementById("awards");
-    const technicalColumn = awards?.querySelectorAll(".about-column")[1];
-    if (!technicalColumn || technicalColumn.querySelector(".skill-row")) return;
+  const buildProject = (project) => {
+    const article = element("article", "resume-project");
+    article.dataset.bladeTarget = "";
 
-    technicalColumn.classList.add("technical-column");
-    technicalColumn.replaceChildren(element("p", "section-label", "Technical range by use"));
-    skills.forEach((skill) => {
-      const row = element("div", "about-row skill-row");
-      row.append(
-        element("h3", "", skill.title),
-        element("p", "skill-list", skill.list),
-        element("span", "skill-evidence", `Seen in: ${skill.evidence}`),
-      );
-      technicalColumn.append(row);
-    });
+    const header = element("div", "resume-project-header");
+    const identity = element("div");
+    identity.append(element("h3", "", project.title), element("p", "", project.role));
+
+    const link = element("a", "case-link resume-project-link");
+    link.href = project.href;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.dataset.bladeTarget = "";
+    link.append(document.createTextNode(`${project.linkLabel} `), element("span", "", "↗"));
+    header.append(identity, link);
+
+    const bullets = element("ul", "resume-project-bullets");
+    project.bullets.forEach((bullet) => bullets.append(element("li", "", bullet)));
+
+    const meta = element("div", "resume-project-meta");
+    meta.append(element("strong", "", project.impact), element("span", "", project.stack));
+
+    article.append(
+      header,
+      element("p", "resume-project-summary", project.summary),
+      bullets,
+      meta,
+    );
+    return article;
+  };
+
+  const addProjects = (research) => {
+    document.getElementById("case-studies")?.remove();
+    if (document.getElementById("projects")) return;
+
+    const section = element("section", "resume-projects-section resume-section");
+    section.id = "projects";
+    section.tabIndex = -1;
+    section.append(buildSectionHeading("Selected Projects"));
+
+    const list = element("div", "resume-project-list");
+    projects.forEach((project) => list.append(buildProject(project)));
+    section.append(list);
+    research.after(section);
   };
 
   const updateNavigation = () => {
     const nav = document.querySelector(".site-header nav");
-    if (!nav || nav.querySelector('a[href="#case-studies"]')) return;
-    const awardsLink = nav.querySelector('a[href="#awards"]');
-    if (!awardsLink) return;
-    awardsLink.href = "#case-studies";
-    awardsLink.textContent = "Case studies";
-    awardsLink.dataset.bladeTarget = "";
+    if (!nav) return;
+    const existingProjects = nav.querySelector('a[href="#projects"]');
+    if (existingProjects) return;
+    const replaceable = nav.querySelector('a[href="#case-studies"], a[href="#awards"]');
+    if (!replaceable) return;
+    replaceable.setAttribute("href", "#projects");
+    replaceable.textContent = "Projects";
+    replaceable.setAttribute("data-blade-target", "");
+  };
+
+  const simplifyAwardsAndSkills = () => {
+    const awards = document.getElementById("awards");
+    const columns = awards?.querySelectorAll(":scope > .about-column");
+    if (!columns || columns.length < 2) return;
+
+    const awardsColumn = columns[0];
+    const awardsLabel = awardsColumn.querySelector(":scope > .section-label");
+    if (awardsLabel) awardsLabel.replaceWith(element("h2", "about-heading", "Awards"));
+
+    const skillsColumn = columns[1];
+    if (skillsColumn.querySelector(".resume-skill-row")) return;
+    skillsColumn.classList.add("technical-column");
+    skillsColumn.replaceChildren(element("h2", "about-heading", "Skills"));
+    skills.forEach(([title, list]) => {
+      const row = element("div", "about-row skill-row resume-skill-row");
+      row.append(element("h3", "", title), element("p", "skill-list", list));
+      skillsColumn.append(row);
+    });
   };
 
   const enhance = () => {
     if (!document.querySelector(".site-header.is-ready")) return false;
+    const experience = document.getElementById("experience");
+    const research = document.getElementById("research");
+    if (!experience || !research) return false;
+
+    experience.classList.add("resume-section");
+    research.classList.add("resume-section");
+    replaceSectionHeading(experience, "Experience");
+    replaceSectionHeading(research, "Research");
+    removeLegacyProjects(experience);
+    removeLegacyProjects(research);
+    flattenRoles(experience);
+    flattenRoles(research);
+    addProjects(research);
+    simplifyAwardsAndSkills();
     updateNavigation();
-    addCaseStudies();
-    categorizeSkills();
+    document.documentElement.dataset.resumeRefined = "true";
     return true;
   };
 
