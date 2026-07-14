@@ -213,13 +213,19 @@
   };
 
   const start = () => {
-    let attempts = 0;
-    const tick = () => {
-      if (enhance() || attempts > 3600) return;
-      attempts += 1;
-      requestAnimationFrame(tick);
-    };
-    tick();
+    if (enhance()) return;
+
+    const observer = new MutationObserver(() => {
+      if (!enhance()) return;
+      observer.disconnect();
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+      childList: true,
+      subtree: true,
+    });
   };
 
   if (document.readyState === "loading") {
