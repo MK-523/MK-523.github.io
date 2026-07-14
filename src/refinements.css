@@ -1,4 +1,4 @@
-/* Portfolio refinements: clearer micro-type, stronger skip control, evidence-led skills, and case studies. */
+/* Resume-flow refinements: clearer labels, a prominent skip control, and a flatter content hierarchy. */
 
 .chronicle-skip {
   min-width: 118px;
@@ -39,7 +39,7 @@
   box-shadow: 0 0 28px rgba(140, 221, 255, .12);
 }
 
-/* The site uses micro-labels as a visual motif. These remain compact, but no longer sit at 7–9px. */
+/* Keep the technical language readable without losing the compact visual system. */
 .site-name { font-size: 11px; }
 .site-header nav a { font-size: 12px; }
 .eyebrow { font-size: 12px; }
@@ -51,17 +51,6 @@
 .chronicle-card > small,
 .chronicle-forging,
 .chronicle-finale,
-.section-heading > p,
-.section-label,
-.work-context,
-.work-index,
-.work-meta time,
-.work-focus,
-.work-results > p,
-.result-row span,
-.subsection-heading p,
-.experiment > span,
-.experiment small,
 .contact-section > p,
 .social-links a,
 footer {
@@ -74,302 +63,291 @@ footer {
   font-size: 10px;
 }
 
-.section-heading > div > span,
-.about-row p {
-  font-size: 11px;
-}
-
-/* Evidence-led skill groups. */
-.technical-column .section-label {
-  max-width: 28ch;
-}
-
-.skill-row {
-  position: relative;
-}
-
-.skill-row h3 {
-  max-width: 18ch;
-}
-
-.about-row .skill-list {
-  max-width: 62ch;
-  margin-top: 14px;
-  color: #39434c;
-  font-family: var(--sans);
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.skill-evidence {
+/* One heading per section. */
+.resume-section-heading {
   display: block;
-  margin-top: 13px;
-  color: #727d86;
-  font-family: var(--technical);
-  font-size: 10px;
-  letter-spacing: .035em;
-  line-height: 1.65;
-}
-
-/* Detailed, editorial case studies. */
-.case-studies-section {
-  padding: 96px 5vw;
-  border-top: 1px solid var(--line);
-  background:
-    radial-gradient(circle at 92% 6%, rgba(140, 221, 255, .055), transparent 28%),
-    #080b10;
-}
-
-.case-study-list {
-  border-top: 1px solid var(--line);
-}
-
-.case-study {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 3vw;
-  padding: 64px 0 72px;
+  margin: 0 0 18px;
+  padding: 0 0 26px;
   border-bottom: 1px solid var(--line);
 }
 
-.case-study-index,
-.case-study-kicker,
-.case-study-role,
-.case-study-metrics > p,
-.case-study-metric span,
-.case-study-detail h4,
-.case-study-step span {
-  color: var(--muted);
-  font-family: var(--technical);
-  font-size: 10px;
-  letter-spacing: .055em;
-  line-height: 1.55;
-}
-
-.case-study-index {
-  padding-top: 8px;
-  color: var(--ion);
-}
-
-.case-study-main {
-  min-width: 0;
-}
-
-.case-study-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 34%);
-  gap: clamp(42px, 5vw, 82px);
-  align-items: start;
-}
-
-.case-study-kicker {
+.resume-section-heading h2 {
   margin: 0;
-  color: var(--ion);
-}
-
-.case-study-heading h3 {
-  max-width: 880px;
-  margin: 13px 0 0;
   font-family: var(--display);
-  font-size: clamp(48px, 5.2vw, 78px);
+  font-size: clamp(42px, 5vw, 72px);
   font-weight: 500;
   letter-spacing: -.045em;
   line-height: .96;
 }
 
-.case-study-role {
-  margin: 21px 0 0;
-  color: #9aa5ae;
-}
-
-.case-study-summary {
-  max-width: 760px;
-  margin: 30px 0 0;
-  color: #b8c0c7;
-  font-size: 16px;
-  line-height: 1.75;
-}
-
-.case-study-metrics {
-  padding-left: clamp(24px, 3vw, 46px);
-  border-left: 1px solid var(--line);
-}
-
-.case-study-metrics > p {
-  margin: 0 0 18px;
-  color: var(--ion);
-}
-
-.case-study-metric {
-  padding: 21px 0 23px;
+.resume-section,
+.resume-projects-section {
+  padding: 96px 5vw;
   border-top: 1px solid var(--line);
 }
 
-.case-study-metric strong {
+.resume-projects-section {
+  background: #080b10;
+}
+
+/* Experience and research read as conventional resume entries. */
+.resume-list,
+.resume-project-list {
+  border-top: 0;
+}
+
+.resume-entry,
+.resume-project {
+  padding: 46px 0 50px;
+  border-bottom: 1px solid var(--line);
+}
+
+.resume-entry-header,
+.resume-project-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 34px;
+}
+
+.resume-entry-header h3,
+.resume-project-header h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(32px, 3.7vw, 52px);
+  font-weight: 500;
+  letter-spacing: -.035em;
+  line-height: 1;
+}
+
+.resume-entry-organization,
+.resume-project-header > div > p {
+  margin: 10px 0 0;
+  color: var(--ion);
+  font-family: var(--technical);
+  font-size: 11px;
+  letter-spacing: .035em;
+  line-height: 1.55;
+}
+
+.resume-entry-header time {
+  flex: 0 0 auto;
+  padding-top: 8px;
+  color: #7f8992;
+  font-family: var(--technical);
+  font-size: 11px;
+  letter-spacing: .035em;
+  line-height: 1.5;
+}
+
+.resume-entry-focus {
+  margin: 18px 0 0;
+  color: #8f99a2;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.resume-entry-summary,
+.resume-project-summary {
+  max-width: 860px;
+  margin: 20px 0 0;
+  color: #b7bec5;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.resume-entry-bullets,
+.resume-project-bullets {
+  display: grid;
+  gap: 10px;
+  max-width: 900px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resume-entry-bullets li,
+.resume-project-bullets li {
+  position: relative;
+  padding-left: 20px;
+  color: #8f98a1;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.resume-entry-bullets li::before,
+.resume-project-bullets li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--ion);
+}
+
+.resume-entry-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+}
+
+.resume-result {
+  min-width: min(270px, 33.333%);
+  padding: 18px 34px 0 0;
+}
+
+.resume-result + .resume-result {
+  padding-left: 30px;
+  border-left: 1px solid var(--line);
+}
+
+.resume-result strong {
   display: block;
   color: var(--ion-strong);
   font-family: var(--display);
-  font-size: clamp(29px, 3.1vw, 47px);
+  font-size: clamp(22px, 2.2vw, 31px);
   font-weight: 500;
-  letter-spacing: -.04em;
-  line-height: .98;
+  letter-spacing: -.025em;
+  line-height: 1.05;
 }
 
-.case-study-metric span {
+.resume-result span {
   display: block;
   max-width: 260px;
-  margin-top: 9px;
+  margin-top: 7px;
+  color: var(--muted);
+  font-family: var(--technical);
+  font-size: 10px;
+  letter-spacing: .025em;
+  line-height: 1.55;
 }
 
-.case-study-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 54px;
+.resume-entry-link {
+  margin-top: 28px;
+}
+
+/* Selected projects keep case-study depth, but use one continuous resume-style narrative. */
+.resume-project-header {
+  align-items: flex-end;
+}
+
+.resume-project-header > div {
+  min-width: 0;
+}
+
+.resume-project-link {
+  flex: 0 0 auto;
+  margin-bottom: 4px;
+}
+
+.resume-project-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 28px;
+  margin-top: 28px;
+  padding-top: 18px;
   border-top: 1px solid var(--line);
 }
 
-.case-study-detail {
-  min-width: 0;
-  padding: 27px clamp(22px, 2.8vw, 42px) 4px 0;
-}
-
-.case-study-detail + .case-study-detail {
-  padding-left: clamp(22px, 2.8vw, 42px);
-  border-left: 1px solid var(--line);
-}
-
-.case-study-detail h4 {
-  margin: 0;
-  color: var(--ion);
-  font-weight: 500;
-}
-
-.case-study-detail p {
-  margin: 17px 0 0;
-  color: #9fa8b0;
-  font-size: 14px;
-  line-height: 1.75;
-}
-
-.case-study-flow {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-top: 46px;
-  border-block: 1px solid var(--line);
-}
-
-.case-study-step {
-  position: relative;
-  min-width: 0;
-  padding: 22px 32px 24px 0;
-}
-
-.case-study-step + .case-study-step {
-  padding-left: 28px;
-  border-left: 1px solid var(--line);
-}
-
-.case-study-step:not(:last-child)::after {
-  content: "→";
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  color: rgba(140, 221, 255, .55);
-  font-family: var(--technical);
-  font-size: 13px;
-  transform: translateY(-50%);
-}
-
-.case-study-step span {
-  display: block;
-  color: #66717b;
-}
-
-.case-study-step strong {
-  display: block;
-  margin-top: 8px;
-  color: var(--paper);
+.resume-project-meta strong {
+  color: var(--ion-strong);
   font-family: var(--display);
-  font-size: 17px;
+  font-size: clamp(18px, 1.8vw, 25px);
   font-weight: 500;
+  letter-spacing: -.02em;
   line-height: 1.35;
 }
 
-.case-study-link {
-  margin-top: 38px;
+.resume-project-meta span {
+  max-width: 42ch;
+  color: #747e87;
+  font-family: var(--technical);
+  font-size: 10px;
+  letter-spacing: .025em;
+  line-height: 1.6;
+  text-align: right;
+}
+
+/* Awards and skills stay categorized, but read like compact resume lines. */
+.about-heading {
+  margin: 0;
+  padding: 22px 0 34px;
+  font-family: var(--display);
+  font-size: clamp(34px, 3.8vw, 52px);
+  font-weight: 500;
+  letter-spacing: -.035em;
+  line-height: 1;
+}
+
+.about-row {
+  padding: 24px 0;
+}
+
+.about-row h3 {
+  font-size: 27px;
+}
+
+.skill-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 150px) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 28px;
+}
+
+.skill-row h3 {
+  margin: 0;
+  font-family: var(--technical);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .025em;
+  line-height: 1.6;
+}
+
+.about-row .skill-list {
+  margin: 0;
+  color: #46515a;
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.75;
 }
 
 @media (max-width: 900px) {
-  .case-studies-section {
+  .resume-section,
+  .resume-projects-section {
     padding: 82px 22px;
   }
 
-  .case-study {
-    grid-template-columns: 38px 1fr;
-    gap: 20px;
+  .resume-entry-header,
+  .resume-project-header {
+    gap: 24px;
   }
 
-  .case-study-top {
-    grid-template-columns: 1fr;
-    gap: 38px;
-  }
-
-  .case-study-metrics {
+  .resume-entry-results {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
-    padding: 28px 0 0;
-    border-top: 1px solid var(--line);
-    border-left: 0;
   }
 
-  .case-study-metrics > p {
-    grid-column: 1 / -1;
-    margin: 0;
+  .resume-result {
+    min-width: 0;
   }
 
-  .case-study-metric {
-    padding-top: 18px;
+  .resume-project-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
   }
 
-  .case-study-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .case-study-detail,
-  .case-study-detail + .case-study-detail {
-    padding: 24px 0;
-    border-left: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .case-study-flow {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .case-study-step:nth-child(3) {
-    border-left: 0;
-    border-top: 1px solid var(--line);
-  }
-
-  .case-study-step:nth-child(4) {
-    border-top: 1px solid var(--line);
+  .resume-project-meta span {
+    max-width: none;
+    text-align: left;
   }
 }
 
 @media (max-width: 620px) {
-  .site-header nav {
-    gap: 9px;
-  }
-
-  .site-name {
-    max-width: 86px;
-    font-size: 9px;
-  }
-
-  .site-header nav a {
-    font-size: 10px;
-  }
+  .site-header nav { gap: 9px; }
+  .site-name { max-width: 86px; font-size: 9px; }
+  .site-header nav a { font-size: 10px; }
 
   .chronicle-skip {
     right: 14px;
@@ -383,116 +361,87 @@ footer {
     font-size: 10px;
   }
 
-  .chronicle-card-topline span,
-  .chronicle-card-topline time,
-  .chronicle-card > p:first-of-type,
-  .chronicle-focus,
-  .chronicle-card > small,
-  .section-heading > p,
-  .section-label,
-  .work-context,
-  .work-index,
-  .work-meta time,
-  .work-focus,
-  .work-results > p,
-  .result-row span,
-  .subsection-heading p,
-  .experiment > span,
-  .experiment small,
-  .contact-section > p,
-  .social-links a,
-  footer {
-    font-size: 9px;
-  }
-
-  .hero-role > p,
-  .hero-role > span,
-  .hero-role > small,
-  .section-heading > div > span,
-  .about-row p {
-    font-size: 10px;
-  }
-
-  .case-studies-section {
+  .resume-section,
+  .resume-projects-section {
     padding: 70px 22px;
   }
 
-  .case-study {
+  .resume-section-heading {
+    margin-bottom: 8px;
+    padding-bottom: 22px;
+  }
+
+  .resume-section-heading h2 {
+    font-size: 40px;
+  }
+
+  .resume-entry,
+  .resume-project {
+    padding: 36px 0 40px;
+  }
+
+  .resume-entry-header,
+  .resume-project-header {
     display: block;
-    padding: 42px 0 50px;
   }
 
-  .case-study-main {
-    margin-top: 22px;
+  .resume-entry-header h3,
+  .resume-project-header h3 {
+    font-size: clamp(31px, 9.5vw, 40px);
   }
 
-  .case-study-heading h3 {
-    font-size: clamp(38px, 11.5vw, 52px);
-    line-height: 1;
+  .resume-entry-header time {
+    display: block;
+    margin-top: 13px;
+    padding-top: 0;
   }
 
-  .case-study-summary {
-    margin-top: 23px;
+  .resume-project-link {
+    margin-top: 20px;
+  }
+
+  .resume-entry-summary,
+  .resume-project-summary {
     font-size: 14px;
     line-height: 1.7;
   }
 
-  .case-study-metrics {
+  .resume-entry-results {
     display: block;
-    margin-top: 30px;
-    padding-top: 22px;
+    margin-top: 24px;
   }
 
-  .case-study-metric strong {
-    font-size: 32px;
-  }
-
-  .case-study-detail-grid {
-    margin-top: 34px;
-  }
-
-  .case-study-detail p {
-    font-size: 13px;
-  }
-
-  .case-study-flow {
-    grid-template-columns: 1fr;
-    margin-top: 32px;
-  }
-
-  .case-study-step,
-  .case-study-step + .case-study-step {
-    padding: 18px 30px 19px 0;
-    border-top: 1px solid var(--line);
+  .resume-result,
+  .resume-result + .resume-result {
+    padding: 17px 0 0;
     border-left: 0;
   }
 
-  .case-study-step:first-child {
-    border-top: 0;
+  .resume-result strong {
+    font-size: 25px;
   }
 
-  .case-study-step:not(:last-child)::after {
-    content: "↓";
-    right: 8px;
+  .resume-project-meta strong {
+    font-size: 19px;
   }
 
-  .case-study-link {
-    margin-top: 30px;
+  .about-heading {
+    padding-bottom: 28px;
+    font-size: 36px;
+  }
+
+  .skill-row {
+    display: block;
   }
 
   .about-row .skill-list {
+    margin-top: 8px;
     font-size: 12px;
-  }
-
-  .skill-evidence {
-    font-size: 9px;
   }
 }
 
 @media (max-width: 380px) {
-  .site-name {
-    display: none;
-  }
+  .site-name { display: none; }
 
   .site-header {
     justify-content: center;

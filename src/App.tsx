@@ -27,7 +27,6 @@ const roleHighlights = [
 
 const roles = [
   {
-    number: "01",
     track: "experience",
     organization: "Flex",
     dates: "Summer 2026",
@@ -47,7 +46,6 @@ const roles = [
     ],
   },
   {
-    number: "01",
     track: "research",
     organization: "UCLA Programmable Software Systems Lab",
     dates: "2025 — Present",
@@ -69,7 +67,6 @@ const roles = [
     linkLabel: "View runtime experiments",
   },
   {
-    number: "02",
     track: "experience",
     organization: "US Chess",
     dates: "2023 — 2024",
@@ -90,7 +87,6 @@ const roles = [
     linkLabel: "Open Chess Life archive",
   },
   {
-    number: "02",
     track: "research",
     organization: "UC Santa Barbara",
     dates: "2022 — 2025",
@@ -113,121 +109,84 @@ const roles = [
 
 const projects = [
   {
-    track: "experience",
-    role: "Co-creator / Computer Vision Engineer",
-    title: "A-Eye",
-    description:
-      "Built priority-aware spoken guidance from a wearable camera with Arya Kunisetty, Krishay Garg, and Hui-Peng-John-Yao.",
-    result: "1st of 76 teams · MLH Best Use of ElevenLabs",
-    stack: "YOLOv8 · ByteTrack · route-aware audio guidance",
-    href: "https://devpost.com/software/a-eye-pk9sdw",
-  },
-  {
-    track: "research",
-    role: "Model Evaluation / Reliability",
-    title: "SAT Policy Audit",
-    description:
-      "Found a tensor-shape failure and formula-independent behavior, then built deterministic evaluation over 600 held-out 3-CNF formulas.",
-    result: "600 held-out formulas · deterministic evaluation",
-    stack: "PyTorch · reinforcement learning · exact evaluation",
-    href: "https://github.com/MK-523/BooleanSatisfiability/tree/main/benchmark",
-  },
-  {
-    track: "research",
-    role: "Applied ML Prototype Builder",
-    title: "Sentiment → Music",
-    description:
-      "Explored language-model sentiment representations, expressive music generation, and a tokenized Braille-to-music interface.",
-    result: "End-to-end multimodal prototype",
-    stack: "BERT · NLTK · music AI",
-    href: "https://github.com/MK-523/NLP-music-sentimentanalysis",
-  },
-];
-
-const caseStudies = [
-  {
-    number: "01",
-    category: "Product engineering",
     title: "ChessStalker",
     role: "Co-founder / Full-stack Engineer",
     summary:
-      "A cross-platform opponent-preparation system that resolves player identities across FIDE, Lichess, and Chess.com, then turns fragmented game histories into searchable profiles and Stockfish-backed preparation.",
-    metrics: [
-      { value: "11M+", label: "official games indexed" },
-      { value: "100K+", label: "engine analyses produced" },
-      { value: "3 sources", label: "FIDE · Lichess · Chess.com" },
+      "Built a cross-platform opponent-preparation product that resolves player identities across FIDE, Lichess, and Chess.com and turns fragmented game histories into searchable, Stockfish-backed preparation.",
+    bullets: [
+      "Designed ingestion and identity-resolution workflows across official and online chess data.",
+      "Built searchable player profiles and analysis flows for concrete opponent preparation.",
+      "Worked across product design, data integration, engine analysis, and the user-facing application.",
     ],
-    details: [
-      {
-        label: "Challenge",
-        text: "A player’s competitive history is split across official ratings and multiple online identities, which makes useful opponent research slow and incomplete.",
-      },
-      {
-        label: "System",
-        text: "Combined source-specific ingestion, identity resolution, searchable player histories, and Stockfish analysis into one preparation workflow.",
-      },
-      {
-        label: "My contribution",
-        text: "Co-designed the product and built full-stack features across data integration, analysis workflows, and the player-facing preparation experience.",
-      },
-    ],
-    flow: ["Resolve identity", "Ingest games", "Run analysis", "Build opponent brief"],
+    impact: "11M+ official games indexed · 100K+ engine analyses · 3 integrated data sources",
+    stack: "Product engineering · data integration · Stockfish",
     href: "https://chessstalker.com/",
     linkLabel: "Open ChessStalker",
   },
   {
-    number: "02",
-    category: "Runtime research",
-    title: "Persisting JIT state across serverless cold starts",
+    title: "JIT State Persistence for OpenFaaS",
     role: "Undergraduate Research Assistant · UCLA PSS Lab",
     summary:
-      "A Redis-backed artifact path for OpenFaaS workloads that preserves profiling and compilation work instead of rebuilding it for every bursty first request.",
-    metrics: [
-      { value: "337 → 125 ms", label: "first-request latency" },
-      { value: "2.7×", label: "faster first request" },
-      { value: "31.6%", label: "less compile / load time" },
+      "Built a Redis-backed artifact path that preserves profiling and compilation work across serverless cold starts instead of rebuilding it for every bursty first request.",
+    bullets: [
+      "Added artifact lookup and restore to the OpenFaaS runtime path.",
+      "Containerized benchmark workloads and traced runtime behavior with gdb.",
+      "Separated first-request latency from startup compile and load costs against an uncached baseline.",
     ],
-    details: [
-      {
-        label: "Challenge",
-        text: "Serverless instances repeatedly paid startup costs for runtime profiling and compilation artifacts that had already been produced by earlier instances.",
-      },
-      {
-        label: "System",
-        text: "Added Redis-backed persistence to the OpenFaaS runtime path, containerized the benchmark workloads, and traced artifact behavior with gdb.",
-      },
-      {
-        label: "Measurement",
-        text: "Compared first-request behavior against the uncached baseline and separated end-to-end latency from startup compile and load time.",
-      },
-    ],
-    flow: ["Cold request", "Artifact lookup", "Redis-backed restore", "Execute with reused state"],
+    impact: "337 → 125 ms first request · 2.7× faster · 31.6% less compile / load time",
+    stack: "OpenFaaS · Redis · Docker · gdb · runtime benchmarking",
     href: "https://github.com/MK-523/hivejit-openfaas",
     linkLabel: "View runtime experiments",
+  },
+  {
+    title: "A-Eye",
+    role: "Co-creator / Computer Vision Engineer",
+    summary:
+      "Built priority-aware spoken guidance from a wearable camera with Arya Kunisetty, Krishay Garg, and Hui-Peng-John-Yao.",
+    bullets: [
+      "Combined YOLOv8 detections with ByteTrack to preserve object identity across frames.",
+      "Designed route-aware audio guidance that prioritized actionable obstacles instead of narrating every detection.",
+    ],
+    impact: "1st of 76 teams · MLH Best Use of ElevenLabs",
+    stack: "YOLOv8 · ByteTrack · computer vision · audio guidance",
+    href: "https://devpost.com/software/a-eye-pk9sdw",
+    linkLabel: "Open project",
+  },
+  {
+    title: "SAT Policy Audit",
+    role: "Model Evaluation / Reliability",
+    summary:
+      "Audited a reinforcement-learning SAT policy and built deterministic evaluation to separate implementation failures from policy quality.",
+    bullets: [
+      "Found a tensor-shape failure and formula-independent behavior in the evaluation path.",
+      "Tested the corrected system over 600 held-out 3-CNF formulas with exact, repeatable scoring.",
+    ],
+    impact: "600 held-out formulas · deterministic evaluation",
+    stack: "PyTorch · reinforcement learning · exact evaluation",
+    href: "https://github.com/MK-523/BooleanSatisfiability/tree/main/benchmark",
+    linkLabel: "View benchmark",
+  },
+  {
+    title: "Sentiment → Music",
+    role: "Applied ML Prototype Builder",
+    summary:
+      "Built an end-to-end prototype connecting language-model sentiment representations, expressive music generation, and an alternate Braille-to-music interaction layer.",
+    bullets: [
+      "Mapped sentiment features from language models into controllable musical output.",
+      "Explored a tokenized Braille interface as an alternate input and composition mechanism.",
+    ],
+    impact: "End-to-end multimodal prototype",
+    stack: "BERT · NLTK · music AI",
+    href: "https://github.com/MK-523/NLP-music-sentimentanalysis",
+    linkLabel: "View project",
   },
 ];
 
 const tools = [
-  {
-    title: "Production engineering",
-    list: "Python · TypeScript · React · ReactFlow · SQL",
-    evidence: "Flex · ChessStalker · US Chess",
-  },
-  {
-    title: "Systems and runtime research",
-    list: "Linux · Docker · Kubernetes · OpenFaaS · Redis · gdb",
-    evidence: "UCLA PSS Lab · serverless artifact caching",
-  },
-  {
-    title: "Applied ML and computer vision",
-    list: "PyTorch · JAX / Flax / XLA · OpenCV · BERT · NLP",
-    evidence: "A-Eye · SAT policy audit · sentiment-to-music",
-  },
-  {
-    title: "Languages and foundations",
-    list: "Java · C++ · Rust · Shell · OCaml · TCP/IP · distributed systems · network security",
-    evidence: "Research tooling · systems coursework · independent builds",
-  },
+  ["Production", "Python · TypeScript · React · ReactFlow · SQL"],
+  ["Systems", "Linux · Docker · Kubernetes · OpenFaaS · Redis · gdb"],
+  ["Applied ML", "PyTorch · JAX / Flax / XLA · OpenCV · BERT · NLP"],
+  ["Additional", "Java · C++ · Rust · Shell · OCaml · TCP/IP · distributed systems · network security"],
 ];
 
 const recognition = [
@@ -238,40 +197,45 @@ const recognition = [
 
 type Role = (typeof roles)[number];
 type Project = (typeof projects)[number];
-type CaseStudy = (typeof caseStudies)[number];
+
+function SectionHeading({ title }: { title: string }) {
+  return (
+    <div className="resume-section-heading">
+      <h2>{title}</h2>
+    </div>
+  );
+}
 
 function RoleList({ items }: { items: Role[] }) {
   return (
-    <div className="work-list">
+    <div className="resume-list">
       {items.map((item) => (
-        <article className="work-item" key={`${item.track}-${item.number}`} data-blade-target>
-          <div className="work-index">{item.number}</div>
-          <div className="work-copy">
-            <div className="work-meta">
-              <p className="work-context">{item.organization}</p>
-              <time>{item.dates}</time>
+        <article className="resume-entry" key={`${item.track}-${item.organization}`} data-blade-target>
+          <div className="resume-entry-header">
+            <div>
+              <h3>{item.role}</h3>
+              <p className="resume-entry-organization">{item.organization}</p>
             </div>
-            <h3>{item.role}</h3>
-            <p className="work-focus">{item.focus}</p>
-            <p className="work-story">{item.summary}</p>
-            <ul className="work-responsibilities">
-              {item.responsibilities.map((detail) => <li key={detail}>{detail}</li>)}
-            </ul>
+            <time>{item.dates}</time>
           </div>
-          <aside className="work-results" aria-label={`${item.organization} results`}>
-            <p>Results</p>
+          <p className="resume-entry-focus">{item.focus}</p>
+          <p className="resume-entry-summary">{item.summary}</p>
+          <ul className="resume-entry-bullets">
+            {item.responsibilities.map((detail) => <li key={detail}>{detail}</li>)}
+          </ul>
+          <div className="resume-entry-results" aria-label={`${item.organization} results`}>
             {item.results.map((result) => (
-              <div className="result-row" key={`${result.value}-${result.label}`}>
+              <div className="resume-result" key={`${result.value}-${result.label}`}>
                 <strong>{result.value}</strong>
                 <span>{result.label}</span>
               </div>
             ))}
-            {item.link && (
-              <a href={item.link} target="_blank" rel="noreferrer" className="case-link" data-blade-target>
-                {item.linkLabel} <span>↗</span>
-              </a>
-            )}
-          </aside>
+          </div>
+          {item.link && (
+            <a href={item.link} target="_blank" rel="noreferrer" className="case-link resume-entry-link" data-blade-target>
+              {item.linkLabel} <span>↗</span>
+            </a>
+          )}
         </article>
       ))}
     </div>
@@ -280,79 +244,25 @@ function RoleList({ items }: { items: Role[] }) {
 
 function ProjectList({ items }: { items: Project[] }) {
   return (
-    <div className="experiment-list">
-      {items.map((project, index) => (
-        <a
-          href={project.href}
-          target="_blank"
-          rel="noreferrer"
-          className="experiment"
-          key={project.title}
-          data-blade-target
-        >
-          <span>{String(index + 1).padStart(2, "0")}</span>
-          <div className="experiment-identity">
-            <small>{project.role}</small>
-            <h3>{project.title}</h3>
-          </div>
-          <p>{project.description}</p>
-          <div className="experiment-result">
-            <strong>{project.result}</strong>
-            <small>{project.stack}</small>
-          </div>
-          <b>↗</b>
-        </a>
-      ))}
-    </div>
-  );
-}
-
-function CaseStudyList({ items }: { items: CaseStudy[] }) {
-  return (
-    <div className="case-study-list">
-      {items.map((study) => (
-        <article className="case-study" key={study.number} data-blade-target>
-          <div className="case-study-index">{study.number}</div>
-          <div className="case-study-main">
-            <div className="case-study-top">
-              <div className="case-study-heading">
-                <p className="case-study-kicker">{study.category}</p>
-                <h3>{study.title}</h3>
-                <p className="case-study-role">{study.role}</p>
-                <p className="case-study-summary">{study.summary}</p>
-              </div>
-              <aside className="case-study-metrics" aria-label={`${study.title} results`}>
-                <p>Evidence</p>
-                {study.metrics.map((metric) => (
-                  <div className="case-study-metric" key={`${metric.value}-${metric.label}`}>
-                    <strong>{metric.value}</strong>
-                    <span>{metric.label}</span>
-                  </div>
-                ))}
-              </aside>
+    <div className="resume-project-list">
+      {items.map((project) => (
+        <article className="resume-project" key={project.title} data-blade-target>
+          <div className="resume-project-header">
+            <div>
+              <h3>{project.title}</h3>
+              <p>{project.role}</p>
             </div>
-
-            <div className="case-study-detail-grid">
-              {study.details.map((detail) => (
-                <div className="case-study-detail" key={detail.label}>
-                  <h4>{detail.label}</h4>
-                  <p>{detail.text}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="case-study-flow" aria-label={`${study.title} system flow`}>
-              {study.flow.map((step, index) => (
-                <div className="case-study-step" key={step}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <strong>{step}</strong>
-                </div>
-              ))}
-            </div>
-
-            <a href={study.href} target="_blank" rel="noreferrer" className="case-link case-study-link" data-blade-target>
-              {study.linkLabel} <span>↗</span>
+            <a href={project.href} target="_blank" rel="noreferrer" className="case-link resume-project-link" data-blade-target>
+              {project.linkLabel} <span>↗</span>
             </a>
+          </div>
+          <p className="resume-project-summary">{project.summary}</p>
+          <ul className="resume-project-bullets">
+            {project.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
+          </ul>
+          <div className="resume-project-meta">
+            <strong>{project.impact}</strong>
+            <span>{project.stack}</span>
           </div>
         </article>
       ))}
@@ -371,8 +281,8 @@ export default function App() {
         <a href="#top" className="site-name" data-blade-target>Mahesh Karthikeyan</a>
         <nav aria-label="Primary navigation">
           <a href="#experience" data-blade-target>Experience</a>
-          <a href="#case-studies" data-blade-target>Case studies</a>
           <a href="#research" data-blade-target>Research</a>
+          <a href="#projects" data-blade-target>Projects</a>
           <a href="#contact" data-blade-target>Contact</a>
         </nav>
       </header>
@@ -403,54 +313,24 @@ export default function App() {
           </div>
         </section>
 
-        <section className="work-section" id="experience" tabIndex={-1}>
-          <div className="section-heading">
-            <p>Experience</p>
-            <div>
-              <h2>Engineering and product roles</h2>
-              <span>Flex · US Chess · ChessStalker · A-Eye</span>
-            </div>
-          </div>
+        <section className="work-section resume-section" id="experience" tabIndex={-1}>
+          <SectionHeading title="Experience" />
           <RoleList items={roles.filter((item) => item.track === "experience")} />
-
-          <div className="subsection-heading">
-            <p>Additional product</p>
-            <h3>Computer vision in the physical world</h3>
-          </div>
-          <ProjectList items={projects.filter((item) => item.track === "experience")} />
         </section>
 
-        <section className="case-studies-section" id="case-studies" tabIndex={-1}>
-          <div className="section-heading compact">
-            <p>Case studies</p>
-            <div>
-              <h2>How the systems work</h2>
-              <span>Product architecture · runtime research · measurable evidence</span>
-            </div>
-          </div>
-          <CaseStudyList items={caseStudies} />
-        </section>
-
-        <section className="work-section research-section" id="research" tabIndex={-1}>
-          <div className="section-heading compact">
-            <p>Research</p>
-            <div>
-              <h2>Runtime and network systems research</h2>
-              <span>UCLA PSS Lab · UC Santa Barbara</span>
-            </div>
-          </div>
+        <section className="work-section research-section resume-section" id="research" tabIndex={-1}>
+          <SectionHeading title="Research" />
           <RoleList items={roles.filter((item) => item.track === "research")} />
+        </section>
 
-          <div className="subsection-heading">
-            <p>Technical investigations</p>
-            <h3>Model evaluation and applied ML</h3>
-          </div>
-          <ProjectList items={projects.filter((item) => item.track === "research")} />
+        <section className="resume-projects-section resume-section" id="projects" tabIndex={-1}>
+          <SectionHeading title="Selected Projects" />
+          <ProjectList items={projects} />
         </section>
 
         <section className="about-section awards-section" id="awards" tabIndex={-1}>
           <div className="about-column">
-            <p className="section-label">Awards and recognition</p>
+            <h2 className="about-heading">Awards</h2>
             {recognition.map(([title, context]) => (
               <div className="about-row" key={title}>
                 <h3>{title}</h3>
@@ -459,12 +339,11 @@ export default function App() {
             ))}
           </div>
           <div className="about-column technical-column">
-            <p className="section-label">Technical range by use</p>
-            {tools.map((tool) => (
-              <div className="about-row skill-row" key={tool.title}>
-                <h3>{tool.title}</h3>
-                <p className="skill-list">{tool.list}</p>
-                <span className="skill-evidence">Seen in: {tool.evidence}</span>
+            <h2 className="about-heading">Skills</h2>
+            {tools.map(([title, list]) => (
+              <div className="about-row skill-row resume-skill-row" key={title}>
+                <h3>{title}</h3>
+                <p className="skill-list">{list}</p>
               </div>
             ))}
           </div>
