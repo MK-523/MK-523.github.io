@@ -61,7 +61,15 @@ type DecisionNode3D = {
   parent: number;
   level: number;
   label: string;
+  detail: string;
   state: "neutral" | "approved" | "declined";
+};
+
+type TreeControls = {
+  zoomIn: () => void;
+  zoomOut: () => void;
+  reset: () => void;
+  select: (index: number) => void;
 };
 
 type Layout = {
@@ -136,23 +144,23 @@ const easeInOut = (value: number) => {
 };
 
 const decisionNodes: DecisionNode3D[] = [
-  { x: -250, y: 0, z: 0, parent: -1, level: 0, label: "APPLICATION", state: "approved" },
-  { x: -125, y: -145, z: -70, parent: 0, level: 1, label: "REVENUE", state: "neutral" },
-  { x: -118, y: 0, z: 85, parent: 0, level: 1, label: "FICO", state: "approved" },
-  { x: -125, y: 145, z: -30, parent: 0, level: 1, label: "CASH FLOW", state: "neutral" },
-  { x: 12, y: -210, z: -135, parent: 1, level: 2, label: "STABILITY", state: "neutral" },
-  { x: 22, y: -92, z: 12, parent: 1, level: 2, label: "REVIEW", state: "neutral" },
-  { x: 20, y: -24, z: 150, parent: 2, level: 2, label: "680+", state: "approved" },
-  { x: 18, y: 72, z: 42, parent: 2, level: 2, label: "< 680", state: "declined" },
-  { x: 8, y: 156, z: -105, parent: 3, level: 2, label: "COVERAGE", state: "neutral" },
-  { x: 22, y: 235, z: 44, parent: 3, level: 2, label: "VOLATILITY", state: "neutral" },
-  { x: 168, y: -178, z: -70, parent: 4, level: 3, label: "TIER 1", state: "neutral" },
-  { x: 172, y: -48, z: 118, parent: 6, level: 3, label: "RISK TIER", state: "approved" },
-  { x: 176, y: 80, z: 68, parent: 7, level: 3, label: "DECLINE", state: "declined" },
-  { x: 170, y: 174, z: -78, parent: 8, level: 3, label: "TIER 3", state: "neutral" },
-  { x: 172, y: 250, z: 18, parent: 9, level: 3, label: "MANUAL", state: "neutral" },
-  { x: 330, y: -46, z: 78, parent: 11, level: 4, label: "APPROVED", state: "approved" },
-  { x: 330, y: 62, z: -42, parent: 11, level: 4, label: "LIMIT", state: "approved" },
+  { x: -250, y: 0, z: 0, parent: -1, level: 0, label: "APPLICATION", detail: "Applicant inputs enter the underwriting workflow.", state: "approved" },
+  { x: -125, y: -145, z: -70, parent: 0, level: 1, label: "REVENUE", detail: "Normalizes revenue signals and verifies reported scale.", state: "neutral" },
+  { x: -118, y: 0, z: 85, parent: 0, level: 1, label: "FICO", detail: "Routes the application by credit-score threshold.", state: "approved" },
+  { x: -125, y: 145, z: -30, parent: 0, level: 1, label: "CASH FLOW", detail: "Evaluates operating cash flow and repayment capacity.", state: "neutral" },
+  { x: 12, y: -210, z: -135, parent: 1, level: 2, label: "STABILITY", detail: "Checks the consistency of revenue over time.", state: "neutral" },
+  { x: 22, y: -92, z: 12, parent: 1, level: 2, label: "REVIEW", detail: "Flags ambiguous revenue evidence for manual review.", state: "neutral" },
+  { x: 20, y: -24, z: 150, parent: 2, level: 2, label: "680+", detail: "Qualifying credit branch continues through risk grading.", state: "approved" },
+  { x: 18, y: 72, z: 42, parent: 2, level: 2, label: "< 680", detail: "Below-threshold applications move toward decline logic.", state: "declined" },
+  { x: 8, y: 156, z: -105, parent: 3, level: 2, label: "COVERAGE", detail: "Measures available cash against projected obligations.", state: "neutral" },
+  { x: 22, y: 235, z: 44, parent: 3, level: 2, label: "VOLATILITY", detail: "Detects unstable cash-flow patterns and outliers.", state: "neutral" },
+  { x: 168, y: -178, z: -70, parent: 4, level: 3, label: "TIER 1", detail: "Stable revenue produces the strongest operating tier.", state: "neutral" },
+  { x: 172, y: -48, z: 118, parent: 6, level: 3, label: "RISK TIER", detail: "Combines qualifying signals into an explainable risk grade.", state: "approved" },
+  { x: 176, y: 80, z: 68, parent: 7, level: 3, label: "DECLINE", detail: "Records the failed threshold and decline explanation.", state: "declined" },
+  { x: 170, y: 174, z: -78, parent: 8, level: 3, label: "TIER 3", detail: "Lower coverage creates a more conservative tier.", state: "neutral" },
+  { x: 172, y: 250, z: 18, parent: 9, level: 3, label: "MANUAL", detail: "High volatility sends the case to an operator.", state: "neutral" },
+  { x: 330, y: -46, z: 78, parent: 11, level: 4, label: "APPROVED", detail: "The qualified path returns an approval decision.", state: "approved" },
+  { x: 330, y: 62, z: -42, parent: 11, level: 4, label: "LIMIT", detail: "Final calculation assigns an explainable credit limit.", state: "approved" },
 ];
 
 const approvedDecisionPath = new Set([0, 2, 6, 11, 15, 16]);
@@ -281,14 +289,26 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cardRef = useRef<HTMLElement>(null);
   const advanceRef = useRef<(x: number, y: number, skip?: boolean) => void>(() => undefined);
+  const treeControlsRef = useRef<TreeControls>({
+    zoomIn: () => undefined,
+    zoomOut: () => undefined,
+    reset: () => undefined,
+    select: () => undefined,
+  });
   const onReadyRef = useRef(onReady);
   const didReadyRef = useRef(false);
   const [phase, setPhase] = useState<Phase>("waiting");
   const [sceneIndex, setSceneIndex] = useState(0);
+  const [inspectedNode, setInspectedNode] = useState(0);
+  const inspectedNodeRef = useRef(0);
 
   useEffect(() => {
     onReadyRef.current = onReady;
   }, [onReady]);
+
+  useEffect(() => {
+    inspectedNodeRef.current = inspectedNode;
+  }, [inspectedNode]);
 
   useEffect(() => {
     if (phase !== "scene") return;
@@ -342,6 +362,38 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       angle: 0,
       angleVelocity: 0,
       scale: coarsePointer ? 86 : 112,
+    };
+
+    const treeCamera = {
+      zoom: coarsePointer ? 0.82 : 1.18,
+      panX: coarsePointer ? 0 : -width * 0.035,
+      panY: coarsePointer ? -height * 0.05 : 0,
+      dragging: false,
+      moved: false,
+      startX: 0,
+      startY: 0,
+      lastX: 0,
+      lastY: 0,
+    };
+    let projectedDecisionNodes: Array<{ x: number; y: number; scale: number; depth: number }> = [];
+
+    const selectDecisionNode = (index: number) => {
+      const safeIndex = Math.max(0, Math.min(decisionNodes.length - 1, index));
+      inspectedNodeRef.current = safeIndex;
+      setInspectedNode(safeIndex);
+    };
+
+    const resetTreeCamera = () => {
+      treeCamera.zoom = coarsePointer ? 0.82 : 1.18;
+      treeCamera.panX = coarsePointer ? 0 : -width * 0.035;
+      treeCamera.panY = coarsePointer ? -height * 0.05 : 0;
+    };
+
+    treeControlsRef.current = {
+      zoomIn: () => { treeCamera.zoom = Math.min(2.8, treeCamera.zoom * 1.2); },
+      zoomOut: () => { treeCamera.zoom = Math.max(0.62, treeCamera.zoom / 1.2); },
+      reset: resetTreeCamera,
+      select: selectDecisionNode,
     };
 
     const getLayout = (): Layout => {
@@ -603,6 +655,21 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       if (sparks.length > 90) sparks = sparks.slice(-90);
     };
 
+    const isTreeStage = (target: EventTarget | null) =>
+      currentPhase === "scene"
+      && currentScene === 0
+      && target instanceof Element
+      && Boolean(target.closest(".chronicle-tree-stage"));
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!isTreeStage(event.target)) return;
+      treeCamera.dragging = true;
+      treeCamera.moved = false;
+      treeCamera.startX = treeCamera.lastX = event.clientX;
+      treeCamera.startY = treeCamera.lastY = event.clientY;
+      (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
+    };
+
     const onPointerMove = (event: PointerEvent) => {
       const dx = event.clientX - pointer.x;
       const dy = event.clientY - pointer.y;
@@ -614,9 +681,50 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       pointer.active = true;
       pointer.lastMove = performance.now();
       isHot = Boolean((event.target as Element | null)?.closest?.("[data-blade-target]"));
+      if (treeCamera.dragging) {
+        const treeDx = event.clientX - treeCamera.lastX;
+        const treeDy = event.clientY - treeCamera.lastY;
+        treeCamera.panX += treeDx;
+        treeCamera.panY += treeDy;
+        treeCamera.lastX = event.clientX;
+        treeCamera.lastY = event.clientY;
+        if (Math.hypot(event.clientX - treeCamera.startX, event.clientY - treeCamera.startY) > 4) {
+          treeCamera.moved = true;
+        }
+      }
       if (currentPhase === "exploring" && distance > 6 && Math.random() > 0.45) {
         addSpark(blade.x, blade.y, -dx * 0.025 + (Math.random() - 0.5), -dy * 0.025 + (Math.random() - 0.5));
       }
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      if (!treeCamera.dragging) return;
+      if (!treeCamera.moved && projectedDecisionNodes.length) {
+        let closestIndex = -1;
+        let closestDistance = Infinity;
+        projectedDecisionNodes.forEach((node, index) => {
+          const distance = Math.hypot(node.x - event.clientX, node.y - event.clientY);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = index;
+          }
+        });
+        if (closestIndex >= 0 && closestDistance < 54) selectDecisionNode(closestIndex);
+      }
+      treeCamera.dragging = false;
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      if (!isTreeStage(event.target)) return;
+      event.preventDefault();
+      const previousZoom = treeCamera.zoom;
+      const zoomFactor = Math.exp(-event.deltaY * 0.0012);
+      treeCamera.zoom = Math.max(0.62, Math.min(2.8, treeCamera.zoom * zoomFactor));
+      const zoomRatio = treeCamera.zoom / previousZoom;
+      const baseX = coarsePointer ? width * 0.48 : width * 0.38;
+      const baseY = coarsePointer ? height * 0.37 : height * 0.49;
+      treeCamera.panX = event.clientX - baseX - (event.clientX - baseX - treeCamera.panX) * zoomRatio;
+      treeCamera.panY = event.clientY - baseY - (event.clientY - baseY - treeCamera.panY) * zoomRatio;
     };
 
     const onScroll = () => {
@@ -705,13 +813,13 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
 
     const drawDecisionGraph = (time: number, progress: number) => {
       const reveal = easeInOut(progress);
-      const originX = coarsePointer ? width * 0.53 : width * 0.57;
-      const originY = coarsePointer ? height * 0.36 : height * 0.48;
+      const originX = (coarsePointer ? width * 0.48 : width * 0.38) + treeCamera.panX;
+      const originY = (coarsePointer ? height * 0.37 : height * 0.49) + treeCamera.panY;
       const viewportScale = Math.min(
-        coarsePointer ? width / 620 : width / 1180,
-        coarsePointer ? height / 760 : height / 880,
-        1.18,
-      );
+        coarsePointer ? width / 560 : width / 900,
+        coarsePointer ? height / 660 : height / 680,
+        1.62,
+      ) * treeCamera.zoom;
       const focalLength = (coarsePointer ? 430 : 680) * viewportScale;
       const cameraDepth = 760 - reveal * 105;
       const yaw = -0.48 + reveal * 0.12 + Math.sin(time * 0.00042) * 0.018;
@@ -741,6 +849,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       };
 
       const projected = decisionNodes.map(project);
+      projectedDecisionNodes = projected;
       const impact = clamp(1 - Math.abs(progress - 0.13) / 0.1);
       const treeAlpha = clamp((progress - 0.08) / 0.2);
 
@@ -842,13 +951,25 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
           drawHex(point.x + 4 * point.scale, point.y + 6 * point.scale, radius, "#030609", treeAlpha * 0.72);
           drawHex(point.x, point.y, radius, color, treeAlpha * (approved ? 0.3 : 0.17));
 
-          if (!coarsePointer && nodeProgress > 0.7 && (approved || node.state === "declined" || node.level === 0)) {
+          if (nodeProgress > 0.62) {
             context.shadowBlur = 0;
-            context.globalAlpha = treeAlpha * clamp((nodeProgress - 0.7) / 0.3) * 0.86;
+            context.globalAlpha = treeAlpha * clamp((nodeProgress - 0.62) / 0.38) * 0.9;
             context.fillStyle = color;
-            context.font = `${Math.max(7, 8.5 * point.scale * viewportScale)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+            context.font = `600 ${Math.max(coarsePointer ? 7 : 9, (coarsePointer ? 8 : 11) * point.scale * viewportScale)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
             context.letterSpacing = "0.08em";
             context.fillText(node.label, point.x + radius + 8, point.y + 3);
+          }
+
+          if (index === inspectedNodeRef.current) {
+            const selectionRadius = radius + 9 + Math.sin(time * 0.006) * 2;
+            context.globalAlpha = treeAlpha * 0.92;
+            context.strokeStyle = "#ffffff";
+            context.lineWidth = 1.2;
+            context.shadowColor = color;
+            context.shadowBlur = 18;
+            context.beginPath();
+            context.arc(point.x, point.y, selectionRadius, 0, Math.PI * 2);
+            context.stroke();
           }
         });
 
@@ -1522,7 +1643,11 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
     else buildField();
     onScroll();
     frame = requestAnimationFrame(render);
+    window.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKeyDown);
@@ -1532,7 +1657,11 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
     return () => {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(resizeFrame);
+      window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("wheel", onWheel);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKeyDown);
@@ -1543,6 +1672,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
 
   const scene = experienceScenes[sceneIndex];
   const nextScene = experienceScenes[Math.min(sceneIndex + 1, experienceScenes.length - 1)];
+  const selectedDecision = decisionNodes[inspectedNode];
   const liveMessage = phase === "scene"
     ? `${scene.organization}. ${scene.role}. ${scene.result}.`
     : phase === "exploring"
@@ -1586,15 +1716,44 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
 
           {phase === "scene" && (
             <>
-              <button
-                type="button"
-                className="chronicle-advance"
-                aria-label={sceneIndex < experienceScenes.length - 1
-                  ? `Show ${nextScene.organization} experience, ${sceneIndex + 2} of 4`
-                  : "Play the combined finale and open the full portfolio"}
-                onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
-              />
-              <article className={`chronicle-card scene-${sceneIndex}`} key={scene.organization} ref={cardRef} tabIndex={-1}>
+              {sceneIndex === 0 ? (
+                <>
+                  <div
+                    className="chronicle-tree-stage"
+                    role="region"
+                    aria-label="Interactive underwriting decision tree. Drag to pan, scroll to zoom, or select a node below."
+                  />
+                  <div className="chronicle-tree-tools" aria-label="Decision tree view controls">
+                    <span>Drag to pan · Scroll to zoom</span>
+                    <button type="button" onClick={() => treeControlsRef.current.zoomOut()} aria-label="Zoom decision tree out">−</button>
+                    <button type="button" onClick={() => treeControlsRef.current.reset()}>Reset</button>
+                    <button type="button" onClick={() => treeControlsRef.current.zoomIn()} aria-label="Zoom decision tree in">+</button>
+                  </div>
+                  <div className="chronicle-node-strip" aria-label="Underwriting decision nodes">
+                    {decisionNodes.map((node, index) => (
+                      <button
+                        type="button"
+                        className={index === inspectedNode ? `is-selected is-${node.state}` : `is-${node.state}`}
+                        key={node.label}
+                        onClick={() => treeControlsRef.current.select(index)}
+                      >
+                        <span>{String(index + 1).padStart(2, "0")}</span>
+                        {node.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="chronicle-advance"
+                  aria-label={sceneIndex < experienceScenes.length - 1
+                    ? `Show ${nextScene.organization} experience, ${sceneIndex + 2} of 4`
+                    : "Play the combined finale and open the full portfolio"}
+                  onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
+                />
+              )}
+              <article className={`chronicle-card scene-${sceneIndex}${sceneIndex === 0 ? " is-tree-card" : ""}`} key={scene.organization} ref={cardRef} tabIndex={-1}>
                 <div className="chronicle-card-topline">
                   <span>{String(sceneIndex + 1).padStart(2, "0")} / 04</span>
                   <time>{scene.dates}</time>
@@ -1605,6 +1764,23 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
                 <p className="chronicle-summary">{scene.summary}</p>
                 <strong>{scene.result}</strong>
                 <small>{scene.resultLabel}</small>
+                {sceneIndex === 0 && (
+                  <>
+                    <div className={`decision-node-inspector is-${selectedDecision.state}`} aria-live="polite">
+                      <span>Inspecting node {String(inspectedNode + 1).padStart(2, "0")}</span>
+                      <strong>{selectedDecision.label}</strong>
+                      <p>{selectedDecision.detail}</p>
+                      <small>{selectedDecision.state === "neutral" ? "Supporting calculation" : selectedDecision.state}</small>
+                    </div>
+                    <button
+                      type="button"
+                      className="chronicle-tree-continue"
+                      onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
+                    >
+                      Continue to UCLA PSS Lab <span>→</span>
+                    </button>
+                  </>
+                )}
               </article>
             </>
           )}
