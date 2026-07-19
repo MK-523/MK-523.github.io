@@ -233,6 +233,22 @@ button, a { -webkit-tap-highlight-color: transparent; }
   pointer-events: none;
 }
 
+.chronicle-card.scene-0 {
+  animation-delay: 900ms;
+}
+
+.chronicle-card.scene-1 {
+  animation-delay: 720ms;
+}
+
+.chronicle-card.scene-2 {
+  animation-delay: 760ms;
+}
+
+.chronicle-card.scene-3 {
+  animation-delay: 820ms;
+}
+
 .chronicle-card::before,
 .chronicle-card::after {
   content: "";
