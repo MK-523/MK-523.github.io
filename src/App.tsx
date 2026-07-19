@@ -304,8 +304,6 @@ export default function App() {
         <a href="#top" className="site-name" data-blade-target>Mahesh Karthikeyan</a>
         <nav aria-label="Primary navigation">
           <a href="#experience" data-blade-target>Experience</a>
-          <a href="#research" data-blade-target>Research</a>
-          <a href="#campus" data-blade-target>Campus</a>
           <a href="#contact" data-blade-target>Contact</a>
         </nav>
       </header>
@@ -340,62 +338,6 @@ export default function App() {
         <section className="work-section resume-section" id="experience" tabIndex={-1}>
           <SectionHeading title="Experience" />
           <RoleList items={roles.filter((item) => item.track === "experience")} />
-        </section>
-
-        <section className="work-section research-section resume-section" id="research" tabIndex={-1}>
-          <SectionHeading title="Research" />
-          <RoleList items={roles.filter((item) => item.track === "research")} />
-        </section>
-
-        <section className="resume-projects-section resume-section" id="projects" tabIndex={-1}>
-          <SectionHeading title="Selected Projects" />
-          <ProjectList items={projects} />
-        </section>
-
-        <section className="resume-projects-section resume-section campus-section" id="campus" tabIndex={-1}>
-          <SectionHeading title="Campus" />
-          <div className="resume-project-list">
-            {campusRoles.map((item) => (
-              <article className="resume-project campus-entry" key={item.title} data-blade-target>
-                <div className="resume-project-header">
-                  <div>
-                    <h3>{item.title}</h3>
-                    <p>{item.role}</p>
-                  </div>
-                  <time>{item.dates}</time>
-                </div>
-                <p className="resume-project-summary">{item.summary}</p>
-                <ul className="resume-project-bullets">
-                  {item.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
-                </ul>
-                <div className="resume-project-meta">
-                  <strong>{item.impact}</strong>
-                  <span>{item.stack}</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="about-section awards-section" id="awards" tabIndex={-1}>
-          <div className="about-column">
-            <h2 className="about-heading">Awards</h2>
-            {recognition.map(([title, context]) => (
-              <div className="about-row" key={title}>
-                <h3>{title}</h3>
-                <p>{context}</p>
-              </div>
-            ))}
-          </div>
-          <div className="about-column technical-column">
-            <h2 className="about-heading">Skills</h2>
-            {tools.map(([title, list]) => (
-              <div className="about-row skill-row resume-skill-row" key={title}>
-                <h3>{title}</h3>
-                <p className="skill-list">{list}</p>
-              </div>
-            ))}
-          </div>
         </section>
 
         <section className="contact-section" id="contact" tabIndex={-1}>
