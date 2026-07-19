@@ -54,6 +54,16 @@ type Spark = {
   size: number;
 };
 
+type DecisionNode3D = {
+  x: number;
+  y: number;
+  z: number;
+  parent: number;
+  level: number;
+  label: string;
+  state: "neutral" | "approved" | "declined";
+};
+
 type Layout = {
   heroX: number;
   heroY: number;
@@ -107,11 +117,45 @@ const experienceScenes: ExperienceScene[] = [
 const fieldColors = ["#07090d", "#090d13", "#0c1118", "#101821"];
 const cloakColors = ["#26313b", "#41505c", "#75858f", "#aab8bf"];
 const bladeColors = ["#d9f5ff", "#8cddff", "#6b9cff", "#f1f7f8"];
+const sceneBodyColors = [
+  cloakColors,
+  ["#172433", "#34526f", "#6b9cff", "#d9f5ff"],
+  ["#262a31", "#4b5260", "#cabf9b", "#fff2b8"],
+  ["#152a34", "#315d70", "#5eb7d5", "#d9f5ff"],
+];
 
 const clamp = (value: number, minimum = 0, maximum = 1) =>
   Math.min(maximum, Math.max(minimum, value));
 
 const easeOut = (value: number) => 1 - Math.pow(1 - clamp(value), 4);
+const easeInOut = (value: number) => {
+  const progress = clamp(value);
+  return progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+};
+
+const decisionNodes: DecisionNode3D[] = [
+  { x: -250, y: 0, z: 0, parent: -1, level: 0, label: "APPLICATION", state: "approved" },
+  { x: -125, y: -145, z: -70, parent: 0, level: 1, label: "REVENUE", state: "neutral" },
+  { x: -118, y: 0, z: 85, parent: 0, level: 1, label: "FICO", state: "approved" },
+  { x: -125, y: 145, z: -30, parent: 0, level: 1, label: "CASH FLOW", state: "neutral" },
+  { x: 12, y: -210, z: -135, parent: 1, level: 2, label: "STABILITY", state: "neutral" },
+  { x: 22, y: -92, z: 12, parent: 1, level: 2, label: "REVIEW", state: "neutral" },
+  { x: 20, y: -24, z: 150, parent: 2, level: 2, label: "680+", state: "approved" },
+  { x: 18, y: 72, z: 42, parent: 2, level: 2, label: "< 680", state: "declined" },
+  { x: 8, y: 156, z: -105, parent: 3, level: 2, label: "COVERAGE", state: "neutral" },
+  { x: 22, y: 235, z: 44, parent: 3, level: 2, label: "VOLATILITY", state: "neutral" },
+  { x: 168, y: -178, z: -70, parent: 4, level: 3, label: "TIER 1", state: "neutral" },
+  { x: 172, y: -48, z: 118, parent: 6, level: 3, label: "RISK TIER", state: "approved" },
+  { x: 176, y: 80, z: 68, parent: 7, level: 3, label: "DECLINE", state: "declined" },
+  { x: 170, y: 174, z: -78, parent: 8, level: 3, label: "TIER 3", state: "neutral" },
+  { x: 172, y: 250, z: 18, parent: 9, level: 3, label: "MANUAL", state: "neutral" },
+  { x: 330, y: -46, z: 78, parent: 11, level: 4, label: "APPROVED", state: "approved" },
+  { x: 330, y: 62, z: -42, parent: 11, level: 4, label: "LIMIT", state: "approved" },
+];
+
+const approvedDecisionPath = new Set([0, 2, 6, 11, 15, 16]);
 
 function seededRandom(seedValue: number) {
   let seed = seedValue >>> 0;
@@ -540,7 +584,8 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
         setPhase("assembling");
         return;
       }
-      if (currentPhase !== "scene" || now - phaseStart < 960 || now - lastAdvance < 960) return;
+      const sceneLock = [1680, 1520, 1580, 1620][currentScene] ?? 960;
+      if (currentPhase !== "scene" || now - phaseStart < sceneLock || now - lastAdvance < sceneLock) return;
       lastAdvance = now;
       if (currentScene < experienceScenes.length - 1) {
         currentScene += 1;
@@ -658,89 +703,515 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       }
     };
 
-    const drawDecisionGraph = (time: number, alpha: number) => {
-      const originX = coarsePointer ? width * 0.76 : width * 0.69;
-      const originY = coarsePointer ? height * 0.24 : height * 0.34;
-      const nodes = [
-        [-0.18, -0.15], [0.02, -0.23], [0.2, -0.08], [-0.08, 0.02], [0.14, 0.12], [-0.2, 0.2], [0.02, 0.27],
-      ];
-      const scale = Math.min(width, height) * (coarsePointer ? 0.38 : 0.32);
-      context.save();
-      context.globalAlpha = alpha * 0.42;
-      context.strokeStyle = "#8cddff";
-      context.lineWidth = 1;
-      context.beginPath();
-      [[0, 1], [1, 2], [0, 3], [3, 4], [3, 5], [5, 6]].forEach(([from, to]) => {
-        context.moveTo(originX + nodes[from][0] * scale, originY + nodes[from][1] * scale);
-        context.lineTo(originX + nodes[to][0] * scale, originY + nodes[to][1] * scale);
-      });
-      context.stroke();
-      nodes.forEach(([x, y], index) => {
-        const pulse = 2.2 + Math.sin(time * 0.006 + index) * 1.1;
-        context.fillStyle = index % 2 ? "#8cddff" : "#d9f5ff";
-        context.fillRect(originX + x * scale - pulse / 2, originY + y * scale - pulse / 2, pulse, pulse);
-      });
-      context.restore();
-    };
+    const drawDecisionGraph = (time: number, progress: number) => {
+      const reveal = easeInOut(progress);
+      const originX = coarsePointer ? width * 0.53 : width * 0.57;
+      const originY = coarsePointer ? height * 0.36 : height * 0.48;
+      const viewportScale = Math.min(
+        coarsePointer ? width / 620 : width / 1180,
+        coarsePointer ? height / 760 : height / 880,
+        1.18,
+      );
+      const focalLength = (coarsePointer ? 430 : 680) * viewportScale;
+      const cameraDepth = 760 - reveal * 105;
+      const yaw = -0.48 + reveal * 0.12 + Math.sin(time * 0.00042) * 0.018;
+      const pitch = -0.095 + Math.sin(time * 0.00031) * 0.012;
+      const roll = -0.025 + reveal * 0.025;
+      const cosYaw = Math.cos(yaw);
+      const sinYaw = Math.sin(yaw);
+      const cosPitch = Math.cos(pitch);
+      const sinPitch = Math.sin(pitch);
+      const cosRoll = Math.cos(roll);
+      const sinRoll = Math.sin(roll);
 
-    const drawColdPulse = (progress: number, alpha: number) => {
-      const x = layout.handX;
-      const y = coarsePointer
-        ? layout.heroY - layout.heroHeight * 0.12
-        : layout.heroY + layout.heroHeight * 0.43;
+      const project = (node: Pick<DecisionNode3D, "x" | "y" | "z">) => {
+        const yawX = node.x * cosYaw - node.z * sinYaw;
+        const yawZ = node.x * sinYaw + node.z * cosYaw;
+        const pitchY = node.y * cosPitch - yawZ * sinPitch;
+        const pitchZ = node.y * sinPitch + yawZ * cosPitch;
+        const rollX = yawX * cosRoll - pitchY * sinRoll;
+        const rollY = yawX * sinRoll + pitchY * cosRoll;
+        const scale = focalLength / Math.max(180, cameraDepth + pitchZ);
+        return {
+          x: originX + rollX * scale,
+          y: originY + rollY * scale,
+          scale,
+          depth: pitchZ,
+        };
+      };
+
+      const projected = decisionNodes.map(project);
+      const impact = clamp(1 - Math.abs(progress - 0.13) / 0.1);
+      const treeAlpha = clamp((progress - 0.08) / 0.2);
+
       context.save();
-      context.globalAlpha = alpha * (1 - progress) * 0.55;
+      context.globalCompositeOperation = "lighter";
+
+      if (impact > 0) {
+        const impactX = originX - 205 * viewportScale;
+        const impactY = originY;
+        const flare = context.createRadialGradient(impactX, impactY, 0, impactX, impactY, 250 * viewportScale);
+        flare.addColorStop(0, `rgba(244, 226, 155, ${impact * 0.44})`);
+        flare.addColorStop(0.16, `rgba(140, 221, 255, ${impact * 0.2})`);
+        flare.addColorStop(1, "rgba(7, 9, 13, 0)");
+        context.fillStyle = flare;
+        context.fillRect(impactX - 280, impactY - 280, 560, 560);
+      }
+
+      context.globalAlpha = treeAlpha * 0.22;
       context.strokeStyle = "#8cddff";
-      context.lineWidth = 1.2;
-      [0, 0.22, 0.44].forEach((offset) => {
-        const radius = clamp(progress + offset) * layout.heroHeight * 0.52;
+      context.lineWidth = 0.8;
+      for (let depth = -220; depth <= 240; depth += 92) {
+        const left = project({ x: -320, y: 288, z: depth });
+        const right = project({ x: 380, y: 288, z: depth });
         context.beginPath();
-        context.ellipse(x, y, radius, radius * 0.26, 0, 0, Math.PI * 2);
+        context.moveTo(left.x, left.y);
+        context.lineTo(right.x, right.y);
+        context.stroke();
+      }
+      for (let x = -320; x <= 380; x += 116) {
+        const near = project({ x, y: 288, z: -220 });
+        const far = project({ x, y: 288, z: 240 });
+        context.beginPath();
+        context.moveTo(near.x, near.y);
+        context.lineTo(far.x, far.y);
+        context.stroke();
+      }
+
+      decisionNodes.forEach((node, index) => {
+        if (node.parent < 0) return;
+        const parent = decisionNodes[node.parent];
+        const from = projected[node.parent];
+        const to = projected[index];
+        const edgeStart = 0.13 + node.level * 0.105;
+        const edgeProgress = easeOut(clamp((progress - edgeStart) / 0.3));
+        if (edgeProgress <= 0) return;
+        const bend = project({
+          x: parent.x + (node.x - parent.x) * 0.52,
+          y: parent.y + (node.y - parent.y) * 0.18,
+          z: parent.z + (node.z - parent.z) * 0.62,
+        });
+        const endX = bend.x + (to.x - bend.x) * edgeProgress;
+        const endY = bend.y + (to.y - bend.y) * edgeProgress;
+        const approved = approvedDecisionPath.has(index) && approvedDecisionPath.has(node.parent);
+        const declined = node.state === "declined";
+        const color = approved ? "#eadb9c" : declined ? "#ff6f73" : "#77cce9";
+        context.globalAlpha = treeAlpha * (approved ? 0.92 : declined ? 0.55 : 0.38);
+        context.shadowColor = color;
+        context.shadowBlur = approved ? 14 : 7;
+        context.strokeStyle = color;
+        context.lineWidth = approved ? Math.max(1.4, from.scale * 2.5) : Math.max(0.8, from.scale * 1.4);
+        context.beginPath();
+        context.moveTo(from.x, from.y);
+        context.bezierCurveTo(bend.x, from.y, bend.x, endY, endX, endY);
         context.stroke();
       });
-      context.restore();
-    };
 
-    const drawChessArchive = (progress: number, alpha: number) => {
-      const size = Math.max(18, Math.min(38, width / 24));
-      const startX = coarsePointer ? width * 0.1 : width * 0.58;
-      const startY = coarsePointer ? height * 0.18 : height * 0.16;
-      context.save();
-      context.globalAlpha = alpha * 0.18;
-      for (let row = 0; row < 7; row += 1) {
-        for (let column = 0; column < 7; column += 1) {
-          if ((row + column) % 2 === 0 && (row * 7 + column) / 49 < progress + 0.16) {
-            context.fillStyle = row % 2 ? "#8cddff" : "#d9f5ff";
-            context.fillRect(startX + column * size, startY + row * size, size - 2, size - 2);
+      const drawHex = (x: number, y: number, radius: number, color: string, fillAlpha: number) => {
+        context.beginPath();
+        for (let side = 0; side < 6; side += 1) {
+          const angle = Math.PI / 6 + side * Math.PI / 3;
+          const pointX = x + Math.cos(angle) * radius;
+          const pointY = y + Math.sin(angle) * radius;
+          if (side === 0) context.moveTo(pointX, pointY);
+          else context.lineTo(pointX, pointY);
+        }
+        context.closePath();
+        context.fillStyle = color;
+        context.globalAlpha = fillAlpha;
+        context.fill();
+        context.globalAlpha = Math.min(1, fillAlpha * 2.8);
+        context.strokeStyle = color;
+        context.lineWidth = 1;
+        context.stroke();
+      };
+
+      [...decisionNodes.keys()]
+        .sort((a, b) => projected[b].depth - projected[a].depth)
+        .forEach((index) => {
+          const node = decisionNodes[index];
+          const point = projected[index];
+          const nodeStart = 0.1 + node.level * 0.11;
+          const nodeProgress = easeOut(clamp((progress - nodeStart) / 0.22));
+          if (nodeProgress <= 0) return;
+          const approved = approvedDecisionPath.has(index);
+          const color = node.state === "declined" ? "#ff6f73" : approved ? "#eadb9c" : "#8cddff";
+          const radius = (approved ? 8.5 : 6.4) * point.scale * viewportScale * nodeProgress;
+          context.shadowColor = color;
+          context.shadowBlur = approved ? 22 : 11;
+          drawHex(point.x + 4 * point.scale, point.y + 6 * point.scale, radius, "#030609", treeAlpha * 0.72);
+          drawHex(point.x, point.y, radius, color, treeAlpha * (approved ? 0.3 : 0.17));
+
+          if (!coarsePointer && nodeProgress > 0.7 && (approved || node.state === "declined" || node.level === 0)) {
+            context.shadowBlur = 0;
+            context.globalAlpha = treeAlpha * clamp((nodeProgress - 0.7) / 0.3) * 0.86;
+            context.fillStyle = color;
+            context.font = `${Math.max(7, 8.5 * point.scale * viewportScale)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+            context.letterSpacing = "0.08em";
+            context.fillText(node.label, point.x + radius + 8, point.y + 3);
           }
-        }
+        });
+
+      const pulsePosition = (time * 0.00023) % 1;
+      const path = [0, 2, 6, 11, 15, 16];
+      const segmentFloat = pulsePosition * (path.length - 1);
+      const segment = Math.min(path.length - 2, Math.floor(segmentFloat));
+      const segmentProgress = segmentFloat - segment;
+      const pulseFrom = projected[path[segment]];
+      const pulseTo = projected[path[segment + 1]];
+      const pulseX = pulseFrom.x + (pulseTo.x - pulseFrom.x) * segmentProgress;
+      const pulseY = pulseFrom.y + (pulseTo.y - pulseFrom.y) * segmentProgress;
+      const pulseRadius = 3 + Math.sin(time * 0.012) * 1.2;
+      context.globalAlpha = treeAlpha * clamp((progress - 0.52) / 0.2);
+      context.fillStyle = "#fff6cc";
+      context.shadowColor = "#eadb9c";
+      context.shadowBlur = 24;
+      context.beginPath();
+      context.arc(pulseX, pulseY, pulseRadius, 0, Math.PI * 2);
+      context.fill();
+
+      if (!coarsePointer) {
+        context.shadowBlur = 0;
+        context.globalAlpha = treeAlpha * clamp((progress - 0.58) / 0.2) * 0.5;
+        context.fillStyle = "#d9f5ff";
+        context.font = "9px ui-monospace, SFMono-Regular, Menlo, monospace";
+        context.letterSpacing = "0.12em";
+        context.fillText("2 WORKFLOWS / 41 CALCULATION STEPS", originX - 185, originY + 285 * viewportScale);
       }
-      context.globalAlpha = alpha * 0.34;
-      context.fillStyle = "#d9f5ff";
-      context.font = `${size * 2.4}px serif`;
-      context.fillText("♞", startX + size * 2.3, startY + size * 5.5);
       context.restore();
+      context.globalAlpha = 1;
+      context.shadowBlur = 0;
     };
 
-    const drawPacketLanes = (time: number, alpha: number) => {
-      const startY = coarsePointer ? height * 0.18 : height * 0.24;
+    const drawColdPulse = (time: number, progress: number, alpha: number) => {
+      const fracture = easeOut(clamp(progress / 0.3));
+      const cacheHit = easeInOut(clamp((progress - 0.28) / 0.52));
+      const x = coarsePointer ? width * 0.5 : layout.handX + layout.heroHeight * 0.18;
+      const y = coarsePointer
+        ? layout.heroY + layout.heroHeight * 0.21
+        : layout.heroY + layout.heroHeight * 0.39;
+      const chestX = layout.heroX + layout.heroHeight * 0.02;
+      const chestY = layout.heroY - layout.heroHeight * 0.12;
+      const random = seededRandom(0x523ca5e);
+
       context.save();
-      context.globalAlpha = alpha * 0.32;
-      for (let lane = 0; lane < 6; lane += 1) {
-        const y = startY + lane * Math.min(48, height * 0.065);
-        context.strokeStyle = lane % 2 ? "#6b9cff" : "#8cddff";
+      context.globalCompositeOperation = "lighter";
+
+      const frost = context.createRadialGradient(chestX, chestY, 0, chestX, chestY, layout.heroHeight * 0.52);
+      frost.addColorStop(0, `rgba(107, 156, 255, ${(1 - cacheHit) * fracture * 0.16})`);
+      frost.addColorStop(0.52, `rgba(140, 221, 255, ${(1 - cacheHit) * fracture * 0.07})`);
+      frost.addColorStop(1, "rgba(7, 9, 13, 0)");
+      context.fillStyle = frost;
+      context.fillRect(chestX - layout.heroHeight * 0.55, chestY - layout.heroHeight * 0.55, layout.heroHeight * 1.1, layout.heroHeight * 1.1);
+
+      for (let index = 0; index < (coarsePointer ? 24 : 54); index += 1) {
+        const angle = random() * Math.PI * 2;
+        const distance = layout.heroHeight * (0.12 + random() * 0.42);
+        const scatter = Math.sin(clamp(progress / 0.56) * Math.PI);
+        const startX = chestX + Math.cos(angle) * distance * scatter;
+        const startY = chestY + Math.sin(angle) * distance * scatter;
+        const returnProgress = easeInOut(clamp((cacheHit - random() * 0.3) / 0.7));
+        const shardX = startX + (x - startX) * returnProgress;
+        const shardY = startY + (y - startY) * returnProgress;
+        const length = 4 + random() * 13;
+        context.globalAlpha = alpha * (0.18 + random() * 0.44) * clamp(fracture + cacheHit);
+        context.strokeStyle = index % 4 === 0 ? "#d9f5ff" : index % 2 ? "#6b9cff" : "#8cddff";
+        context.lineWidth = 0.7 + random();
         context.beginPath();
-        context.moveTo(width * 0.5, y);
-        context.bezierCurveTo(width * 0.62, y - 18, width * 0.77, y + 22, width * 0.94, y);
+        context.moveTo(shardX - Math.cos(angle) * length, shardY - Math.sin(angle) * length);
+        context.lineTo(shardX + Math.cos(angle) * length, shardY + Math.sin(angle) * length);
         context.stroke();
-        for (let packet = 0; packet < 4; packet += 1) {
-          const position = (time * 0.00018 + packet * 0.25 + lane * 0.07) % 1;
-          const x = width * (0.5 + position * 0.44);
-          context.fillStyle = "#d9f5ff";
-          context.fillRect(x, y + Math.sin(position * Math.PI * 2 + lane) * 8, 3, 3);
-        }
+      }
+
+      context.shadowColor = "#8cddff";
+      context.shadowBlur = 24;
+      [0, 0.19, 0.38].forEach((offset, ringIndex) => {
+        const ringProgress = (cacheHit + offset + time * 0.000055) % 1;
+        const radius = (0.12 + ringProgress * 0.48) * layout.heroHeight;
+        context.globalAlpha = alpha * (1 - ringProgress) * 0.46;
+        context.strokeStyle = ringIndex === 1 ? "#6b9cff" : "#8cddff";
+        context.lineWidth = ringIndex === 0 ? 1.8 : 1;
+        context.beginPath();
+        context.ellipse(x, y, radius, radius * 0.19, -0.08, 0, Math.PI * 2);
+        context.stroke();
+      });
+
+      const coreRadius = (9 + cacheHit * 10) * (coarsePointer ? 0.75 : 1);
+      context.globalAlpha = alpha * clamp(progress / 0.25);
+      context.fillStyle = "#06101a";
+      context.strokeStyle = "#d9f5ff";
+      context.lineWidth = 1.4;
+      context.beginPath();
+      context.arc(x, y, coreRadius, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.fillStyle = "#8cddff";
+      context.font = `${Math.max(8, coreRadius * 0.7)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText("R", x, y + 0.5);
+
+      if (cacheHit > 0.08) {
+        const beam = context.createLinearGradient(x, y, chestX, chestY);
+        beam.addColorStop(0, "rgba(217, 245, 255, .92)");
+        beam.addColorStop(0.45, "rgba(107, 156, 255, .5)");
+        beam.addColorStop(1, "rgba(140, 221, 255, 0)");
+        context.globalAlpha = alpha * cacheHit * 0.72;
+        context.strokeStyle = beam;
+        context.lineWidth = 1.2 + cacheHit * 2;
+        context.beginPath();
+        context.moveTo(x, y);
+        context.quadraticCurveTo(x - layout.heroHeight * 0.08, chestY + layout.heroHeight * 0.26, chestX, chestY);
+        context.stroke();
+      }
+
+      if (!coarsePointer) {
+        const textX = width * 0.51;
+        const textY = height * 0.19;
+        context.shadowBlur = 0;
+        context.textAlign = "left";
+        context.textBaseline = "alphabetic";
+        context.font = "9px ui-monospace, SFMono-Regular, Menlo, monospace";
+        context.letterSpacing = "0.14em";
+        context.globalAlpha = alpha * (1 - cacheHit) * fracture * 0.58;
+        context.fillStyle = "#8cddff";
+        context.fillText("COLD START", textX, textY);
+        context.font = "600 42px ui-sans-serif, system-ui, sans-serif";
+        context.letterSpacing = "-0.04em";
+        context.fillStyle = "#d9f5ff";
+        context.fillText("337 ms", textX, textY + 47);
+        context.globalAlpha = alpha * cacheHit * 0.82;
+        context.font = "9px ui-monospace, SFMono-Regular, Menlo, monospace";
+        context.letterSpacing = "0.14em";
+        context.fillStyle = "#6b9cff";
+        context.fillText("CACHE HIT", textX, textY);
+        context.font = "600 46px ui-sans-serif, system-ui, sans-serif";
+        context.letterSpacing = "-0.04em";
+        context.fillStyle = "#eefcff";
+        context.fillText("125 ms", textX, textY + 50);
       }
       context.restore();
+      context.globalAlpha = 1;
+      context.shadowBlur = 0;
+      context.textAlign = "left";
+      context.textBaseline = "alphabetic";
+    };
+
+    const drawChessArchive = (time: number, progress: number, alpha: number) => {
+      const pageFlight = easeOut(clamp(progress / 0.58));
+      const boardReveal = easeInOut(clamp((progress - 0.22) / 0.55));
+      const tile = Math.max(20, Math.min(coarsePointer ? 30 : 46, width / 27));
+      const centerX = coarsePointer ? width * 0.49 : width * 0.67;
+      const centerY = coarsePointer ? height * 0.31 : height * 0.48;
+      const random = seededRandom(0xc4e55a9);
+      const boardPoint = (column: number, row: number) => {
+        const worldX = (column - 4) * tile;
+        const worldZ = (row - 4) * tile;
+        const depthScale = 1 - row * 0.017;
+        return {
+          x: centerX + worldX * depthScale + worldZ * 0.34,
+          y: centerY + worldZ * 0.42 - worldX * 0.08,
+        };
+      };
+
+      context.save();
+      context.globalCompositeOperation = "lighter";
+      const glow = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, tile * 7.5);
+      glow.addColorStop(0, `rgba(202, 191, 155, ${boardReveal * 0.12})`);
+      glow.addColorStop(0.55, `rgba(140, 221, 255, ${boardReveal * 0.055})`);
+      glow.addColorStop(1, "rgba(7, 9, 13, 0)");
+      context.fillStyle = glow;
+      context.fillRect(centerX - tile * 8, centerY - tile * 5, tile * 16, tile * 10);
+
+      for (let index = 0; index < (coarsePointer ? 18 : 32); index += 1) {
+        const column = index % 8;
+        const row = Math.floor(index / 8) * 2 + (index % 2);
+        const target = boardPoint(column + 0.5, row + 0.5);
+        const startX = width * (-0.08 + random() * 0.45);
+        const startY = height * (-0.1 + random() * 0.92);
+        const delay = random() * 0.38;
+        const localProgress = easeOut(clamp((pageFlight - delay) / (1 - delay)));
+        const arc = Math.sin(localProgress * Math.PI) * (45 + random() * 130);
+        const x = startX + (target.x - startX) * localProgress;
+        const y = startY + (target.y - startY) * localProgress - arc;
+        const pageWidth = (10 + random() * 10) * (1 - localProgress * 0.35);
+        const pageHeight = pageWidth * 1.35;
+        context.save();
+        context.translate(x, y);
+        context.rotate((1 - localProgress) * (random() - 0.5) * 4 + Math.sin(time * 0.002 + index) * 0.05);
+        context.globalAlpha = alpha * clamp(localProgress / 0.25) * (1 - boardReveal * 0.55) * 0.48;
+        context.fillStyle = index % 3 ? "#d9f5ff" : "#cabf9b";
+        context.fillRect(-pageWidth / 2, -pageHeight / 2, pageWidth, pageHeight);
+        context.globalAlpha *= 0.55;
+        context.fillStyle = "#071018";
+        context.fillRect(-pageWidth * 0.3, -pageHeight * 0.2, pageWidth * 0.6, 1);
+        context.fillRect(-pageWidth * 0.3, 0, pageWidth * 0.45, 1);
+        context.restore();
+      }
+
+      context.shadowColor = "#8cddff";
+      context.shadowBlur = 10;
+      for (let row = 0; row < 8; row += 1) {
+        for (let column = 0; column < 8; column += 1) {
+          const tileProgress = easeOut(clamp((boardReveal - (row * 8 + column) * 0.006) / 0.62));
+          if (tileProgress <= 0) continue;
+          const a = boardPoint(column, row);
+          const b = boardPoint(column + 1, row);
+          const c = boardPoint(column + 1, row + 1);
+          const d = boardPoint(column, row + 1);
+          context.globalAlpha = alpha * tileProgress * ((row + column) % 2 ? 0.16 : 0.36);
+          context.fillStyle = (row + column) % 2 ? "#5b8093" : "#d8c98f";
+          context.beginPath();
+          context.moveTo(a.x, a.y);
+          context.lineTo(b.x, b.y);
+          context.lineTo(c.x, c.y);
+          context.lineTo(d.x, d.y);
+          context.closePath();
+          context.fill();
+        }
+      }
+
+      const knightSquare = boardPoint(3.35, 5.2);
+      const knightScale = clamp((boardReveal - 0.42) / 0.34);
+      context.globalAlpha = alpha * knightScale * 0.9;
+      context.shadowColor = "#eadb9c";
+      context.shadowBlur = 30;
+      context.fillStyle = "#fff2b8";
+      context.font = `${tile * 2.3}px Georgia, serif`;
+      context.fillText("♞", knightSquare.x, knightSquare.y);
+
+      const scan = (time * 0.00018) % 1;
+      const scanStart = boardPoint(0, scan * 8);
+      const scanEnd = boardPoint(8, scan * 8);
+      context.globalAlpha = alpha * boardReveal * 0.42;
+      context.strokeStyle = "#d9f5ff";
+      context.lineWidth = 1.2;
+      context.beginPath();
+      context.moveTo(scanStart.x, scanStart.y);
+      context.lineTo(scanEnd.x, scanEnd.y);
+      context.stroke();
+
+      if (!coarsePointer) {
+        context.shadowBlur = 0;
+        context.globalAlpha = alpha * clamp((progress - 0.62) / 0.24) * 0.58;
+        context.fillStyle = "#eadb9c";
+        context.font = "9px ui-monospace, SFMono-Regular, Menlo, monospace";
+        context.letterSpacing = "0.12em";
+        context.fillText("DECADES OF CHESS LIFE / SQL-BACKED RETRIEVAL", width * 0.49, height * 0.18);
+      }
+      context.restore();
+      context.globalAlpha = 1;
+      context.shadowBlur = 0;
+    };
+
+    const drawPacketLanes = (time: number, progress: number, alpha: number) => {
+      const reveal = easeInOut(clamp(progress / 0.75));
+      const centerX = coarsePointer ? width * 0.52 : width * 0.69;
+      const centerY = coarsePointer ? height * 0.29 : height * 0.46;
+      const radius = Math.min(coarsePointer ? width * 0.31 : width * 0.2, height * (coarsePointer ? 0.19 : 0.28));
+      const rotation = time * 0.00032;
+      const nodeCount = coarsePointer ? 16 : 26;
+      const nodes = Array.from({ length: nodeCount }, (_, index) => {
+        const latitude = Math.asin(-1 + (2 * (index + 0.5)) / nodeCount);
+        const longitude = index * 2.399963229728653 + rotation;
+        const x3 = Math.cos(latitude) * Math.cos(longitude);
+        const y3 = Math.sin(latitude);
+        const z3 = Math.cos(latitude) * Math.sin(longitude);
+        const perspective = 0.76 + (z3 + 1) * 0.16;
+        return {
+          x: centerX + x3 * radius * perspective,
+          y: centerY + y3 * radius,
+          z: z3,
+          perspective,
+        };
+      });
+
+      context.save();
+      context.globalCompositeOperation = "lighter";
+      const sphereGlow = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 1.45);
+      sphereGlow.addColorStop(0, `rgba(61, 121, 158, ${reveal * 0.17})`);
+      sphereGlow.addColorStop(0.5, `rgba(107, 156, 255, ${reveal * 0.08})`);
+      sphereGlow.addColorStop(1, "rgba(7, 9, 13, 0)");
+      context.fillStyle = sphereGlow;
+      context.fillRect(centerX - radius * 1.5, centerY - radius * 1.5, radius * 3, radius * 3);
+
+      [0, 0.18, 0.36].forEach((offset) => {
+        const wave = (progress * 1.2 + offset) % 1;
+        context.globalAlpha = alpha * (1 - wave) * 0.3;
+        context.strokeStyle = "#8cddff";
+        context.lineWidth = 1;
+        context.beginPath();
+        context.ellipse(centerX, centerY, radius * (0.35 + wave * 1.25), radius * (0.1 + wave * 0.35), -0.08, 0, Math.PI * 2);
+        context.stroke();
+      });
+
+      for (let index = 0; index < nodeCount; index += 1) {
+        const connections = [(index + 3) % nodeCount, (index + 8) % nodeCount];
+        for (const targetIndex of connections) {
+          if (targetIndex <= index) continue;
+          const from = nodes[index];
+          const to = nodes[targetIndex];
+          const edgeReveal = easeOut(clamp((reveal - index / nodeCount * 0.22) / 0.62));
+          context.globalAlpha = alpha * edgeReveal * (0.1 + Math.max(from.z, to.z) * 0.09 + 0.1);
+          context.strokeStyle = targetIndex % 3 ? "#8cddff" : "#6b9cff";
+          context.lineWidth = 0.65 + Math.max(from.z, to.z) * 0.35;
+          context.beginPath();
+          context.moveTo(from.x, from.y);
+          context.quadraticCurveTo(centerX, centerY, to.x, to.y);
+          context.stroke();
+
+          const packet = (time * 0.00038 + index * 0.071 + targetIndex * 0.037) % 1;
+          const inverse = 1 - packet;
+          const packetX = inverse * inverse * from.x + 2 * inverse * packet * centerX + packet * packet * to.x;
+          const packetY = inverse * inverse * from.y + 2 * inverse * packet * centerY + packet * packet * to.y;
+          context.globalAlpha = alpha * reveal * 0.72;
+          context.fillStyle = "#d9f5ff";
+          context.fillRect(packetX - 1.6, packetY - 1.6, 3.2, 3.2);
+        }
+      }
+
+      [...nodes]
+        .sort((a, b) => a.z - b.z)
+        .forEach((node, index) => {
+          const nodeReveal = easeOut(clamp((reveal - index / nodeCount * 0.18) / 0.54));
+          const size = (2.2 + node.perspective * 2.6) * nodeReveal;
+          context.globalAlpha = alpha * nodeReveal * (0.38 + (node.z + 1) * 0.23);
+          context.fillStyle = index % 5 === 0 ? "#eadb9c" : index % 2 ? "#8cddff" : "#d9f5ff";
+          context.shadowColor = context.fillStyle;
+          context.shadowBlur = node.z > 0 ? 16 : 6;
+          context.fillRect(node.x - size / 2, node.y - size / 2, size, size);
+        });
+
+      const beamProgress = easeOut(clamp((progress - 0.12) / 0.42));
+      const beamStartX = layout.handX;
+      const beamStartY = layout.handY - layout.heroHeight * 0.22;
+      const beamEndX = beamStartX + (centerX - beamStartX) * beamProgress;
+      const beamEndY = beamStartY + (centerY - beamStartY) * beamProgress;
+      const beamGradient = context.createLinearGradient(beamStartX, beamStartY, centerX, centerY);
+      beamGradient.addColorStop(0, "rgba(217, 245, 255, .95)");
+      beamGradient.addColorStop(0.35, "rgba(140, 221, 255, .66)");
+      beamGradient.addColorStop(1, "rgba(107, 156, 255, .08)");
+      context.globalAlpha = alpha * beamProgress * 0.7;
+      context.strokeStyle = beamGradient;
+      context.lineWidth = 2.4;
+      context.shadowColor = "#8cddff";
+      context.shadowBlur = 22;
+      context.beginPath();
+      context.moveTo(beamStartX, beamStartY);
+      context.lineTo(beamEndX, beamEndY);
+      context.stroke();
+
+      if (!coarsePointer) {
+        context.shadowBlur = 0;
+        context.globalAlpha = alpha * clamp((progress - 0.58) / 0.25) * 0.54;
+        context.fillStyle = "#8cddff";
+        context.font = "9px ui-monospace, SFMono-Regular, Menlo, monospace";
+        context.letterSpacing = "0.12em";
+        context.fillText("10K+ PACKET SAMPLES / 6+ ABR VARIANTS", width * 0.5, height * 0.17);
+      }
+      context.restore();
+      context.globalAlpha = 1;
+      context.shadowBlur = 0;
     };
 
     const drawHero = (time: number, scene: number, action: number, finale = false, alphaMultiplier = 1) => {
@@ -752,10 +1223,12 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       let swordAngle = 0;
 
       if (finale) {
-        bodyX = Math.sin(active * Math.PI * 4) * 12;
-        bodyY += Math.sin(active * Math.PI * 6) * 7;
-        bodyAngle = Math.sin(active * Math.PI * 4) * 0.08;
-        swordAngle = active * Math.PI * 4 + Math.sin(active * Math.PI * 7) * 0.5;
+        const charge = easeOut(clamp(active / 0.64));
+        const strike = easeOut(clamp((active - 0.64) / 0.36));
+        bodyX = -18 * charge + 54 * strike;
+        bodyY += -5 * charge + 16 * strike;
+        bodyAngle = -0.055 * charge + 0.1 * strike;
+        swordAngle = 0.42 * charge - 1.92 * strike;
       } else if (scene === 0) {
         bodyX = burst * 9;
         bodyAngle = -burst * 0.035;
@@ -791,12 +1264,34 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
           rx = pivotX + localX * swordCos - localY * swordSin;
           ry = pivotY + localX * swordSin + localY * swordCos;
         }
-        const x = layout.heroX + (rx * bodyCos - ry * bodySin) * layout.heroHeight + bodyX;
-        const y = layout.heroY + (rx * bodySin + ry * bodyCos) * layout.heroHeight + bodyY;
+        let x = layout.heroX + (rx * bodyCos - ry * bodySin) * layout.heroHeight + bodyX;
+        let y = layout.heroY + (rx * bodySin + ry * bodyCos) * layout.heroHeight + bodyY;
+        const transformationEnvelope = Math.sin(clamp(active / 0.78) * Math.PI);
+        if (!finale && scene === 1 && particle.group === "body") {
+          x += (particle.seed - 0.5) * 58 * transformationEnvelope;
+          y += Math.sin(particle.seed * 37) * 26 * transformationEnvelope;
+        }
+        if (!finale && scene === 2 && particle.group === "body" && particle.seed > 0.58) {
+          const pageLift = (particle.seed - 0.58) * 92 * transformationEnvelope;
+          x += Math.cos(particle.seed * 31) * pageLift;
+          y -= pageLift * 0.72;
+        }
+        if (!finale && scene === 3 && particle.group === "body" && particle.seed > 0.7) {
+          const networkX = coarsePointer ? width * 0.52 : width * 0.69;
+          const networkY = coarsePointer ? height * 0.29 : height * 0.46;
+          const pull = (particle.seed - 0.7) * transformationEnvelope * 0.62;
+          x += (networkX - x) * pull;
+          y += (networkY - y) * pull;
+        }
         const shimmer = 0.58 + Math.sin(time * 0.004 + particle.seed * 18) * 0.24;
         context.globalAlpha = finaleFade * alphaMultiplier * shimmer;
-        const palette = particle.group === "sword" ? bladeColors : cloakColors;
+        const palette = particle.group === "sword" ? bladeColors : sceneBodyColors[scene] ?? cloakColors;
         context.fillStyle = palette[particle.tone];
+        if (!finale && scene === 1 && transformationEnvelope > 0.08 && particle.group === "body") {
+          context.globalAlpha *= 0.28;
+          context.fillRect(x - transformationEnvelope * 11, y, particle.size, particle.size);
+          context.globalAlpha = finaleFade * alphaMultiplier * shimmer;
+        }
         context.fillRect(x, y, particle.size, particle.size);
       }
       context.restore();
@@ -811,30 +1306,131 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       glow.addColorStop(1, "rgba(7, 9, 13, 0)");
       context.fillStyle = glow;
       context.fillRect(0, 0, width, height);
-      const action = clamp((time - phaseStart) / 860);
+      const elapsed = time - phaseStart;
+      const sceneDurations = [1550, 1360, 1420, 1480];
+      const action = clamp(elapsed / (sceneDurations[currentScene] ?? 860));
       if (currentScene === 0) drawDecisionGraph(time, action);
-      if (currentScene === 1) drawColdPulse(action, 1);
-      if (currentScene === 2) drawChessArchive(action, 1);
-      if (currentScene === 3) drawPacketLanes(time, action);
-      drawHero(time, currentScene, action);
+      if (currentScene === 1) drawColdPulse(time, action, 1);
+      if (currentScene === 2) drawChessArchive(time, action, 1);
+      if (currentScene === 3) drawPacketLanes(time, action, 1);
+      const heroDurations = [720, 980, 920, 1050];
+      const heroAction = clamp(elapsed / (heroDurations[currentScene] ?? 860));
+      drawHero(time, currentScene, heroAction);
+    };
+
+    const drawFormEmblems = (time: number, progress: number) => {
+      const converge = easeInOut(clamp((progress - 0.1) / 0.58));
+      const chestX = layout.heroX + layout.heroHeight * 0.02;
+      const chestY = layout.heroY - layout.heroHeight * 0.13;
+      const orbitRadius = Math.min(width, height) * (0.31 - converge * 0.24);
+      const colors = ["#eadb9c", "#6b9cff", "#fff2b8", "#8cddff"];
+      const labels = ["Y", "R", "♞", "◎"];
+
+      context.save();
+      context.globalCompositeOperation = "lighter";
+      colors.forEach((color, index) => {
+        const angle = time * 0.00048 + index * Math.PI / 2 + converge * Math.PI * 0.72;
+        const depth = 0.72 + Math.sin(angle) * 0.2;
+        const x = chestX + Math.cos(angle) * orbitRadius;
+        const y = chestY + Math.sin(angle) * orbitRadius * 0.44;
+        const radius = (coarsePointer ? 13 : 18) * depth * (1 - converge * 0.18);
+        context.globalAlpha = (0.3 + depth * 0.48) * (1 - clamp((progress - 0.79) / 0.18));
+        context.strokeStyle = color;
+        context.fillStyle = "rgba(7, 9, 13, .74)";
+        context.shadowColor = color;
+        context.shadowBlur = 22;
+        context.lineWidth = 1.2;
+        context.beginPath();
+        context.arc(x, y, radius, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+        context.shadowBlur = 0;
+        context.fillStyle = color;
+        context.font = `${Math.max(9, radius * 0.85)}px ${index === 2 ? "Georgia, serif" : "ui-monospace, SFMono-Regular, Menlo, monospace"}`;
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(labels[index], x, y + 0.5);
+        context.globalAlpha *= converge * 0.5;
+        context.strokeStyle = color;
+        context.beginPath();
+        context.moveTo(x, y);
+        context.lineTo(chestX, chestY);
+        context.stroke();
+      });
+
+      const core = clamp((progress - 0.46) / 0.3);
+      const coreGlow = context.createRadialGradient(chestX, chestY, 0, chestX, chestY, layout.heroHeight * 0.23);
+      coreGlow.addColorStop(0, `rgba(238, 252, 255, ${core * 0.42})`);
+      coreGlow.addColorStop(0.24, `rgba(140, 221, 255, ${core * 0.17})`);
+      coreGlow.addColorStop(1, "rgba(7, 9, 13, 0)");
+      context.globalAlpha = 1;
+      context.fillStyle = coreGlow;
+      context.fillRect(chestX - layout.heroHeight * 0.25, chestY - layout.heroHeight * 0.25, layout.heroHeight * 0.5, layout.heroHeight * 0.5);
+      context.restore();
+      context.globalAlpha = 1;
+      context.shadowBlur = 0;
+      context.textAlign = "left";
+      context.textBaseline = "alphabetic";
+    };
+
+    const drawFinalRift = (progress: number) => {
+      const strike = easeOut(clamp((progress - 0.63) / 0.19));
+      const opening = easeInOut(clamp((progress - 0.78) / 0.2));
+      const startX = -width * 0.08;
+      const startY = height * 1.08;
+      const targetX = width * 1.08;
+      const targetY = -height * 0.08;
+      const endX = startX + (targetX - startX) * strike;
+      const endY = startY + (targetY - startY) * strike;
+
+      context.save();
+      context.globalCompositeOperation = "lighter";
+      context.globalAlpha = strike * (1 - opening * 0.72);
+      context.strokeStyle = "#ffffff";
+      context.shadowColor = "#8cddff";
+      context.shadowBlur = 42;
+      context.lineWidth = 3 + strike * 5;
+      context.beginPath();
+      context.moveTo(startX, startY);
+      context.lineTo(endX, endY);
+      context.stroke();
+      context.strokeStyle = "#eadb9c";
+      context.lineWidth = 1.2;
+      context.beginPath();
+      context.moveTo(startX - 16, startY + 8);
+      context.lineTo(endX - 16, endY + 8);
+      context.stroke();
+      context.restore();
+
+      if (opening > 0) {
+        context.save();
+        context.globalCompositeOperation = "destination-out";
+        context.globalAlpha = opening;
+        context.strokeStyle = "#000";
+        context.lineWidth = opening * Math.hypot(width, height) * 1.35;
+        context.beginPath();
+        context.moveTo(startX, startY);
+        context.lineTo(targetX, targetY);
+        context.stroke();
+        context.restore();
+      }
     };
 
     const drawFinale = (time: number) => {
       context.fillStyle = "#07090d";
       context.fillRect(0, 0, width, height);
       const elapsed = time - phaseStart;
-      const progress = clamp(elapsed / 1800);
-      drawDecisionGraph(time, 1 - progress * 0.25);
-      drawColdPulse((progress * 2.4) % 1, 1);
-      drawChessArchive(clamp(progress * 1.5), 1 - progress * 0.25);
-      drawPacketLanes(time, 1);
-      const echoAlpha = (1 - clamp((progress - 0.68) / 0.28)) * 0.2;
-      [0, 1, 2, 3].forEach((scene, index) => {
-        const action = clamp(progress * 1.55 - index * 0.07);
-        drawHero(time + index * 90, scene, action, false, echoAlpha);
-      });
+      const progress = clamp(elapsed / 2280);
+      const backgroundGlow = context.createRadialGradient(layout.heroX, layout.heroY, 0, layout.heroX, layout.heroY, layout.heroHeight * 0.82);
+      backgroundGlow.addColorStop(0, `rgba(58, 103, 126, ${0.12 + progress * 0.1})`);
+      backgroundGlow.addColorStop(0.5, `rgba(107, 156, 255, ${progress * 0.035})`);
+      backgroundGlow.addColorStop(1, "rgba(7, 9, 13, 0)");
+      context.fillStyle = backgroundGlow;
+      context.fillRect(0, 0, width, height);
+      drawFormEmblems(time, progress);
       drawHero(time, 3, progress, true);
-      if (elapsed > 1880) startExploring(false);
+      drawFinalRift(progress);
+      if (elapsed > 2360) startExploring(false);
     };
 
     const drawExploring = (time: number) => {
@@ -998,7 +1594,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
                   : "Play the combined finale and open the full portfolio"}
                 onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
               />
-              <article className="chronicle-card" key={scene.organization} ref={cardRef} tabIndex={-1}>
+              <article className={`chronicle-card scene-${sceneIndex}`} key={scene.organization} ref={cardRef} tabIndex={-1}>
                 <div className="chronicle-card-topline">
                   <span>{String(sceneIndex + 1).padStart(2, "0")} / 04</span>
                   <time>{scene.dates}</time>
