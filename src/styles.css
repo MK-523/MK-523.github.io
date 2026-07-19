@@ -348,11 +348,20 @@ button, a { -webkit-tap-highlight-color: transparent; }
   max-height: calc(100svh - 190px);
   padding: 24px 0 24px 28px;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-color: rgba(140, 221, 255, .34) rgba(255, 255, 255, .03);
+  scrollbar-width: thin;
   background: linear-gradient(90deg, rgba(7, 9, 13, .78), rgba(7, 9, 13, .98) 22%);
   pointer-events: auto;
 }
 
-.chronicle-card.is-tree-card h2 { font-size: clamp(30px, 3.2vw, 46px); }
+.chronicle-card.is-tree-card h2 {
+  max-width: calc(100% - 18px);
+  font-size: clamp(28px, 2.55vw, 38px);
+}
+.chronicle-card.is-tree-card::-webkit-scrollbar { width: 5px; }
+.chronicle-card.is-tree-card::-webkit-scrollbar-track { background: rgba(255, 255, 255, .03); }
+.chronicle-card.is-tree-card::-webkit-scrollbar-thumb { background: rgba(140, 221, 255, .34); }
 .chronicle-card.is-tree-card .chronicle-summary { margin-top: 18px; }
 .chronicle-card.is-tree-card > strong { margin-top: 20px; font-size: clamp(27px, 2.8vw, 40px); }
 
