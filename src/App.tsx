@@ -348,13 +348,8 @@ export default function App() {
         </section>
 
         <section className="resume-projects-section resume-section" id="projects" tabIndex={-1}>
-          <SectionHeading title="Product Engineering" />
-          <ProjectList items={projects.filter((item) => item.category === "product")} />
-        </section>
-
-        <section className="resume-projects-section resume-section investigation-section" id="investigations" tabIndex={-1}>
-          <SectionHeading title="Technical Investigations" />
-          <ProjectList items={projects.filter((item) => item.category === "investigation")} />
+          <SectionHeading title="Selected Projects" />
+          <ProjectList items={projects} />
         </section>
 
         <section className="resume-projects-section resume-section campus-section" id="campus" tabIndex={-1}>
