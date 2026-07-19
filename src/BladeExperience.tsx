@@ -69,7 +69,6 @@ type TreeControls = {
   zoomIn: () => void;
   zoomOut: () => void;
   reset: () => void;
-  select: (index: number) => void;
 };
 
 type Layout = {
@@ -293,22 +292,15 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
     zoomIn: () => undefined,
     zoomOut: () => undefined,
     reset: () => undefined,
-    select: () => undefined,
   });
   const onReadyRef = useRef(onReady);
   const didReadyRef = useRef(false);
   const [phase, setPhase] = useState<Phase>("waiting");
   const [sceneIndex, setSceneIndex] = useState(0);
-  const [inspectedNode, setInspectedNode] = useState(0);
-  const inspectedNodeRef = useRef(0);
 
   useEffect(() => {
     onReadyRef.current = onReady;
   }, [onReady]);
-
-  useEffect(() => {
-    inspectedNodeRef.current = inspectedNode;
-  }, [inspectedNode]);
 
   useEffect(() => {
     if (phase !== "scene") return;
@@ -375,14 +367,6 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       lastX: 0,
       lastY: 0,
     };
-    let projectedDecisionNodes: Array<{ x: number; y: number; scale: number; depth: number }> = [];
-
-    const selectDecisionNode = (index: number) => {
-      const safeIndex = Math.max(0, Math.min(decisionNodes.length - 1, index));
-      inspectedNodeRef.current = safeIndex;
-      setInspectedNode(safeIndex);
-    };
-
     const resetTreeCamera = () => {
       treeCamera.zoom = coarsePointer ? 0.82 : 1.18;
       treeCamera.panX = coarsePointer ? 0 : -width * 0.035;
@@ -393,7 +377,6 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       zoomIn: () => { treeCamera.zoom = Math.min(2.8, treeCamera.zoom * 1.2); },
       zoomOut: () => { treeCamera.zoom = Math.max(0.62, treeCamera.zoom / 1.2); },
       reset: resetTreeCamera,
-      select: selectDecisionNode,
     };
 
     const getLayout = (): Layout => {
@@ -699,18 +682,6 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
 
     const onPointerUp = (event: PointerEvent) => {
       if (!treeCamera.dragging) return;
-      if (!treeCamera.moved && projectedDecisionNodes.length) {
-        let closestIndex = -1;
-        let closestDistance = Infinity;
-        projectedDecisionNodes.forEach((node, index) => {
-          const distance = Math.hypot(node.x - event.clientX, node.y - event.clientY);
-          if (distance < closestDistance) {
-            closestDistance = distance;
-            closestIndex = index;
-          }
-        });
-        if (closestIndex >= 0 && closestDistance < 54) selectDecisionNode(closestIndex);
-      }
       treeCamera.dragging = false;
     };
 
@@ -849,7 +820,6 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       };
 
       const projected = decisionNodes.map(project);
-      projectedDecisionNodes = projected;
       const impact = clamp(1 - Math.abs(progress - 0.13) / 0.1);
       const treeAlpha = clamp((progress - 0.08) / 0.2);
 
@@ -960,17 +930,6 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
             context.fillText(node.label, point.x + radius + 8, point.y + 3);
           }
 
-          if (index === inspectedNodeRef.current) {
-            const selectionRadius = radius + 9 + Math.sin(time * 0.006) * 2;
-            context.globalAlpha = treeAlpha * 0.92;
-            context.strokeStyle = "#ffffff";
-            context.lineWidth = 1.2;
-            context.shadowColor = color;
-            context.shadowBlur = 18;
-            context.beginPath();
-            context.arc(point.x, point.y, selectionRadius, 0, Math.PI * 2);
-            context.stroke();
-          }
         });
 
       const pulsePosition = (time * 0.00023) % 1;
@@ -1672,7 +1631,6 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
 
   const scene = experienceScenes[sceneIndex];
   const nextScene = experienceScenes[Math.min(sceneIndex + 1, experienceScenes.length - 1)];
-  const selectedDecision = decisionNodes[inspectedNode];
   const liveMessage = phase === "scene"
     ? `${scene.organization}. ${scene.role}. ${scene.result}.`
     : phase === "exploring"
@@ -1721,7 +1679,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
                   <div
                     className="chronicle-tree-stage"
                     role="region"
-                    aria-label="Interactive underwriting decision tree. Drag to pan, scroll to zoom, or select a node below."
+                    aria-label="Interactive underwriting decision tree. Drag to pan and scroll to zoom."
                   />
                   <div className="chronicle-tree-tools" aria-label="Decision tree view controls">
                     <span>Drag to pan · Scroll to zoom</span>
@@ -1729,59 +1687,42 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
                     <button type="button" onClick={() => treeControlsRef.current.reset()}>Reset</button>
                     <button type="button" onClick={() => treeControlsRef.current.zoomIn()} aria-label="Zoom decision tree in">+</button>
                   </div>
-                  <div className="chronicle-node-strip" aria-label="Underwriting decision nodes">
-                    {decisionNodes.map((node, index) => (
-                      <button
-                        type="button"
-                        className={index === inspectedNode ? `is-selected is-${node.state}` : `is-${node.state}`}
-                        key={node.label}
-                        onClick={() => treeControlsRef.current.select(index)}
-                      >
-                        <span>{String(index + 1).padStart(2, "0")}</span>
-                        {node.label}
-                      </button>
-                    ))}
+                  <div className="chronicle-tree-title" aria-hidden="true">
+                    <span>Flex · Underwriting infrastructure</span>
+                    <strong>Decision tree</strong>
                   </div>
+                  <button
+                    type="button"
+                    className="chronicle-tree-next"
+                    onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
+                  >
+                    Continue <span>→</span>
+                  </button>
                 </>
               ) : (
-                <button
-                  type="button"
-                  className="chronicle-advance"
-                  aria-label={sceneIndex < experienceScenes.length - 1
-                    ? `Show ${nextScene.organization} experience, ${sceneIndex + 2} of 4`
-                    : "Play the combined finale and open the full portfolio"}
-                  onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
-                />
-              )}
-              <article className={`chronicle-card scene-${sceneIndex}${sceneIndex === 0 ? " is-tree-card" : ""}`} key={scene.organization} ref={cardRef} tabIndex={-1}>
-                <div className="chronicle-card-topline">
-                  <span>{String(sceneIndex + 1).padStart(2, "0")} / 04</span>
-                  <time>{scene.dates}</time>
-                </div>
-                <p>{scene.organization}</p>
-                <h2>{scene.role}</h2>
-                <span className="chronicle-focus">{scene.focus}</span>
-                <p className="chronicle-summary">{scene.summary}</p>
-                <strong>{scene.result}</strong>
-                <small>{scene.resultLabel}</small>
-                {sceneIndex === 0 && (
-                  <>
-                    <div className={`decision-node-inspector is-${selectedDecision.state}`} aria-live="polite">
-                      <span>Inspecting node {String(inspectedNode + 1).padStart(2, "0")}</span>
-                      <strong>{selectedDecision.label}</strong>
-                      <p>{selectedDecision.detail}</p>
-                      <small>{selectedDecision.state === "neutral" ? "Supporting calculation" : selectedDecision.state}</small>
+                <>
+                  <button
+                    type="button"
+                    className="chronicle-advance"
+                    aria-label={sceneIndex < experienceScenes.length - 1
+                      ? `Show ${nextScene.organization} experience, ${sceneIndex + 2} of 4`
+                      : "Play the combined finale and open the full portfolio"}
+                    onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
+                  />
+                  <article className={`chronicle-card scene-${sceneIndex}`} key={scene.organization} ref={cardRef} tabIndex={-1}>
+                    <div className="chronicle-card-topline">
+                      <span>{String(sceneIndex + 1).padStart(2, "0")} / 04</span>
+                      <time>{scene.dates}</time>
                     </div>
-                    <button
-                      type="button"
-                      className="chronicle-tree-continue"
-                      onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
-                    >
-                      Continue to UCLA PSS Lab <span>→</span>
-                    </button>
-                  </>
-                )}
-              </article>
+                    <p>{scene.organization}</p>
+                    <h2>{scene.role}</h2>
+                    <span className="chronicle-focus">{scene.focus}</span>
+                    <p className="chronicle-summary">{scene.summary}</p>
+                    <strong>{scene.result}</strong>
+                    <small>{scene.resultLabel}</small>
+                  </article>
+                </>
+              )}
             </>
           )}
 
