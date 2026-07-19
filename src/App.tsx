@@ -6,6 +6,7 @@ const roleHighlights = [
     label: "Current role",
     role: "Software Engineering Intern",
     organization: "Flex",
+    description: "Making production underwriting logic easier to inspect, explain, and audit.",
     result: "30–60 min → under 5 min",
     resultLabel: "workflow walkthroughs",
   },
@@ -13,6 +14,7 @@ const roleHighlights = [
     label: "Research",
     role: "Undergraduate Research Assistant",
     organization: "UCLA PSS Lab",
+    description: "Persisting useful runtime state across serverless cold starts.",
     result: "337 → 125 ms",
     resultLabel: "first-request latency",
   },
@@ -20,6 +22,7 @@ const roleHighlights = [
     label: "Product",
     role: "Co-founder / Full-stack Engineer",
     organization: "ChessStalker",
+    description: "Turning fragmented chess histories into practical opponent preparation.",
     result: "11M+ games",
     resultLabel: "indexed for opponent preparation",
   },
@@ -109,6 +112,7 @@ const roles = [
 
 const projects = [
   {
+    category: "product",
     title: "ChessStalker",
     role: "Co-founder / Full-stack Engineer",
     summary:
@@ -124,21 +128,7 @@ const projects = [
     linkLabel: "Open ChessStalker",
   },
   {
-    title: "JIT State Persistence for OpenFaaS",
-    role: "Undergraduate Research Assistant · UCLA PSS Lab",
-    summary:
-      "Built a Redis-backed artifact path that preserves profiling and compilation work across serverless cold starts instead of rebuilding it for every bursty first request.",
-    bullets: [
-      "Added artifact lookup and restore to the OpenFaaS runtime path.",
-      "Containerized benchmark workloads and traced runtime behavior with gdb.",
-      "Separated first-request latency from startup compile and load costs against an uncached baseline.",
-    ],
-    impact: "337 → 125 ms first request · 2.7× faster · 31.6% less compile / load time",
-    stack: "OpenFaaS · Redis · Docker · gdb · runtime benchmarking",
-    href: "https://github.com/MK-523/hivejit-openfaas",
-    linkLabel: "View runtime experiments",
-  },
-  {
+    category: "product",
     title: "A-Eye",
     role: "Co-creator / Computer Vision Engineer",
     summary:
@@ -153,6 +143,7 @@ const projects = [
     linkLabel: "Open project",
   },
   {
+    category: "investigation",
     title: "SAT Policy Audit",
     role: "Model Evaluation / Reliability",
     summary:
@@ -167,6 +158,7 @@ const projects = [
     linkLabel: "View benchmark",
   },
   {
+    category: "investigation",
     title: "Sentiment → Music",
     role: "Applied ML Prototype Builder",
     summary:
@@ -182,17 +174,48 @@ const projects = [
   },
 ];
 
+const campusRoles = [
+  {
+    title: "VEST at UCLA",
+    role: "Board Member, Finance",
+    dates: "2026 — Present",
+    summary:
+      "Help build the operating systems behind UCLA's student builder and startup community—from budgeting and sponsorships to founder talks, venture panels, office visits, and community programming.",
+    bullets: [
+      "Own speaker outreach, partner relations, budgeting, and event logistics for LA Tech Week programming.",
+      "Coordinate with a16z, Cognition, and startup and venture partners across the Los Angeles ecosystem.",
+    ],
+    impact: "40-member builder community · LA Tech Week operations",
+    stack: "Finance · partnerships · event operations",
+  },
+  {
+    title: "UCLA Unmanned Aerial Systems",
+    role: "Computer Vision Team",
+    dates: "Oct 2025 — Present",
+    summary:
+      "Developed the perception and control loop for an autonomous drone that tracks people in real time under changing motion and camera conditions.",
+    bullets: [
+      "Integrated YOLO and OpenCV detections into a ROS-based flight-control pipeline.",
+      "Tuned PID control for responsive target following at real-time inference rates.",
+    ],
+    impact: "50 FPS dynamic tracking",
+    stack: "YOLO · OpenCV · ROS · PID control",
+  },
+];
+
 const tools = [
-  ["Production", "Python · TypeScript · React · ReactFlow · SQL"],
-  ["Systems", "Linux · Docker · Kubernetes · OpenFaaS · Redis · gdb"],
-  ["Applied ML", "PyTorch · JAX / Flax / XLA · OpenCV · BERT · NLP"],
-  ["Additional", "Java · C++ · Rust · Shell · OCaml · TCP/IP · distributed systems · network security"],
+  ["Languages", "Python · TypeScript · JavaScript · Java · C++ · SQL · Rust · Shell · OCaml"],
+  ["Product + ML", "React · ReactFlow · PyTorch · JAX / Flax / XLA · BERT · NLP · OpenCV"],
+  ["Systems + Databases", "Linux · Git · Docker · Kubernetes · OpenFaaS · Redis · TCP/IP · serverless computing · SQL backends · query execution · gdb · monitoring"],
+  ["Security + Core CS", "Access control · network security · data structures · algorithms · OOP · distributed systems · performance benchmarking"],
 ];
 
 const recognition = [
-  ["US Chess Top 100 Juniors", "Competitive chess"],
-  ["LA Hacks Winner", "Best Use of ElevenLabs · 1st of 76 teams"],
-  ["USNCO Finalist", "Chemistry"],
+  ["Former US Chess Top 100 Junior", "National junior ranking · Competitive chess"],
+  ["USNCO Finalist", "USA National Chemistry Olympiad"],
+  ["A-Eye: MLH Best Use of ElevenLabs Winner", "LA Hacks · 1st of 76 teams"],
+  ["Stanford HAI AI+Education Summit", "Table presenter"],
+  ["ACM SIGCOMM ’24", "Research contributor"],
 ];
 
 type Role = (typeof roles)[number];
@@ -282,7 +305,7 @@ export default function App() {
         <nav aria-label="Primary navigation">
           <a href="#experience" data-blade-target>Experience</a>
           <a href="#research" data-blade-target>Research</a>
-          <a href="#projects" data-blade-target>Projects</a>
+          <a href="#campus" data-blade-target>Campus</a>
           <a href="#contact" data-blade-target>Contact</a>
         </nav>
       </header>
@@ -301,6 +324,7 @@ export default function App() {
                   <p>{item.label}</p>
                   <h2>{item.role}</h2>
                   <span>{item.organization}</span>
+                  <p className="hero-role-description">{item.description}</p>
                   <strong>{item.result}</strong>
                   <small>{item.resultLabel}</small>
                 </article>
@@ -324,8 +348,38 @@ export default function App() {
         </section>
 
         <section className="resume-projects-section resume-section" id="projects" tabIndex={-1}>
-          <SectionHeading title="Selected Projects" />
-          <ProjectList items={projects} />
+          <SectionHeading title="Product Engineering" />
+          <ProjectList items={projects.filter((item) => item.category === "product")} />
+        </section>
+
+        <section className="resume-projects-section resume-section investigation-section" id="investigations" tabIndex={-1}>
+          <SectionHeading title="Technical Investigations" />
+          <ProjectList items={projects.filter((item) => item.category === "investigation")} />
+        </section>
+
+        <section className="resume-projects-section resume-section campus-section" id="campus" tabIndex={-1}>
+          <SectionHeading title="Campus" />
+          <div className="resume-project-list">
+            {campusRoles.map((item) => (
+              <article className="resume-project campus-entry" key={item.title} data-blade-target>
+                <div className="resume-project-header">
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.role}</p>
+                  </div>
+                  <time>{item.dates}</time>
+                </div>
+                <p className="resume-project-summary">{item.summary}</p>
+                <ul className="resume-project-bullets">
+                  {item.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
+                </ul>
+                <div className="resume-project-meta">
+                  <strong>{item.impact}</strong>
+                  <span>{item.stack}</span>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="about-section awards-section" id="awards" tabIndex={-1}>
