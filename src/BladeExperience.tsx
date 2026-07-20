@@ -88,7 +88,7 @@ const experienceScenes: ExperienceScene[] = [
     dates: "Summer 2026",
     role: "Software Engineering Intern",
     focus: "Underwriting infrastructure · Financial risk tooling",
-    summary: "Built inspectable decision traces across two production underwriting workflows and 41 calculation steps.",
+    summary: "Built backend and visualization tooling that made dense production underwriting logic inspectable for engineers and operators.",
     result: "30–60 min → under 5 min",
     resultLabel: "workflow walkthroughs",
   },
@@ -784,7 +784,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
 
     const drawDecisionGraph = (time: number, progress: number) => {
       const reveal = easeInOut(progress);
-      const originX = (coarsePointer ? width * 0.48 : width * 0.38) + treeCamera.panX;
+      const originX = (coarsePointer ? width * 0.48 : width * 0.3) + treeCamera.panX;
       const originY = (coarsePointer ? height * 0.37 : height * 0.49) + treeCamera.panY;
       const viewportScale = Math.min(
         coarsePointer ? width / 560 : width / 900,
@@ -793,8 +793,10 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       ) * treeCamera.zoom;
       const focalLength = (coarsePointer ? 430 : 680) * viewportScale;
       const cameraDepth = 760 - reveal * 105;
-      const yaw = -0.48 + reveal * 0.12 + Math.sin(time * 0.00042) * 0.018;
-      const pitch = -0.095 + Math.sin(time * 0.00031) * 0.012;
+      const pointerYaw = coarsePointer ? 0 : (pointer.x / width - 0.5) * 0.07;
+      const pointerPitch = coarsePointer ? 0 : (pointer.y / height - 0.5) * -0.035;
+      const yaw = -0.48 + reveal * 0.12 + Math.sin(time * 0.00042) * 0.018 + pointerYaw;
+      const pitch = -0.095 + Math.sin(time * 0.00031) * 0.012 + pointerPitch;
       const roll = -0.025 + reveal * 0.025;
       const cosYaw = Math.cos(yaw);
       const sinYaw = Math.sin(yaw);
@@ -824,7 +826,54 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       const treeAlpha = clamp((progress - 0.08) / 0.2);
 
       context.save();
+
+      const horizon = originY + 255 * viewportScale;
+      const atmosphere = context.createRadialGradient(
+        originX - 120 * viewportScale,
+        originY - 80 * viewportScale,
+        0,
+        originX,
+        originY,
+        Math.max(width, height) * 0.78,
+      );
+      atmosphere.addColorStop(0, `rgba(31, 76, 103, ${treeAlpha * 0.2})`);
+      atmosphere.addColorStop(0.38, `rgba(12, 33, 49, ${treeAlpha * 0.12})`);
+      atmosphere.addColorStop(1, "rgba(3, 5, 8, 0)");
+      context.fillStyle = atmosphere;
+      context.fillRect(0, 0, width, height);
+
       context.globalCompositeOperation = "lighter";
+      const cinematicRandom = seededRandom(0x523f1e7);
+      for (let rayIndex = 0; rayIndex < 5; rayIndex += 1) {
+        const rayX = originX - width * 0.28 + rayIndex * width * 0.12;
+        const sway = Math.sin(time * 0.00018 + rayIndex * 1.7) * width * 0.018;
+        const ray = context.createLinearGradient(rayX, 0, rayX + sway, horizon);
+        ray.addColorStop(0, "rgba(140, 221, 255, 0)");
+        ray.addColorStop(0.48, `rgba(140, 221, 255, ${treeAlpha * 0.018})`);
+        ray.addColorStop(1, "rgba(140, 221, 255, 0)");
+        context.fillStyle = ray;
+        context.beginPath();
+        context.moveTo(rayX - width * 0.02, 0);
+        context.lineTo(rayX + width * 0.035, 0);
+        context.lineTo(rayX + sway + width * 0.12, horizon);
+        context.lineTo(rayX + sway - width * 0.1, horizon);
+        context.closePath();
+        context.fill();
+      }
+
+      for (let dustIndex = 0; dustIndex < (coarsePointer ? 22 : 46); dustIndex += 1) {
+        const seedX = cinematicRandom();
+        const seedY = cinematicRandom();
+        const depth = 0.28 + cinematicRandom() * 0.72;
+        const drift = (time * (0.004 + depth * 0.006) + cinematicRandom() * width) % width;
+        const dustX = (seedX * width + drift) % width;
+        const dustY = seedY * height;
+        const dustAlpha = treeAlpha * depth * (0.06 + Math.sin(time * 0.0015 + seedX * 16) * 0.025);
+        context.globalAlpha = Math.max(0, dustAlpha);
+        context.fillStyle = depth > 0.72 ? "#d9f5ff" : "#6d9fb4";
+        context.fillRect(dustX, dustY, depth * 1.7, depth * 1.7);
+      }
+      context.globalAlpha = 1;
 
       if (impact > 0) {
         const impactX = originX - 205 * viewportScale;
@@ -884,6 +933,26 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
         context.moveTo(from.x, from.y);
         context.bezierCurveTo(bend.x, from.y, bend.x, endY, endX, endY);
         context.stroke();
+
+        if (edgeProgress > 0.78) {
+          const packetProgress = (time * 0.00022 + index * 0.173) % 1;
+          const inverse = 1 - packetProgress;
+          const packetX = inverse * inverse * inverse * from.x
+            + 3 * inverse * inverse * packetProgress * bend.x
+            + 3 * inverse * packetProgress * packetProgress * bend.x
+            + packetProgress * packetProgress * packetProgress * to.x;
+          const packetY = inverse * inverse * inverse * from.y
+            + 3 * inverse * inverse * packetProgress * from.y
+            + 3 * inverse * packetProgress * packetProgress * to.y
+            + packetProgress * packetProgress * packetProgress * to.y;
+          context.globalAlpha = treeAlpha * (approved ? 0.9 : 0.32);
+          context.fillStyle = approved ? "#fff6cc" : color;
+          context.shadowColor = color;
+          context.shadowBlur = approved ? 26 : 14;
+          context.beginPath();
+          context.arc(packetX, packetY, approved ? 2.8 : 1.7, 0, Math.PI * 2);
+          context.fill();
+        }
       });
 
       const drawHex = (x: number, y: number, radius: number, color: string, fillAlpha: number) => {
@@ -958,6 +1027,21 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
         context.letterSpacing = "0.12em";
         context.fillText("2 WORKFLOWS / 41 CALCULATION STEPS", originX - 185, originY + 285 * viewportScale);
       }
+
+      context.globalCompositeOperation = "source-over";
+      context.globalAlpha = treeAlpha;
+      const floorFog = context.createLinearGradient(0, horizon - height * 0.18, 0, height);
+      floorFog.addColorStop(0, "rgba(7, 9, 13, 0)");
+      floorFog.addColorStop(0.55, "rgba(11, 26, 35, 0.12)");
+      floorFog.addColorStop(1, "rgba(3, 5, 8, 0.72)");
+      context.fillStyle = floorFog;
+      context.fillRect(0, horizon - height * 0.18, width, height);
+
+      const vignette = context.createRadialGradient(width * 0.43, height * 0.45, height * 0.12, width * 0.5, height * 0.5, Math.max(width, height) * 0.72);
+      vignette.addColorStop(0.48, "rgba(0, 0, 0, 0)");
+      vignette.addColorStop(1, "rgba(0, 0, 0, 0.68)");
+      context.fillStyle = vignette;
+      context.fillRect(0, 0, width, height);
       context.restore();
       context.globalAlpha = 1;
       context.shadowBlur = 0;
@@ -1700,29 +1784,27 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
                   </button>
                 </>
               ) : (
-                <>
-                  <button
-                    type="button"
-                    className="chronicle-advance"
-                    aria-label={sceneIndex < experienceScenes.length - 1
-                      ? `Show ${nextScene.organization} experience, ${sceneIndex + 2} of 4`
-                      : "Play the combined finale and open the full portfolio"}
-                    onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
-                  />
-                  <article className={`chronicle-card scene-${sceneIndex}`} key={scene.organization} ref={cardRef} tabIndex={-1}>
-                    <div className="chronicle-card-topline">
-                      <span>{String(sceneIndex + 1).padStart(2, "0")} / 04</span>
-                      <time>{scene.dates}</time>
-                    </div>
-                    <p>{scene.organization}</p>
-                    <h2>{scene.role}</h2>
-                    <span className="chronicle-focus">{scene.focus}</span>
-                    <p className="chronicle-summary">{scene.summary}</p>
-                    <strong>{scene.result}</strong>
-                    <small>{scene.resultLabel}</small>
-                  </article>
-                </>
+                <button
+                  type="button"
+                  className="chronicle-advance"
+                  aria-label={sceneIndex < experienceScenes.length - 1
+                    ? `Show ${nextScene.organization} experience, ${sceneIndex + 2} of 4`
+                    : "Play the combined finale and open the full portfolio"}
+                  onClick={(event) => advanceRef.current(event.clientX, event.clientY)}
+                />
               )}
+              <article className={`chronicle-card scene-${sceneIndex}${sceneIndex === 0 ? " chronicle-tree-card" : ""}`} key={scene.organization} ref={cardRef} tabIndex={-1}>
+                <div className="chronicle-card-topline">
+                  <span>{String(sceneIndex + 1).padStart(2, "0")} / 04</span>
+                  <time>{scene.dates}</time>
+                </div>
+                <p>{scene.organization}</p>
+                <h2>{scene.role}</h2>
+                <span className="chronicle-focus">{scene.focus}</span>
+                <p className="chronicle-summary">{scene.summary}</p>
+                <strong>{scene.result}</strong>
+                <small>{scene.resultLabel}</small>
+              </article>
             </>
           )}
 

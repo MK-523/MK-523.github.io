@@ -237,6 +237,21 @@ button, a { -webkit-tap-highlight-color: transparent; }
   animation-delay: 900ms;
 }
 
+.chronicle-tree-card {
+  right: 3vw;
+  width: min(38vw, 540px);
+  padding-right: clamp(24px, 2.8vw, 42px);
+  border: 1px solid rgba(140, 221, 255, .18);
+  background:
+    linear-gradient(135deg, rgba(9, 16, 23, .94), rgba(5, 8, 12, .86)),
+    radial-gradient(circle at 0 50%, rgba(140, 221, 255, .13), transparent 52%);
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, .55),
+    0 0 0 1px rgba(238, 241, 242, .025) inset,
+    0 0 50px rgba(140, 221, 255, .055);
+  backdrop-filter: blur(18px);
+}
+
 .chronicle-card.scene-1 {
   animation-delay: 720ms;
 }
@@ -299,7 +314,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   position: fixed;
   z-index: 2;
   top: max(24px, env(safe-area-inset-top));
-  left: 50%;
+  left: 30%;
   text-align: center;
   transform: translateX(-50%);
   pointer-events: none;
@@ -1019,6 +1034,10 @@ footer span:last-child { justify-self: end; }
     width: min(49vw, 520px);
     padding-left: 28px;
   }
+  .chronicle-tree-card {
+    right: 22px;
+    width: min(42vw, 470px);
+  }
   .hero { gap: 48px; padding: 116px 22px 44px; }
   .hero-name { font-size: clamp(66px, 11.5vw, 104px); }
   .work-section, .experiments-section, .about-section { padding: 82px 22px; }
@@ -1094,11 +1113,18 @@ footer span:last-child { justify-self: end; }
   .chronicle-tree-title { top: max(68px, calc(env(safe-area-inset-top) + 56px)); }
   .chronicle-tree-title span { display: none; }
   .chronicle-tree-title strong { font-size: 12px; }
+  .chronicle-tree-title { left: 50%; }
   .chronicle-tree-next {
     top: max(14px, env(safe-area-inset-top));
     right: 126px;
     min-height: 44px;
     padding-inline: 12px;
+  }
+  .chronicle-tree-card {
+    right: 18px;
+    width: auto;
+    max-height: 40svh;
+    padding-right: 3px;
   }
   .chronicle-card-topline { gap: 14px; }
   .chronicle-card-topline span,
