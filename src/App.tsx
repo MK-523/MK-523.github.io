@@ -304,6 +304,8 @@ export default function App() {
         <a href="#top" className="site-name" data-blade-target>Mahesh Karthikeyan</a>
         <nav aria-label="Primary navigation">
           <a href="#experience" data-blade-target>Experience</a>
+          <a href="#projects" data-blade-target>Projects</a>
+          <a href="#campus" data-blade-target>Campus</a>
           <a href="#contact" data-blade-target>Contact</a>
         </nav>
       </header>
@@ -335,12 +337,18 @@ export default function App() {
           </div>
         </section>
 
-        <section className="work-section resume-section experience-all" id="experience" tabIndex={-1}>
+        <section className="work-section resume-section" id="experience" tabIndex={-1}>
           <SectionHeading title="Experience" />
           <RoleList items={roles} />
+        </section>
 
+        <section className="resume-section resume-projects-section" id="projects" tabIndex={-1}>
+          <SectionHeading title="Projects" />
           <ProjectList items={projects} />
+        </section>
 
+        <section className="resume-section campus-section" id="campus" tabIndex={-1}>
+          <SectionHeading title="Campus Involvement" />
           <div className="resume-project-list experience-campus-list" aria-label="Campus experience">
             {campusRoles.map((item) => (
               <article className="resume-project campus-entry" key={item.title} data-blade-target>

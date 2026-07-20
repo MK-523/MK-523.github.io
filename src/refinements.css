@@ -84,10 +84,16 @@ footer {
 .resume-projects-section {
   padding: 96px 5vw;
   border-top: 1px solid var(--line);
+  scroll-margin-top: 71px;
 }
 
 .resume-projects-section {
   background: #080b10;
+}
+
+.resume-projects-section .resume-project-list,
+.campus-section .resume-project-list {
+  margin-top: 0;
 }
 
 /* Experience and research read as conventional resume entries. */
