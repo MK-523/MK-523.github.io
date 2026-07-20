@@ -312,7 +312,44 @@ footer {
   line-height: 1.75;
 }
 
+/* Restore the original light treatment for awards and technical skills. */
+.experience-support-grid {
+  margin-right: -5vw;
+  margin-bottom: -96px;
+  margin-left: -5vw;
+  padding: 0 5vw 96px;
+  border-top: 0;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.experience-support-column {
+  border-top: 1px solid rgba(7, 9, 13, .28);
+}
+
+.experience-support-column .about-row {
+  border-top-color: rgba(7, 9, 13, .16);
+}
+
+.experience-support-column .about-row h3 {
+  color: var(--ink);
+}
+
+.experience-support-column .about-row p,
+.experience-support-column .about-row .skill-list {
+  color: #59636c;
+}
+
 @media (max-width: 900px) {
+  .experience-support-grid {
+    margin-right: -22px;
+    margin-bottom: -82px;
+    margin-left: -22px;
+    padding-right: 22px;
+    padding-bottom: 82px;
+    padding-left: 22px;
+  }
+
   .resume-section,
   .resume-projects-section {
     padding: 82px 22px;
@@ -345,6 +382,11 @@ footer {
 }
 
 @media (max-width: 620px) {
+  .experience-support-grid {
+    margin-bottom: -70px;
+    padding-bottom: 70px;
+  }
+
   .site-header nav { gap: 9px; }
   .site-name { max-width: 86px; font-size: 9px; }
   .site-header nav a { font-size: 10px; }
