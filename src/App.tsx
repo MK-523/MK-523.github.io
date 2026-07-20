@@ -335,9 +335,52 @@ export default function App() {
           </div>
         </section>
 
-        <section className="work-section resume-section" id="experience" tabIndex={-1}>
+        <section className="work-section resume-section experience-all" id="experience" tabIndex={-1}>
           <SectionHeading title="Experience" />
-          <RoleList items={roles.filter((item) => item.track === "experience")} />
+          <RoleList items={roles} />
+
+          <ProjectList items={projects} />
+
+          <div className="resume-project-list experience-campus-list" aria-label="Campus experience">
+            {campusRoles.map((item) => (
+              <article className="resume-project campus-entry" key={item.title} data-blade-target>
+                <div className="resume-project-header">
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.role}</p>
+                  </div>
+                  <time>{item.dates}</time>
+                </div>
+                <p className="resume-project-summary">{item.summary}</p>
+                <ul className="resume-project-bullets">
+                  {item.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
+                </ul>
+                <div className="resume-project-meta">
+                  <strong>{item.impact}</strong>
+                  <span>{item.stack}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="experience-support-grid">
+            <div className="experience-support-column" role="group" aria-label="Awards and recognition">
+              {recognition.map(([title, context]) => (
+                <div className="about-row" key={title}>
+                  <h3>{title}</h3>
+                  <p>{context}</p>
+                </div>
+              ))}
+            </div>
+            <div className="experience-support-column" role="group" aria-label="Technical skills">
+              {tools.map(([title, list]) => (
+                <div className="about-row skill-row resume-skill-row" key={title}>
+                  <h3>{title}</h3>
+                  <p className="skill-list">{list}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section className="contact-section" id="contact" tabIndex={-1}>
