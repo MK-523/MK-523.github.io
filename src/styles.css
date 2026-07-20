@@ -942,6 +942,25 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .investigation-section { background: #0a0d12; }
 .campus-section { background: #07090d; }
+.experience-all > .resume-project-list {
+  margin-top: 54px;
+  border-top: 1px solid var(--line);
+}
+.experience-all > .experience-campus-list { margin-top: 0; }
+.experience-support-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8vw;
+  margin-top: 72px;
+  border-top: 1px solid var(--line);
+}
+.experience-support-column .about-row {
+  border-top-color: var(--line);
+}
+.experience-support-column .about-row:first-child { border-top: 0; }
+.experience-support-column .about-row h3 { color: var(--paper); }
+.experience-support-column .about-row p,
+.experience-support-column .about-row .skill-list { color: #89949d; }
 .campus-entry .resume-project-header time {
   flex: 0 0 auto;
   color: #7f8992;
@@ -1026,6 +1045,7 @@ footer span:last-child { justify-self: end; }
   .experiment-result { grid-column: 2; }
   .experiment b { grid-column: 3; grid-row: 1; }
   .about-section { grid-template-columns: 1fr; gap: 90px; }
+  .experience-support-grid { grid-template-columns: 1fr; gap: 30px; }
   .contact-section { min-height: 64svh; padding: 92px 22px; }
   footer { padding-inline: 22px; }
 }
