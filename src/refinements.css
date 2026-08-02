@@ -506,3 +506,221 @@ footer {
     font-size: 9px;
   }
 }
+
+/* Motion system: cinematic on arrival, quiet while reading, and cheap to render. */
+.portfolio-shell::before {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  inset: -18vh -15vw;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 14% 22%, rgba(107, 156, 255, .105), transparent 24%),
+    radial-gradient(circle at 78% 38%, rgba(140, 221, 255, .075), transparent 27%),
+    radial-gradient(circle at 52% 88%, rgba(234, 219, 156, .045), transparent 25%);
+  transform: translate3d(-2%, -1%, 0) scale(1.04);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.portfolio-shell.is-ready::before {
+  opacity: 1;
+  animation: ambient-field-drift 18s ease-in-out infinite alternate;
+}
+
+.site-header nav a {
+  position: relative;
+  padding-block: 9px;
+}
+
+.site-header nav a::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 4px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ion), transparent);
+  transform: scaleX(0);
+  transition: transform 300ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.site-header nav a:hover::after,
+.site-header nav a:focus-visible::after { transform: scaleX(1); }
+
+.portfolio-shell.is-ready .hero > .eyebrow {
+  animation: portfolio-rise 680ms 80ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.portfolio-shell.is-ready .hero-name > span {
+  animation: hero-slice-in 980ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.portfolio-shell.is-ready .hero-name > span:nth-child(2) { animation-delay: 110ms; }
+
+.portfolio-shell.is-ready .hero-role {
+  animation: portfolio-rise 760ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.portfolio-shell.is-ready .hero-role:nth-child(1) { animation-delay: 220ms; }
+.portfolio-shell.is-ready .hero-role:nth-child(2) { animation-delay: 310ms; }
+.portfolio-shell.is-ready .hero-role:nth-child(3) { animation-delay: 400ms; }
+.portfolio-shell.is-ready .hero-bottom { animation: portfolio-rise 720ms 470ms cubic-bezier(.16, 1, .3, 1) both; }
+
+.hero-role,
+.resume-entry,
+.resume-project {
+  position: relative;
+  isolation: isolate;
+}
+
+.hero-role {
+  overflow: hidden;
+  transition: background-color 300ms ease, transform 300ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.hero-role::after,
+.resume-entry::after,
+.resume-project::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -35%;
+  bottom: -35%;
+  left: -26%;
+  width: 17%;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgba(140, 221, 255, .08), transparent);
+  transform: skewX(-14deg) translateX(-190%);
+  transition: transform 760ms cubic-bezier(.16, 1, .3, 1), opacity 220ms ease;
+  pointer-events: none;
+}
+
+.hero-role:hover {
+  background: rgba(140, 221, 255, .025);
+  transform: translateY(-4px);
+}
+
+.hero-role:hover::after,
+.resume-entry:hover::after,
+.resume-project:hover::after {
+  opacity: 1;
+  transform: skewX(-14deg) translateX(840%);
+}
+
+.resume-entry,
+.resume-project {
+  overflow: clip;
+  transition: border-color 260ms ease, transform 360ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.resume-entry:hover,
+.resume-project:hover {
+  border-color: rgba(140, 221, 255, .34);
+  transform: translateX(8px);
+}
+
+.resume-entry h3,
+.resume-project h3,
+.resume-result strong,
+.resume-project-meta strong {
+  transition: color 260ms ease, text-shadow 260ms ease;
+}
+
+.resume-entry:hover h3,
+.resume-project:hover h3 {
+  color: var(--ion-strong);
+  text-shadow: 0 0 28px rgba(140, 221, 255, .1);
+}
+
+.resume-section,
+.contact-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
+.reveal-ready [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 34px, 0);
+  transition:
+    opacity 720ms calc(var(--reveal-order, 0) * 70ms) ease,
+    transform 820ms calc(var(--reveal-order, 0) * 70ms) cubic-bezier(.16, 1, .3, 1),
+    border-color 260ms ease;
+}
+
+.reveal-ready [data-reveal].is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.resume-section-heading h2 {
+  background: linear-gradient(102deg, var(--paper) 0 44%, var(--ion-strong) 51%, var(--paper) 58% 100%);
+  background-size: 230% 100%;
+  background-position: 100% 0;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.resume-section-heading.is-visible h2 {
+  animation: heading-light-pass 1100ms 180ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.contact-section h2 {
+  background: linear-gradient(110deg, var(--paper) 0 42%, var(--ion-strong) 49%, var(--paper) 56% 100%);
+  background-size: 240% 100%;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.contact-section.is-visible h2 { animation: heading-light-pass 1300ms 260ms cubic-bezier(.16, 1, .3, 1) both; }
+
+@keyframes ambient-field-drift {
+  from { transform: translate3d(-2%, -1%, 0) scale(1.04); }
+  to { transform: translate3d(3%, 2%, 0) scale(1.08); }
+}
+
+@keyframes portfolio-rise {
+  from { opacity: 0; transform: translate3d(0, 24px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes hero-slice-in {
+  from { opacity: 0; transform: translate3d(0, 52px, 0); clip-path: inset(0 0 100% 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); clip-path: inset(0 0 0 0); }
+}
+
+@keyframes heading-light-pass {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+
+@media (max-width: 620px) {
+  .resume-entry:hover,
+  .resume-project:hover { transform: none; }
+
+  .portfolio-shell::before { opacity: .72; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-shell.is-ready::before,
+  .portfolio-shell.is-ready .hero > .eyebrow,
+  .portfolio-shell.is-ready .hero-name > span,
+  .portfolio-shell.is-ready .hero-role,
+  .portfolio-shell.is-ready .hero-bottom,
+  .resume-section-heading.is-visible h2,
+  .contact-section.is-visible h2 {
+    animation: none;
+  }
+
+  .portfolio-shell.is-ready .hero > .eyebrow,
+  .portfolio-shell.is-ready .hero-name > span,
+  .portfolio-shell.is-ready .hero-role,
+  .portfolio-shell.is-ready .hero-bottom,
+  .reveal-ready [data-reveal] {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+}
