@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import BladeExperience from "./BladeExperience";
 
 const roleHighlights = [
@@ -223,7 +223,7 @@ type Project = (typeof projects)[number];
 
 function SectionHeading({ title }: { title: string }) {
   return (
-    <div className="resume-section-heading">
+    <div className="resume-section-heading" data-reveal>
       <h2>{title}</h2>
     </div>
   );
@@ -232,8 +232,14 @@ function SectionHeading({ title }: { title: string }) {
 function RoleList({ items }: { items: Role[] }) {
   return (
     <div className="resume-list">
-      {items.map((item) => (
-        <article className="resume-entry" key={`${item.track}-${item.organization}`} data-blade-target>
+      {items.map((item, index) => (
+        <article
+          className="resume-entry"
+          key={`${item.track}-${item.organization}`}
+          data-blade-target
+          data-reveal
+          style={{ "--reveal-order": index % 3 } as CSSProperties}
+        >
           <div className="resume-entry-header">
             <div>
               <h3>{item.role}</h3>
@@ -268,8 +274,14 @@ function RoleList({ items }: { items: Role[] }) {
 function ProjectList({ items }: { items: Project[] }) {
   return (
     <div className="resume-project-list">
-      {items.map((project) => (
-        <article className="resume-project" key={project.title} data-blade-target>
+      {items.map((project, index) => (
+        <article
+          className="resume-project"
+          key={project.title}
+          data-blade-target
+          data-reveal
+          style={{ "--reveal-order": index % 3 } as CSSProperties}
+        >
           <div className="resume-project-header">
             <div>
               <h3>{project.title}</h3>
@@ -296,6 +308,35 @@ function ProjectList({ items }: { items: Project[] }) {
 export default function App() {
   const [ready, setReady] = useState(false);
 
+  useEffect(() => {
+    if (!ready) return;
+
+    const root = document.documentElement;
+    const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reducedMotion || !("IntersectionObserver" in window)) {
+      targets.forEach((target) => target.classList.add("is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { rootMargin: "0px 0px -9%", threshold: 0.08 });
+
+    targets.forEach((target) => observer.observe(target));
+    root.classList.add("reveal-ready");
+
+    return () => {
+      observer.disconnect();
+      root.classList.remove("reveal-ready");
+    };
+  }, [ready]);
+
   return (
     <>
       <BladeExperience onReady={() => setReady(true)} />
@@ -310,7 +351,7 @@ export default function App() {
         </nav>
       </header>
 
-      <main className="portfolio-shell" inert={!ready ? true : undefined} aria-busy={!ready}>
+      <main className={ready ? "portfolio-shell is-ready" : "portfolio-shell"} inert={!ready ? true : undefined} aria-busy={!ready}>
         <section className="hero" id="top">
           <p className="eyebrow">UCLA Computer Science · Expected 2028</p>
           <div className="hero-display">
@@ -350,8 +391,14 @@ export default function App() {
         <section className="resume-section campus-section" id="campus" tabIndex={-1}>
           <SectionHeading title="Campus Involvement" />
           <div className="resume-project-list experience-campus-list" aria-label="Campus experience">
-            {campusRoles.map((item) => (
-              <article className="resume-project campus-entry" key={item.title} data-blade-target>
+            {campusRoles.map((item, index) => (
+              <article
+                className="resume-project campus-entry"
+                key={item.title}
+                data-blade-target
+                data-reveal
+                style={{ "--reveal-order": index % 3 } as CSSProperties}
+              >
                 <div className="resume-project-header">
                   <div>
                     <h3>{item.title}</h3>
@@ -373,16 +420,16 @@ export default function App() {
 
           <div className="experience-support-grid">
             <div className="experience-support-column" role="group" aria-label="Awards and recognition">
-              {recognition.map(([title, context]) => (
-                <div className="about-row" key={title}>
+              {recognition.map(([title, context], index) => (
+                <div className="about-row" key={title} data-reveal style={{ "--reveal-order": index % 3 } as CSSProperties}>
                   <h3>{title}</h3>
                   <p>{context}</p>
                 </div>
               ))}
             </div>
             <div className="experience-support-column" role="group" aria-label="Technical skills">
-              {tools.map(([title, list]) => (
-                <div className="about-row skill-row resume-skill-row" key={title}>
+              {tools.map(([title, list], index) => (
+                <div className="about-row skill-row resume-skill-row" key={title} data-reveal style={{ "--reveal-order": index % 3 } as CSSProperties}>
                   <h3>{title}</h3>
                   <p className="skill-list">{list}</p>
                 </div>
@@ -391,7 +438,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="contact-section" id="contact" tabIndex={-1}>
+        <section className="contact-section" id="contact" tabIndex={-1} data-reveal>
           <p>Systems engineering · Applied ML · Research collaboration</p>
           <h2>Email Mahesh.</h2>
           <a href="mailto:mahesh523k@gmail.com" className="contact-link" data-blade-target>

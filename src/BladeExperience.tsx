@@ -311,11 +311,13 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const context = canvas.getContext("2d", { alpha: true });
+    const context = canvas.getContext("2d", { alpha: true, desynchronized: true });
     if (!context) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
+    const lowPower = coarsePointer || navigator.hardwareConcurrency <= 4 || deviceMemory <= 4;
     const deepLinkId = ["experience", "research", "awards", "contact"]
       .find((id) => window.location.hash.toLowerCase() === `#${id}`);
     const deepLink = Boolean(deepLinkId);
@@ -408,7 +410,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       width = Math.max(1, window.innerWidth);
       height = Math.max(1, window.innerHeight);
       layout = getLayout();
-      const dpr = Math.min(window.devicePixelRatio || 1, coarsePointer ? 1.15 : 1.5);
+      const dpr = Math.min(window.devicePixelRatio || 1, lowPower ? 1 : 1.25);
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       canvas.style.width = `${width}px`;
@@ -445,7 +447,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
     };
 
     const buildField = () => {
-      const targetCount = coarsePointer ? 15000 : 39000;
+      const targetCount = lowPower ? 9000 : 18000;
       const tile = Math.max(coarsePointer ? 5 : 6, Math.ceil(Math.sqrt((width * height) / targetCount)));
       const random = seededRandom(0x523c10a);
 
@@ -460,7 +462,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       drawBladeMask(swordContext, layout.swordX, layout.swordY, layout.swordHeight);
       const bodyData = bodyContext.getImageData(0, 0, bodyMask.width, bodyMask.height).data;
       const swordData = swordContext.getImageData(0, 0, swordMask.width, swordMask.height).data;
-      const sampleStep = coarsePointer ? 4 : 3;
+      const sampleStep = lowPower ? 5 : 4;
       const targets: Target[] = [];
       const swordTargets: Target[] = [];
 
@@ -545,9 +547,9 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
         }
       }
       particles = next;
-      const sceneStride = Math.max(1, Math.ceil(particles.length / (coarsePointer ? 4200 : 6800)));
+      const sceneStride = Math.max(1, Math.ceil(particles.length / (lowPower ? 1800 : 3200)));
       sceneParticles = particles.filter((_, particleIndex) => particleIndex % sceneStride === 0);
-      const followerStride = Math.max(1, Math.ceil(swordTargets.length / (coarsePointer ? 430 : 760)));
+      const followerStride = Math.max(1, Math.ceil(swordTargets.length / (lowPower ? 260 : 480)));
       followerPixels = swordTargets
         .filter((_, targetIndex) => targetIndex % followerStride === 0)
         .map((target) => ({
@@ -793,10 +795,10 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       ) * treeCamera.zoom;
       const focalLength = (coarsePointer ? 430 : 680) * viewportScale;
       const cameraDepth = 760 - reveal * 105;
-      const pointerYaw = coarsePointer ? 0 : (pointer.x / width - 0.5) * 0.07;
-      const pointerPitch = coarsePointer ? 0 : (pointer.y / height - 0.5) * -0.035;
-      const yaw = -0.48 + reveal * 0.12 + Math.sin(time * 0.00042) * 0.018 + pointerYaw;
-      const pitch = -0.095 + Math.sin(time * 0.00031) * 0.012 + pointerPitch;
+      const pointerYaw = lowPower ? 0 : (pointer.x / width - 0.5) * 0.035;
+      const pointerPitch = lowPower ? 0 : (pointer.y / height - 0.5) * -0.018;
+      const yaw = -0.48 + reveal * 0.12 + (lowPower ? 0 : Math.sin(time * 0.00042) * 0.009) + pointerYaw;
+      const pitch = -0.095 + (lowPower ? 0 : Math.sin(time * 0.00031) * 0.006) + pointerPitch;
       const roll = -0.025 + reveal * 0.025;
       const cosYaw = Math.cos(yaw);
       const sinYaw = Math.sin(yaw);
@@ -844,7 +846,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
 
       context.globalCompositeOperation = "lighter";
       const cinematicRandom = seededRandom(0x523f1e7);
-      for (let rayIndex = 0; rayIndex < 5; rayIndex += 1) {
+      for (let rayIndex = 0; rayIndex < (lowPower ? 2 : 3); rayIndex += 1) {
         const rayX = originX - width * 0.28 + rayIndex * width * 0.12;
         const sway = Math.sin(time * 0.00018 + rayIndex * 1.7) * width * 0.018;
         const ray = context.createLinearGradient(rayX, 0, rayX + sway, horizon);
@@ -861,7 +863,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
         context.fill();
       }
 
-      for (let dustIndex = 0; dustIndex < (coarsePointer ? 22 : 46); dustIndex += 1) {
+      for (let dustIndex = 0; dustIndex < (lowPower ? 8 : 18); dustIndex += 1) {
         const seedX = cinematicRandom();
         const seedY = cinematicRandom();
         const depth = 0.28 + cinematicRandom() * 0.72;
@@ -926,7 +928,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
         const color = approved ? "#eadb9c" : declined ? "#ff6f73" : "#77cce9";
         context.globalAlpha = treeAlpha * (approved ? 0.92 : declined ? 0.55 : 0.38);
         context.shadowColor = color;
-        context.shadowBlur = approved ? 14 : 7;
+        context.shadowBlur = approved ? 9 : declined ? 4 : 0;
         context.strokeStyle = color;
         context.lineWidth = approved ? Math.max(1.4, from.scale * 2.5) : Math.max(0.8, from.scale * 1.4);
         context.beginPath();
@@ -948,7 +950,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
           context.globalAlpha = treeAlpha * (approved ? 0.9 : 0.32);
           context.fillStyle = approved ? "#fff6cc" : color;
           context.shadowColor = color;
-          context.shadowBlur = approved ? 26 : 14;
+          context.shadowBlur = approved ? 14 : 6;
           context.beginPath();
           context.arc(packetX, packetY, approved ? 2.8 : 1.7, 0, Math.PI * 2);
           context.fill();
@@ -986,7 +988,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
           const color = node.state === "declined" ? "#ff6f73" : approved ? "#eadb9c" : "#8cddff";
           const radius = (approved ? 8.5 : 6.4) * point.scale * viewportScale * nodeProgress;
           context.shadowColor = color;
-          context.shadowBlur = approved ? 22 : 11;
+          context.shadowBlur = approved ? 12 : 4;
           drawHex(point.x + 4 * point.scale, point.y + 6 * point.scale, radius, "#030609", treeAlpha * 0.72);
           drawHex(point.x, point.y, radius, color, treeAlpha * (approved ? 0.3 : 0.17));
 
@@ -1014,7 +1016,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       context.globalAlpha = treeAlpha * clamp((progress - 0.52) / 0.2);
       context.fillStyle = "#fff6cc";
       context.shadowColor = "#eadb9c";
-      context.shadowBlur = 24;
+      context.shadowBlur = 14;
       context.beginPath();
       context.arc(pulseX, pulseY, pulseRadius, 0, Math.PI * 2);
       context.fill();
@@ -1671,7 +1673,15 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
 
     const render = (time: number) => {
       if (!(currentPhase === "exploring" && reducedMotion)) frame = requestAnimationFrame(render);
-      if (currentPhase === "waiting" && time - lastFrame < 32) return;
+      const pointerIsFresh = pointer.active && time - pointer.lastMove < 820 && !coarsePointer;
+      const frameInterval = currentPhase === "waiting"
+        ? 1000 / 30
+        : currentPhase === "scene" && currentScene === 0
+          ? 1000 / (lowPower ? 22 : 30)
+          : currentPhase === "exploring" && !pointerIsFresh && sparks.length === 0
+            ? 1000 / 24
+            : 0;
+      if (frameInterval > 0 && time - lastFrame < frameInterval) return;
       lastFrame = time;
       context.clearRect(0, 0, width, height);
       if (currentPhase === "waiting") drawWaiting(time);
