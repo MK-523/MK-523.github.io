@@ -1464,6 +1464,49 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       context.globalAlpha = 1;
     };
 
+    const drawAnimeImpact = (progress: number, scene: number) => {
+      const impact = 1 - easeOut(clamp(progress / 0.2));
+      if (impact <= 0.01) return;
+
+      const centerX = coarsePointer ? width * 0.5 : scene === 0 ? width * 0.31 : layout.handX;
+      const centerY = coarsePointer ? height * 0.34 : scene === 0 ? height * 0.49 : layout.handY;
+      const random = seededRandom(0x523a11 + scene * 997);
+      const lineCount = lowPower ? 12 : 24;
+
+      context.save();
+      context.globalCompositeOperation = "lighter";
+
+      if (progress < 0.035) {
+        context.globalAlpha = 1 - progress / 0.035;
+        context.fillStyle = scene === 0 ? "#eafaff" : "#ffffff";
+        context.fillRect(0, 0, width, height);
+      }
+
+      for (let index = 0; index < lineCount; index += 1) {
+        const angle = (index / lineCount) * Math.PI * 2 + (random() - 0.5) * 0.22;
+        const inner = Math.min(width, height) * (0.05 + random() * 0.08);
+        const outer = Math.max(width, height) * (0.38 + random() * 0.52);
+        const widthBoost = index % 5 === 0 ? 2.2 : 0.7 + random() * 1.2;
+        context.globalAlpha = impact * (0.12 + random() * 0.36);
+        context.strokeStyle = index % 4 === 0 ? "#fff2b8" : index % 3 === 0 ? "#6b9cff" : "#d9f5ff";
+        context.lineWidth = widthBoost;
+        context.beginPath();
+        context.moveTo(centerX + Math.cos(angle) * inner, centerY + Math.sin(angle) * inner);
+        context.lineTo(centerX + Math.cos(angle) * outer, centerY + Math.sin(angle) * outer);
+        context.stroke();
+      }
+
+      const ringRadius = (1 - impact) * Math.min(width, height) * 0.42;
+      context.globalAlpha = impact * 0.62;
+      context.strokeStyle = scene === 0 ? "#8cddff" : "#fff2b8";
+      context.lineWidth = 1.2 + impact * 3.5;
+      context.beginPath();
+      context.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+      context.stroke();
+      context.restore();
+      context.globalAlpha = 1;
+    };
+
     const drawScene = (time: number) => {
       context.fillStyle = "#07090d";
       context.fillRect(0, 0, width, height);
@@ -1479,6 +1522,7 @@ export default function BladeExperience({ onReady }: { onReady: () => void }) {
       if (currentScene === 1) drawColdPulse(time, action, 1);
       if (currentScene === 2) drawChessArchive(time, action, 1);
       if (currentScene === 3) drawPacketLanes(time, action, 1);
+      drawAnimeImpact(action, currentScene);
       const heroDurations = [720, 980, 920, 1050];
       const heroAction = clamp(elapsed / (heroDurations[currentScene] ?? 860));
       drawHero(time, currentScene, heroAction);
