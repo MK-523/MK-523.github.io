@@ -5,197 +5,315 @@ import {
   fireEvent,
   render,
   screen,
-  waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
-import AlpineHero from "./AlpineHero";
+import LakeScene from "./LakeScene";
+import { createLakeRenderer } from "./lake-renderer";
+import { chapters } from "./useJourney";
 
-let mediaMatches = true;
-let mediaListeners: Set<() => void>;
-let observers: Array<(entries: Array<{ isIntersecting: boolean }>) => void>;
-
+vi.mock("./lake-renderer", () => ({ createLakeRenderer: vi.fn() }));
+let reduced = false;
+let listeners: Set<() => void>;
+let frames: Map<number, FrameRequestCallback>;
+let nextFrame = 0;
+let draw = vi.fn<(progress: number, seconds: number) => void>();
+let dispose = vi.fn<() => void>();
 beforeEach(() => {
   window.history.replaceState(null, "", "/");
-  mediaMatches = true;
-  mediaListeners = new Set();
-  observers = [];
+  reduced = false;
+  listeners = new Set();
+  frames = new Map();
+  nextFrame = 0;
   vi.stubGlobal(
     "matchMedia",
-    vi.fn(() => ({
+    vi.fn((query: string) => ({
       get matches() {
-        return mediaMatches;
+        return query.includes("reduced-motion") && reduced;
       },
-      addEventListener: (_: string, listener: () => void) =>
-        mediaListeners.add(listener),
-      removeEventListener: (_: string, listener: () => void) =>
-        mediaListeners.delete(listener),
+      addEventListener: (_: string, fn: () => void) => listeners.add(fn),
+      removeEventListener: (_: string, fn: () => void) => listeners.delete(fn),
     })),
   );
   vi.stubGlobal(
-    "IntersectionObserver",
+    "requestAnimationFrame",
+    vi.fn((fn: FrameRequestCallback) => {
+      const id = ++nextFrame;
+      frames.set(id, fn);
+      return id;
+    }),
+  );
+  vi.stubGlobal(
+    "cancelAnimationFrame",
+    vi.fn((id: number) => frames.delete(id)),
+  );
+  vi.stubGlobal(
+    "ResizeObserver",
     class {
-      constructor(
-        callback: (entries: Array<{ isIntersecting: boolean }>) => void,
-      ) {
-        observers.push(callback);
-      }
       observe() {}
       disconnect() {}
     },
   );
-  vi.stubGlobal(
-    "requestAnimationFrame",
-    vi.fn(() => 1),
-  );
-  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+  draw = vi.fn();
+  dispose = vi.fn();
+  vi.mocked(createLakeRenderer).mockReturnValue({
+    draw,
+    dispose,
+    resize: vi.fn(),
+  });
 });
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
-
-const hero = () => screen.getByRole("region", { name: "Mahesh Karthikeyan" });
-
-describe("landscape motion", () => {
-  it("uses a static scene for reduced motion or a coarse pointer and follows live preference changes", () => {
-    mediaMatches = false;
-    render(<AlpineHero />);
-    expect(hero().getAttribute("data-animating")).toBe("false");
-    expect(requestAnimationFrame).not.toHaveBeenCalled();
-    act(() => {
-      mediaMatches = true;
-      mediaListeners.forEach((listener) => listener());
-    });
-    expect(hero().getAttribute("data-motion")).toBe("on");
-    act(() => {
-      mediaMatches = false;
-      mediaListeners.forEach((listener) => listener());
-    });
-    expect(hero().getAttribute("data-motion")).toBe("off");
+function loadImage(container: HTMLElement) {
+  const image = container.querySelector("img")!;
+  Object.defineProperties(image, {
+    complete: { value: true, configurable: true },
+    naturalWidth: { value: 1920, configurable: true },
   });
-  it("stops work while outside the viewport and resumes on return", () => {
-    render(<AlpineHero />);
-    act(() =>
-      observers.forEach((callback) => callback([{ isIntersecting: false }])),
-    );
-    expect(hero().getAttribute("data-animating")).toBe("false");
-    vi.mocked(requestAnimationFrame).mockClear();
-    fireEvent.scroll(window);
-    fireEvent.pointerMove(hero(), { clientX: 300, clientY: 200 });
-    expect(requestAnimationFrame).not.toHaveBeenCalled();
-    act(() =>
-      observers.forEach((callback) => callback([{ isIntersecting: true }])),
-    );
-    expect(hero().getAttribute("data-animating")).toBe("true");
+  fireEvent.load(image);
+}
+function tick(time: number) {
+  act(() => {
+    const pending = [...frames.values()];
+    frames.clear();
+    pending.forEach((fn) => fn(time));
   });
-  it("stops animation when the tab is hidden", () => {
-    render(<AlpineHero />);
+}
+
+describe("living landscape", () => {
+  it("animates after image readiness and releases GPU resources on unmount", () => {
+    const view = render(<LakeScene paused={false} />);
+    loadImage(view.container);
+    tick(100);
+    tick(150);
+    expect(draw).toHaveBeenCalledTimes(2);
+    expect(draw.mock.calls[1][1]).toBeGreaterThan(draw.mock.calls[0][1]);
+    view.unmount();
+    expect(dispose).toHaveBeenCalled();
+    expect(frames.size).toBe(0);
+  });
+  it("stops the frame loop in hidden tabs and resumes without a time jump", () => {
+    const view = render(<LakeScene paused={false} />);
+    loadImage(view.container);
+    tick(100);
+    tick(150);
     const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
     fireEvent(document, new Event("visibilitychange"));
-    expect(hero().getAttribute("data-animating")).toBe("false");
+    expect(frames.size).toBe(0);
     hidden.mockReturnValue(false);
     fireEvent(document, new Event("visibilitychange"));
-    expect(hero().getAttribute("data-animating")).toBe("true");
+    tick(5000);
+    expect(draw.mock.calls.at(-1)?.[1]).toBe(0.05);
   });
-  it("keeps the name and actions available if both image layers fail", () => {
-    const { container } = render(<AlpineHero />);
-    container
-      .querySelectorAll("img")
-      .forEach((image) => fireEvent.error(image));
-    expect(
-      screen.getByRole("heading", { name: "Mahesh Karthikeyan" }),
-    ).toBeTruthy();
+  it("uses one static frame for reduced motion and follows live preference changes", () => {
+    reduced = true;
+    const view = render(<LakeScene paused={false} />);
+    loadImage(view.container);
+    tick(100);
+    expect(draw).toHaveBeenLastCalledWith(0, 0);
+    expect(frames.size).toBe(0);
+    act(() => {
+      reduced = false;
+      listeners.forEach((fn) => fn());
+    });
+    tick(150);
+    expect(frames.size).toBe(1);
+  });
+  it("pauses continuous weather without hiding content and can resume", () => {
+    const view = render(<LakeScene paused={false} />);
+    loadImage(view.container);
+    tick(100);
+    tick(150);
+    view.rerender(<LakeScene paused />);
+    tick(200);
+    expect(frames.size).toBe(0);
+    expect(draw).toHaveBeenLastCalledWith(0, 0.05);
+    view.rerender(<LakeScene paused={false} />);
+    tick(250);
+    expect(frames.size).toBe(1);
+  });
+  it("keeps all work and links accessible when WebGL is unavailable", () => {
+    vi.mocked(createLakeRenderer).mockReturnValue(null);
+    const view = render(<App />);
+    loadImage(view.container);
+    expect(view.container.querySelector("canvas")?.dataset.renderer).toBe(
+      "fallback",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "View Projects" }));
+    expect(screen.getByRole("heading", { name: "ChessStalker" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: "Experience" }));
+    expect(screen.getByRole("heading", { name: "Flex" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: "Contact" }));
     expect(
       screen
-        .getByRole("link", { name: "Explore my work" })
+        .getByRole("link", { name: "mahesh523k@gmail.com" })
         .getAttribute("href"),
-    ).toBe("#projects");
-    expect(
-      screen.getByRole("link", { name: "Get in touch" }).getAttribute("href"),
-    ).toBe("#contact");
+    ).toBe("mailto:mahesh523k@gmail.com");
+  });
+  it("falls back on GPU context loss and stops drawing", () => {
+    const view = render(<LakeScene paused={false} />);
+    loadImage(view.container);
+    tick(100);
+    fireEvent(
+      view.container.querySelector("canvas")!,
+      new Event("webglcontextlost", { cancelable: true }),
+    );
+    expect(frames.size).toBe(0);
+    expect(view.container.firstElementChild?.getAttribute("data-ready")).toBe(
+      "false",
+    );
+  });
+  it("moves the camera between stops and uses a static destination when paused", () => {
+    const view = render(<LakeScene paused={false} progress={0} />);
+    loadImage(view.container);
+    tick(100);
+    view.rerender(<LakeScene paused={false} progress={0.6} />);
+    tick(150);
+    tick(200);
+    const position = draw.mock.calls.at(-1)![0];
+    expect(position).toBeGreaterThan(0);
+    expect(position).toBeLessThan(0.6);
+    view.rerender(<LakeScene paused progress={0.6} />);
+    tick(250);
+    expect(draw.mock.calls.at(-1)![0]).toBe(0.6);
+    expect(frames.size).toBe(0);
   });
 });
-
-describe("portfolio navigation", () => {
-  it("closes the phone menu with Escape and restores focus to its control", () => {
-    render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+describe("alternating journey navigation", () => {
+  it("retains all anchors and separates campus involvement from awards", () => {
+    const view = render(<App />);
+    for (const chapter of chapters)
+      expect(document.getElementById(chapter.id)).not.toBeNull();
+    const campus = document.getElementById("campus")!,
+      awards = document.getElementById("awards")!;
+    expect(within(campus).getByText("VEST at UCLA")).toBeTruthy();
+    expect(within(campus).queryByText("USNCO Finalist")).toBeNull();
+    expect(within(awards).getByText("USNCO Finalist")).toBeTruthy();
+    expect(screen.getByText("Summer 2026")).toBeTruthy();
+    expect(view.container.querySelector(".menu-toggle")).toBeNull();
+  });
+  it("alternates a reading stop with lake travel before showing the next section", () => {
+    const view = render(<App />);
+    expect(screen.queryByRole("heading", { name: "ChessStalker" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "View Projects" }));
+    expect(window.location.hash).toBe("#projects");
+    expect(document.activeElement?.id).toBe("projects");
+    expect(screen.getByRole("heading", { name: "ChessStalker" })).toBeTruthy();
     expect(
-      screen
-        .getByRole("button", { name: "Close menu" })
-        .getAttribute("aria-expanded"),
-    ).toBe("true");
-    fireEvent.keyDown(window, { key: "Escape" });
-    const menu = screen.getByRole("button", { name: "Menu" });
-    expect(menu.getAttribute("aria-expanded")).toBe("false");
-    expect(document.activeElement).toBe(menu);
+      view.container.firstElementChild?.classList.contains("is-reading"),
+    ).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Continue journey" }));
+    expect(window.location.hash).toBe("#lake-experience");
+    expect(screen.queryByRole("heading", { name: "Flex" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "View Experience" }));
+    expect(screen.getByRole("heading", { name: "Flex" })).toBeTruthy();
+    expect(window.location.hash).toBe("#experience");
   });
-  it("opens each section directly, separates campus from awards, and preserves old anchors", async () => {
-    render(<App />);
-    for (const [id, title] of [
-      ["projects", "Projects"],
-      ["experience", "Experience"],
-      ["campus", "Campus involvement"],
-      ["awards", "Awards & recognition"],
-      ["about", "About"],
-      ["contact", "Contact"],
-    ]) {
-      act(() => {
-        window.history.pushState(null, "", `#${id}`);
-        window.dispatchEvent(new HashChangeEvent("hashchange"));
-      });
-      const heading = await screen.findByRole("heading", {
-        level: 2,
-        name: title,
-      });
-      const section = heading.closest("section");
-      expect(section?.id).toBe(id);
-      expect(document.activeElement).toBe(section);
-      expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1);
-      if (id === "campus") {
-        expect(screen.getByText("VEST at UCLA")).toBeTruthy();
-        expect(screen.queryByText("USNCO Finalist")).toBeNull();
-      }
-      if (id === "awards") {
-        expect(screen.getByText("USNCO Finalist")).toBeTruthy();
-        expect(screen.queryByText("VEST at UCLA")).toBeNull();
-      }
-      if (id === "experience")
-        expect(screen.getByText("Summer 2026")).toBeTruthy();
-    }
-  });
-  it("opens a bookmarked section immediately and returns focus to the home heading on Escape", async () => {
+  it("opens direct links and follows browser Back/Forward without depending on motion", () => {
+    reduced = true;
     window.history.replaceState(null, "", "#campus");
     render(<App />);
+    expect(document.activeElement?.id).toBe("campus");
+    act(() => {
+      window.history.replaceState(null, "", "#lake-experience");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(document.activeElement?.id).toBe("top");
     expect(
-      screen.getByRole("heading", { name: "Campus involvement" }),
+      screen.getByRole("button", { name: "View Experience" }),
     ).toBeTruthy();
-    fireEvent.keyDown(window, { key: "Escape" });
-    await waitFor(() => expect(window.location.hash).toBe("#top"));
-    await waitFor(() => expect(document.activeElement?.id).toBe("hero-name"));
-    expect(
-      screen.queryByRole("heading", { name: "Campus involvement" }),
-    ).toBeNull();
+    act(() => {
+      window.history.replaceState(null, "", "#experience");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    expect(document.activeElement?.id).toBe("experience");
   });
-  it("closes the phone menu after a destination link is followed", async () => {
+  it("advances once per wheel gesture and does not skip sections on trackpad momentum", () => {
+    let now = 10000;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
     render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
-    fireEvent.click(screen.getByRole("link", { name: /^About$/ }));
-    await screen.findByRole("heading", { name: "About" });
+    fireEvent.wheel(window, { deltaY: 60 });
+    expect(window.location.hash).toBe("#projects");
+    for (let i = 0; i < 20; i++) {
+      now += 100;
+      fireEvent.wheel(window, { deltaY: 80 });
+    }
+    expect(window.location.hash).toBe("#projects");
+    now += 300;
+    fireEvent.wheel(window, { deltaY: 60 });
+    expect(window.location.hash).toBe("#lake-experience");
+  });
+  it("allows reading scroll and requires a fresh gesture at the content edge", () => {
+    let now = 10000;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
+    window.history.replaceState(null, "", "#projects");
+    const view = render(<App />);
+    const panel = view.container.querySelector(".content-viewport")!;
+    Object.defineProperties(panel, {
+      clientHeight: { value: 500 },
+      scrollHeight: { value: 1600 },
+      scrollTop: { value: 0, writable: true },
+    });
+    const event = new WheelEvent("wheel", {
+      deltaY: 70,
+      bubbles: true,
+      cancelable: true,
+    });
+    fireEvent(panel, event);
+    expect(event.defaultPrevented).toBe(false);
+    panel.scrollTop = 1100;
+    now += 100;
+    fireEvent.wheel(panel, { deltaY: 70 });
+    expect(window.location.hash).toBe("#projects");
+    now += 300;
+    fireEvent.wheel(panel, { deltaY: 70 });
+    expect(window.location.hash).toBe("#lake-experience");
+  });
+  it("supports keyboard travel, Escape, and touch swipes", () => {
+    let now = 10000;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
+    render(<App />);
+    fireEvent.keyDown(window, { key: "PageDown" });
+    expect(window.location.hash).toBe("#projects");
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(window.location.hash).toBe("#top");
+    now += 1200;
+    fireEvent.touchStart(window, { touches: [{ clientX: 180, clientY: 600 }] });
+    fireEvent.touchEnd(window, {
+      changedTouches: [{ clientX: 180, clientY: 400 }],
+    });
+    expect(window.location.hash).toBe("#projects");
+  });
+  it("does not intercept external project links or expanded technical details", () => {
+    window.history.replaceState(null, "", "#projects");
+    render(<App />);
+    const link = screen.getByRole("link", {
+      name: /Open ChessStalker|Visit ChessStalker|Explore ChessStalker/,
+    });
+    expect(link.getAttribute("href")).toBe("https://chessstalker.com/");
+    const details = screen
+      .getAllByText("Technical details")[0]
+      .closest("summary")!;
+    fireEvent.click(details);
+    expect(window.location.hash).toBe("#projects");
+  });
+  it("keeps all navigation usable with image failure and returns home after Contact", () => {
+    const view = render(<App />);
+    fireEvent.error(view.container.querySelector("img")!);
+    fireEvent.click(screen.getByRole("button", { name: "View Projects" }));
+    expect(document.activeElement?.id).toBe("projects");
+    fireEvent.click(screen.getByRole("link", { name: "Contact" }));
     expect(
       screen
-        .getByRole("button", { name: "Menu" })
-        .getAttribute("aria-expanded"),
-    ).toBe("false");
-  });
-  it("returns an unknown hash to the usable home view", () => {
-    window.history.replaceState(null, "", "#unknown");
-    render(<App />);
-    expect(
-      screen.getByRole("heading", { name: "Mahesh Karthikeyan" }),
-    ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Explore my work" })).toBeTruthy();
+        .getByRole("link", { name: "mahesh523k@gmail.com" })
+        .getAttribute("href"),
+    ).toBe("mailto:mahesh523k@gmail.com");
+    fireEvent.click(screen.getByRole("button", { name: "Continue journey" }));
+    expect(window.location.hash).toBe("#top");
+    expect(screen.getByRole("button", { name: "View Projects" })).toBeTruthy();
   });
 });

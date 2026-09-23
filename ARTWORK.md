@@ -1,19 +1,20 @@
-# Forest lake artwork
+# Himalayan lake artwork
 
-Generated with the built-in imagegen tool on September 23, 2026 for this portfolio. The returned original is 1672 × 941 pixels. Responsive WebP assets are exported at 960, 1600, and 2560 pixels wide; the largest is an upscaled export, not additional source detail. Transfer sizes are approximately 104 KB, 224 KB, and 379 KB. Both scenery layers share one cached image.
+Created with the built-in imagegen tool on September 23, 2026. The selected output is a 1942 × 809 panoramic image, edited from an earlier original Himalayan lake generation using a reference image. This is Himalayan-inspired artwork with Gokyo/Khumbu character, not a photograph or geographically exact reconstruction.
 
-Production assets: `public/images/forest-lake-960.webp`, `public/images/forest-lake-1600.webp`, and `public/images/forest-lake-2560.webp`.
+The portfolio uses 960-pixel (83,670 bytes) and 1920-pixel (262,150 bytes) WebP exports. Only the responsive primary landscape is preloaded; the WebGL renderer reuses that same image as its texture. The panorama is a photographic backdrop. Water reflections and ripples, rain impact rings, diagonal drizzle, clouds, mist, and camera movement are implemented in the original `src/lake-renderer.ts` shader.
 
-The image contains no text. Project illustrations are original SVG/CSS compositions. Instrument Serif and Inter are self-hosted; their SIL Open Font Licenses are in `public/fonts/`.
+Production assets: `public/images/himalayas-960.webp` and `public/images/himalayas-1920.webp`.
 
-## Final generation prompt
+Instrument Serif and Inter are self-hosted; their SIL Open Font Licenses are in `public/fonts/`.
+
+## Mode and source
+
+Imagegen reference-image edit. Selected generated file: `exec-64d9dbae-935c-45fe-bddd-18f02e262433.png`. Reference: the original Himalayan image generated in the same session, `exec-8054921a-30ee-46b9-b9bc-b8113e396cea.png`. Earlier forest and portrait-oriented iterations were not selected.
+
+## Final prompt
 
 Use case: photorealistic-natural.
-Asset type: Full-viewport landscape background for a personal portfolio website.
-Primary request: An exceptionally realistic, immersive alpine forest lake setting, as if the viewer is standing on the shore, with tangible foreground depth and vast natural scenery beyond.
-Scene: a still dark emerald alpine lake, softly reflected rugged distant mountains and conifer-covered slopes receding into cool early-morning mist. Close irregular pine trunks and fine natural pine branches frame the extreme left and right edges and upper corners. A few textured shoreline rocks and moss low along the bottom edges. Open middle and center-left lake area has calm, low-detail dark reflections suitable for ivory typography overlaid in the website.
-Style: premium large-format landscape photograph, believable natural geology and trees, subtle atmospheric perspective, exceptionally detailed pine needles, moss and rock, restrained natural color, crisp near edges, softly hazy distance. No illustration, no painterly surfaces, no stylized 3D geometry.
-Composition: wide cinematic 16:9 image at 3840x2160. Camera at human eye height, immersive spatial depth through foreground, middle-ground shore, background valley. Horizon in upper half. Asymmetric and naturally composed, spacious lake opening in center, not a symmetrical fantasy scene. Keep a beautiful viable center crop for phones.
-Lighting: soft morning sky through thin fog, gentle warm sunlight on distant peaks, deep forest shadows with visible detail, photographic dynamic range.
-Constraints: only landscape, no people, no buildings, no screens, no interface, no text, no logos, no watermark. Original scene, not a copy of another website. Avoid hyper-saturated teal, artificial glow, giant cinematic sun, overly perfect reflections, fantasy mountains.
+Asset: very wide photographic backdrop for a real-time Himalayan lake scene.
+Create a NEW panoramic version of the attached Himalayan lake image, using it as a visual reference. Preserve the imposing main snow-covered Himalayan pyramid, the glaciers, weather, subtle muted colors, and cold turquoise glacial lake. Extend the natural mountain range on BOTH sides to create a truly wide panoramic photograph. Crucially: output image aspect ratio 2.4:1 (for example 2400x1000), NOT 3:2. Compose the entire central peak clearly within the frame, with visible cloudy sky above it. The view must encompass more distant mountains horizontally without flattening, squashing, or stretching the peaks. Documentary expedition photograph, Gokyo/Khumbu Himalayan character, above the treeline with NO forests. Sparse rain atmosphere and low clouds, realistic geology, majestic immense scale, not fantasy, not illustration. Distant level shoreline precisely 62 percent down the frame, all terrain above it. Bottom 38 percent uninterrupted calm turquoise lake, no near rocks, no foreground objects, no boat, no people, no flags, no buildings, no text. This is a photographic environment texture; do not add any website content.
 
