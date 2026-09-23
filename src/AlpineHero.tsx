@@ -2,24 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { Arrow } from "./Icons";
 
 const imageSet =
-  "/images/alpine-960.webp 960w, /images/alpine-1600.webp 1600w, /images/alpine-2560.webp 2560w";
+  "/images/forest-lake-960.webp 960w, /images/forest-lake-1600.webp 1600w, /images/forest-lake-2560.webp 2560w";
 // Match the HTML preload. The portrait crop benefits from extra resolution.
 const imageSizes = "(max-width: 640px) 140vw, 106vw";
-function initialMotionChoice() {
-  try {
-    return localStorage.getItem("portfolio-motion") !== "off";
-  } catch {
-    return true;
-  }
-}
-export default function AlpineHero() {
+
+export default function AlpineHero({ covered = false }: { covered?: boolean }) {
   const heroRef = useRef<HTMLElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
-  const [motionWanted, setMotionWanted] = useState(initialMotionChoice);
   const [motionSupported, setMotionSupported] = useState(false);
   const [inView, setInView] = useState(true);
   const [pageVisible, setPageVisible] = useState(true);
-  const motionOn = motionWanted && motionSupported;
+  const motionOn = motionSupported && !covered;
   useEffect(() => {
     const media = window.matchMedia(
       "(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)",
@@ -99,28 +92,22 @@ export default function AlpineHero() {
       window.removeEventListener("scroll", schedule);
     };
   }, [motionOn, inView, pageVisible]);
-  const toggleMotion = () => {
-    const next = !motionWanted;
-    setMotionWanted(next);
-    try {
-      localStorage.setItem("portfolio-motion", next ? "on" : "off");
-    } catch {
-      /* Storage restrictions must not prevent using the control. */
-    }
-  };
   return (
     <section
       id="top"
       ref={heroRef}
       className="hero"
+      aria-hidden={covered || undefined}
+      inert={covered}
+      data-covered={covered ? "true" : "false"}
       aria-labelledby="hero-name"
       data-motion={motionOn ? "on" : "off"}
       data-animating={motionOn && inView && pageVisible ? "true" : "false"}
     >
-      <div className="alpine-scene" ref={sceneRef} aria-hidden="true">
+      <div className="forest-lake-scene" ref={sceneRef} aria-hidden="true">
         <img
-          className="alpine-background"
-          src="/images/alpine-1600.webp"
+          className="forest-lake-background"
+          src="/images/forest-lake-1600.webp"
           srcSet={imageSet}
           sizes={imageSizes}
           width="2560"
@@ -129,8 +116,8 @@ export default function AlpineHero() {
           fetchPriority="high"
         />
         <img
-          className="alpine-foreground"
-          src="/images/alpine-1600.webp"
+          className="forest-lake-foreground"
+          src="/images/forest-lake-1600.webp"
           srcSet={imageSet}
           sizes={imageSizes}
           width="2560"
@@ -147,7 +134,7 @@ export default function AlpineHero() {
           SOFTWARE ENGINEER <span aria-hidden="true">·</span> UCLA COMPUTER
           SCIENCE
         </p>
-        <h1 id="hero-name" aria-label="Mahesh Karthikeyan">
+        <h1 id="hero-name" aria-label="Mahesh Karthikeyan" tabIndex={-1}>
           Mahesh
           <br />
           <em>Karthikeyan</em>
@@ -155,9 +142,6 @@ export default function AlpineHero() {
             .
           </span>
         </h1>
-        <p className="hero-description">
-          Exploring systems. Building useful things.
-        </p>
         <div className="hero-actions">
           <a className="button-primary" href="#projects">
             Explore my work
@@ -168,34 +152,6 @@ export default function AlpineHero() {
             <Arrow diagonal />
           </a>
         </div>
-      </div>
-      <div className="hero-bottom">
-        <p>
-          ROOTED IN CURIOSITY.
-          <br />
-          <span>Always looking a little further.</span>
-        </p>
-        <a href="#projects" className="scroll-cue">
-          <span>SCROLL TO EXPLORE</span>
-          <span className="scroll-line" aria-hidden="true" />
-        </a>
-        <button
-          type="button"
-          className="motion-toggle"
-          onClick={toggleMotion}
-          aria-pressed={motionOn}
-          disabled={!motionSupported}
-          aria-label={
-            !motionSupported
-              ? "Motion off: static view follows your device preferences"
-              : `Motion ${motionOn ? "on" : "off"}: toggle landscape animation`
-          }
-        >
-          <span className="motion-icon" aria-hidden="true">
-            {motionOn ? "Ⅱ" : "▷"}
-          </span>
-          <span>{motionOn ? "Motion on" : "Motion off"}</span>
-        </button>
       </div>
     </section>
   );
