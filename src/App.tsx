@@ -473,13 +473,8 @@ export default function App() {
         }}
         className={`site-header${pastHero ? " is-solid" : ""}${menuOpen ? " menu-open" : ""}`}
       >
-        <a
-          className="brand"
-          href="#top"
-          aria-label="mk. Mahesh Karthikeyan — home"
-          onClick={() => setMenuOpen(false)}
-        >
-          <span className="brand-monogram" aria-hidden="true">
+        <a className="brand" href="#top" onClick={() => setMenuOpen(false)}>
+          <span className="brand-monogram">
             mk<span>.</span>
           </span>
           <span className="brand-caption">
