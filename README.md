@@ -1,6 +1,6 @@
 # Mahesh Karthikeyan — Personal Portfolio
 
-An immersive forest-and-lake portfolio at [mk-523.github.io](https://mk-523.github.io/), built with React, TypeScript, and Vite. GitHub Pages serves the production files checked into the root of this repository.
+A living Himalayan lake journey at [mk-523.github.io](https://mk-523.github.io/), built with React, TypeScript, Vite, and a small custom WebGL2 renderer. GitHub Pages serves the generated production files committed at the repository root.
 
 ## Develop and verify
 
@@ -15,31 +15,34 @@ npm run preview
 npm run format:check
 ```
 
-The production build includes TypeScript checking. Nine interaction tests cover device motion preferences, visibility, image failure, menu keyboard behavior, hash navigation, direct links, and focus restoration.
+The build includes TypeScript checking. Interaction tests cover animation lifecycle, visibility, device motion preferences, image/GPU failure, alternating navigation, wheel momentum, reading scroll, keyboard and touch input, hashes, and focus.
 
-## Edit
+## Experience and editing
 
-- `src/content.ts`: experience, projects, campus roles, recognition, and technical skills.
-- `src/App.tsx`: navigation, page sections, and original project illustrations.
-- `src/AlpineHero.tsx`: the responsive landscape and device-aware parallax.
-- `src/styles.css`: the complete responsive design system.
-- `public/`: self-hosted fonts, original landscape WebP variants, and static metadata.
+The opening is an unobstructed landscape. Click the scene, scroll, swipe, or use the compact journey controls to open Projects on a white page while the entire scene contracts into a small circular window. Continue to expand the scene and travel across the lake, then enter Experience at the next stop. Campus, Awards, About, and Contact follow in their own stops. Direct section links remain available at all sizes, including the original `#campus` anchor.
 
-The landscape is the home view. Projects, Experience, Campus, Awards, About, and Contact open as independently scrollable panels, with navigation always available. URL hashes support direct links and browser Back/Forward. The original `#campus` link still opens campus involvement. Escape closes the mobile menu first, or returns an open section to the landscape. Keyboard focus follows the selected content.
+Long sections scroll within the white reading area. A new scroll gesture at its boundary advances the journey; scrolling outside the reading area or clicking the circle/white space also advances. Trackpad momentum cannot skip stops. Previous view and upward scrolling reverse the sequence. Escape returns from reading to the same lake stop. URL hashes preserve reading and travel states for direct links and browser Back/Forward. Focus follows the active section, and inactive content is removed from the keyboard and accessibility order.
 
-Parallax runs only for fine pointers that permit animation. Reduced-motion and touch/coarse-pointer devices use a static scene. Automatic mist movement settles within five seconds. Motion pauses behind an open panel, outside the viewport, and when the browser tab is hidden. A gradient remains behind the text if an image fails.
+- `src/content.ts`: existing projects, experience, campus, awards, and skills.
+- `src/PortfolioSections.tsx`: readable work lists and contact destinations.
+- `src/App.tsx`: the scene/reading composition and controls.
+- `src/useJourney.ts`: alternating travel/reading state, input handling, hashes, and focus.
+- `src/LakeScene.tsx`: image readiness, animation scheduling, motion preferences, and GPU lifecycle.
+- `src/lake-renderer.ts`: camera travel, reflected water, wind waves, rain ripples, mist, clouds, and diagonal drizzle.
+- `src/styles.css`: responsive white reading pages and the contracting landscape circle.
+- `public/`: self-hosted fonts, original artwork, and static metadata.
 
-See [ARTWORK.md](ARTWORK.md) for the original image prompt and asset provenance.
+The renderer runs at a maximum of 30 frames/second (24 for coarse pointers), caps resolution, and stops in hidden tabs. Scene settings can pause animation. System reduced motion disables weather, camera animation, and CSS transitions while preserving every interaction. Image/GPU failure retains a photographic or gradient fallback. Content never depends on the renderer loading. No backend, external public API, or added runtime dependency is used.
 
-## Publish to the existing GitHub Pages site
+The landscape is original Himalayan-inspired artwork, with procedural water and weather over a panoramic backdrop. See [ARTWORK.md](ARTWORK.md) for the generation prompt and provenance.
+
+## Publish through the existing GitHub Pages configuration
 
 ```sh
 npm test
 npm run stage:pages
 ```
 
-`stage:pages` builds the site and copies `dist/` into the repository root. It replaces generated asset folders and removes obsolete intro images without modifying source files. Commit both the source and generated production changes. Merge into `main`; the existing GitHub Pages configuration publishes from `main` at `/`.
+`stage:pages` builds and copies `dist/` into the repository root. It replaces generated asset folders without modifying source files. Commit the source and generated files together, then merge into `main`. The existing GitHub Pages configuration publishes from `main` at `/`.
 
-Use only GitHub account `MK-523`. No new repository, hosting service, backend, or credentials are needed.
-
-To roll back, revert the redesign commit on `main` so the previous source and generated site are restored together.
+Use only GitHub account `MK-523`. To roll back, revert the change on `main` so source and generated files are restored together.
