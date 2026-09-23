@@ -1,461 +1,527 @@
-import { useEffect, useState, type CSSProperties } from "react";
-import BladeExperience from "./BladeExperience";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { campusRoles, projects, recognition, roles, skills } from "./content";
+import AlpineHero from "./AlpineHero";
+import { Arrow } from "./Icons";
 
-const roleHighlights = [
-  {
-    label: "Current role",
-    role: "Software Engineering Intern",
-    organization: "Flex",
-    description: "Making production underwriting logic easier to inspect, explain, and audit.",
-    result: "30–60 min → under 5 min",
-    resultLabel: "workflow walkthroughs",
-  },
-  {
-    label: "Research",
-    role: "Undergraduate Research Assistant",
-    organization: "UCLA PSS Lab",
-    description: "Persisting useful runtime state across serverless cold starts.",
-    result: "337 → 125 ms",
-    resultLabel: "first-request latency",
-  },
-  {
-    label: "Product",
-    role: "Co-founder / Full-stack Engineer",
-    organization: "ChessStalker",
-    description: "Turning fragmented chess histories into practical opponent preparation.",
-    result: "11M+ games",
-    resultLabel: "indexed for opponent preparation",
-  },
-];
-
-const roles = [
-  {
-    track: "experience",
-    organization: "Flex",
-    dates: "Summer 2026",
-    role: "Software Engineering Intern",
-    focus: "Underwriting infrastructure · Financial risk tooling",
-    summary:
-      "Built backend and visualization tooling that made dense production underwriting logic inspectable for engineers and operators.",
-    responsibilities: [
-      "Built Python and TypeScript workflows with React and ReactFlow decision traces.",
-      "Connected applicant inputs, rules, calculations, and outcomes in one review path.",
-      "Structured type-safe decision logic for auditability and operator use.",
-    ],
-    results: [
-      { value: "30–60 min → <5 min", label: "workflow walkthroughs" },
-      { value: "2 workflows", label: "41 calculation steps visualized" },
-      { value: "10 models", label: "approval, decline, and credit-limit logic" },
-    ],
-  },
-  {
-    track: "research",
-    organization: "UCLA Programmable Software Systems Lab",
-    dates: "2025 — Present",
-    role: "Undergraduate Research Assistant",
-    focus: "JVM / Serverless runtime performance",
-    summary:
-      "Researching how profiling and compilation artifacts can persist across OpenFaaS cold starts instead of being rebuilt for every bursty workload.",
-    responsibilities: [
-      "Designed Redis-backed caching for runtime and compilation artifacts.",
-      "Benchmarked first-request behavior in Dockerized OpenFaaS workloads.",
-      "Traced and validated runtime behavior with gdb.",
-    ],
-    results: [
-      { value: "337 → 125 ms", label: "first-request latency" },
-      { value: "2.7×", label: "faster first request" },
-      { value: "31.6%", label: "less startup compile / load time" },
-    ],
-    link: "https://github.com/MK-523/hivejit-openfaas",
-    linkLabel: "View runtime experiments",
-  },
-  {
-    track: "experience",
-    organization: "US Chess",
-    dates: "2023 — 2024",
-    role: "Web Developer Intern",
-    focus: "Chess Life archive · Data and editorial systems",
-    summary:
-      "Helped build a searchable digital archive and SQL-backed retrieval workflow for decades of Chess Life issues.",
-    responsibilities: [
-      "Developed database-backed search and retrieval for archived magazine issues.",
-      "Supported the Drupal and Pantheon editorial publishing workflow.",
-      "Made historical content easier for readers and editors to locate and explore.",
-    ],
-    results: [
-      { value: "250K+", label: "monthly readers served by the platform" },
-      { value: "SQL-backed", label: "archive search and retrieval" },
-    ],
-    link: "https://new.uschess.org/chess-life-magazine",
-    linkLabel: "Open Chess Life archive",
-  },
-  {
-    track: "research",
-    organization: "UC Santa Barbara",
-    dates: "2022 — 2025",
-    role: "Research Assistant",
-    focus: "Network systems · Adaptive bitrate experiments",
-    summary:
-      "Studied adaptive bitrate behavior under changing throughput and latency, turning multi-year experiments into comparable congestion evidence.",
-    responsibilities: [
-      "Compared adaptive bitrate strategies across controlled network conditions.",
-      "Analyzed packet traces and TCP/IP simulation output.",
-      "Produced comparable evidence from three years of experiments.",
-    ],
-    results: [
-      { value: "10K+", label: "packet samples analyzed" },
-      { value: "6+", label: "adaptive bitrate variants compared" },
-      { value: "SIGCOMM ’24", label: "research supported" },
-    ],
-  },
-];
-
-const projects = [
-  {
-    category: "product",
-    title: "ChessStalker",
-    role: "Co-founder / Full-stack Engineer",
-    summary:
-      "Built a cross-platform opponent-preparation product that resolves player identities across FIDE, Lichess, and Chess.com and turns fragmented game histories into searchable, Stockfish-backed preparation.",
-    bullets: [
-      "Designed ingestion and identity-resolution workflows across official and online chess data.",
-      "Built searchable player profiles and analysis flows for concrete opponent preparation.",
-      "Worked across product design, data integration, engine analysis, and the user-facing application.",
-    ],
-    impact: "11M+ official games indexed · 100K+ engine analyses · 3 integrated data sources",
-    stack: "Product engineering · data integration · Stockfish",
-    href: "https://chessstalker.com/",
-    linkLabel: "Open ChessStalker",
-  },
-  {
-    category: "product",
-    title: "A-Eye",
-    role: "Co-creator / Computer Vision Engineer",
-    summary:
-      "Built priority-aware spoken guidance from a wearable camera with Arya Kunisetty, Krishay Garg, and Hui-Peng-John-Yao.",
-    bullets: [
-      "Combined YOLOv8 detections with ByteTrack to preserve object identity across frames.",
-      "Designed route-aware audio guidance that prioritized actionable obstacles instead of narrating every detection.",
-    ],
-    impact: "1st of 76 teams · MLH Best Use of ElevenLabs",
-    stack: "YOLOv8 · ByteTrack · computer vision · audio guidance",
-    href: "https://devpost.com/software/a-eye-pk9sdw",
-    linkLabel: "Open project",
-  },
-  {
-    category: "investigation",
-    title: "SAT Policy Audit",
-    role: "Model Evaluation / Reliability",
-    summary:
-      "Audited a reinforcement-learning SAT policy and built deterministic evaluation to separate implementation failures from policy quality.",
-    bullets: [
-      "Found a tensor-shape failure and formula-independent behavior in the evaluation path.",
-      "Tested the corrected system over 600 held-out 3-CNF formulas with exact, repeatable scoring.",
-    ],
-    impact: "600 held-out formulas · deterministic evaluation",
-    stack: "PyTorch · reinforcement learning · exact evaluation",
-    href: "https://github.com/MK-523/BooleanSatisfiability/tree/main/benchmark",
-    linkLabel: "View benchmark",
-  },
-  {
-    category: "investigation",
-    title: "Sentiment → Music",
-    role: "Applied ML Prototype Builder",
-    summary:
-      "Built an end-to-end prototype connecting language-model sentiment representations, expressive music generation, and an alternate Braille-to-music interaction layer.",
-    bullets: [
-      "Mapped sentiment features from language models into controllable musical output.",
-      "Explored a tokenized Braille interface as an alternate input and composition mechanism.",
-    ],
-    impact: "End-to-end multimodal prototype",
-    stack: "BERT · NLTK · music AI",
-    href: "https://github.com/MK-523/NLP-music-sentimentanalysis",
-    linkLabel: "View project",
-  },
-];
-
-const campusRoles = [
-  {
-    title: "VEST at UCLA",
-    role: "Board Member, Finance",
-    dates: "2026 — Present",
-    summary:
-      "Help build the operating systems behind UCLA's student builder and startup community—from budgeting and sponsorships to founder talks, venture panels, office visits, and community programming.",
-    bullets: [
-      "Own speaker outreach, partner relations, budgeting, and event logistics for LA Tech Week programming.",
-      "Coordinate with a16z, Cognition, and startup and venture partners across the Los Angeles ecosystem.",
-    ],
-    impact: "40-member builder community · LA Tech Week operations",
-    stack: "Finance · partnerships · event operations",
-  },
-  {
-    title: "UCLA Unmanned Aerial Systems",
-    role: "Computer Vision Team",
-    dates: "Oct 2025 — Present",
-    summary:
-      "Developed the perception and control loop for an autonomous drone that tracks people in real time under changing motion and camera conditions.",
-    bullets: [
-      "Integrated YOLO and OpenCV detections into a ROS-based flight-control pipeline.",
-      "Tuned PID control for responsive target following at real-time inference rates.",
-    ],
-    impact: "50 FPS dynamic tracking",
-    stack: "YOLO · OpenCV · ROS · PID control",
-  },
-];
-
-const tools = [
-  ["Languages", "Python · TypeScript · JavaScript · Java · C++ · SQL · Rust · Shell · OCaml"],
-  ["Product + ML", "React · ReactFlow · PyTorch · JAX / Flax / XLA · BERT · NLP · OpenCV"],
-  ["Systems + Databases", "Linux · Git · Docker · Kubernetes · OpenFaaS · Redis · TCP/IP · serverless computing · SQL backends · query execution · gdb · monitoring"],
-  ["Security + Core CS", "Access control · network security · data structures · algorithms · OOP · distributed systems · performance benchmarking"],
-];
-
-const recognition = [
-  ["Former US Chess Top 100 Junior", "National junior ranking · Competitive chess"],
-  ["USNCO Finalist", "USA National Chemistry Olympiad"],
-  ["A-Eye: MLH Best Use of ElevenLabs Winner", "LA Hacks · 1st of 76 teams"],
-  ["Stanford HAI AI+Education Summit", "Table presenter"],
-  ["ACM SIGCOMM ’24", "Research contributor"],
-];
-
-type Role = (typeof roles)[number];
-type Project = (typeof projects)[number];
-
-function SectionHeading({ title }: { title: string }) {
+function ExternalLink({
+  href,
+  children,
+  className = "text-link",
+}: {
+  href: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="resume-section-heading" data-reveal>
-      <h2>{title}</h2>
+    <a href={href} target="_blank" rel="noreferrer" className={className}>
+      {children}
+      <Arrow diagonal />
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  );
+}
+
+function SectionLabel({
+  number,
+  children,
+}: {
+  number: string;
+  children: ReactNode;
+}) {
+  return (
+    <p className="section-label">
+      <span>{number}</span>
+      {children}
+    </p>
+  );
+}
+
+function ChessVisual() {
+  return (
+    <div className="project-art chess-art" aria-hidden="true">
+      <div className="art-topline">
+        <span>CHESSSTALKER</span>
+        <span>OPPONENT INTELLIGENCE</span>
+      </div>
+      <div className="chess-grid">
+        {Array.from({ length: 64 }, (_, i) => (
+          <span
+            key={i}
+            className={(i + Math.floor(i / 8)) % 2 ? "dark-square" : ""}
+          />
+        ))}
+      </div>
+      <svg className="chess-knight" viewBox="0 0 200 240" fill="none">
+        <path
+          d="M58 194c-6-34 6-55 29-79l-28 10-19-22 29-48 28-18 6-23 20 22c41 8 64 43 60 79-3 27-26 57-15 79H58Z"
+          fill="currentColor"
+        />
+        <path
+          d="m82 56 18-9M51 106l21-4m37-42c-3 25-20 44-34 53m41 9c18-15 24-31 16-51"
+          stroke="#9faa8e"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+        <circle cx="85" cy="74" r="4" fill="#9faa8e" />
+        <path d="M48 198h125v15H48zm-7 20h139v12H41z" fill="currentColor" />
+      </svg>
+      <span className="chess-orbit orbit-one" />
+      <span className="chess-orbit orbit-two" />
+      <div className="art-bottomline">
+        <span>FIDE · LICHESS · CHESS.COM</span>
+        <span>
+          One complete picture. <Arrow diagonal />
+        </span>
+      </div>
     </div>
   );
 }
 
-function RoleList({ items }: { items: Role[] }) {
+function VisionVisual() {
   return (
-    <div className="resume-list">
-      {items.map((item, index) => (
-        <article
-          className="resume-entry"
-          key={`${item.track}-${item.organization}`}
-          data-blade-target
-          data-reveal
-          style={{ "--reveal-order": index % 3 } as CSSProperties}
-        >
-          <div className="resume-entry-header">
-            <div>
-              <h3>{item.role}</h3>
-              <p className="resume-entry-organization">{item.organization}</p>
+    <div className="project-art vision-art" aria-hidden="true">
+      <div className="art-topline">
+        <span>A-EYE</span>
+        <span>PERCEPTION → GUIDANCE</span>
+      </div>
+      <svg className="vision-scene" viewBox="0 0 560 340" fill="none">
+        <defs>
+          <linearGradient
+            id="path-light"
+            x1="280"
+            y1="145"
+            x2="280"
+            y2="335"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stopColor="#b6c6a9" stopOpacity="0" />
+            <stop offset="1" stopColor="#b6c6a9" stopOpacity=".45" />
+          </linearGradient>
+        </defs>
+        <path d="M260 146 120 340h320L297 146" fill="url(#path-light)" />
+        {[190, 230, 282, 335].map((y) => (
+          <path
+            key={y}
+            d={`M${260 - (y - 146) * 0.72} ${y}H${297 + (y - 146) * 0.74}`}
+            stroke="#abc2b1"
+            strokeOpacity=".13"
+          />
+        ))}
+        <path
+          d="m281 334-1-170m-11 14 11-14 11 14"
+          stroke="#c5d2b5"
+          strokeWidth="2"
+          strokeDasharray="5 8"
+        />
+        <rect
+          x="108"
+          y="70"
+          width="77"
+          height="150"
+          rx="3"
+          stroke="#bdd0a7"
+          strokeOpacity=".75"
+        />
+        <circle cx="146" cy="108" r="15" fill="#90a993" fillOpacity=".2" />
+        <path
+          d="M124 160c-4-29 47-29 45 0v24h-45z"
+          fill="#90a993"
+          fillOpacity=".2"
+        />
+        <path
+          d="M351 146v-37h79v101h-43"
+          stroke="#a2bdac"
+          strokeOpacity=".55"
+        />
+        <rect x="338" y="160" width="70" height="95" rx="3" stroke="#bdd0a7" />
+        <path
+          d="M47 88V45h43m380 0h43v43M47 255v43h43m380 0h43v-43"
+          stroke="#d0dcc9"
+          strokeOpacity=".45"
+        />
+        <circle cx="280" cy="146" r="5" fill="#d0dcc9" />
+        <circle cx="280" cy="146" r="26" stroke="#d0dcc9" strokeOpacity=".15" />
+      </svg>
+      <div className="vision-chip">
+        <span />
+        Detect. Track. Guide.
+      </div>
+      <div className="art-bottomline">
+        <span>COMPUTER VISION · AUDIO</span>
+        <span>
+          A clearer way forward. <Arrow diagonal />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function Projects() {
+  return (
+    <section id="projects" className="section projects-section" tabIndex={-1}>
+      <SectionLabel number="01">SELECTED WORK</SectionLabel>
+      <div className="section-intro">
+        <h2>
+          From curiosity
+          <br />
+          to <em>something useful.</em>
+        </h2>
+        <p>
+          Products, experiments, and the engineering
+          <br className="desktop-break" /> that brings them to life.
+        </p>
+      </div>
+      <div className="featured-projects">
+        {projects.slice(0, 2).map((project, index) => (
+          <article className="featured-project" key={project.title}>
+            {index === 0 ? <ChessVisual /> : <VisionVisual />}
+            <div className="project-caption">
+              <span className="small-label">
+                {index === 0
+                  ? "PRODUCT ENGINEERING"
+                  : "APPLIED MACHINE LEARNING"}
+              </span>
+              <span className="project-index">0{index + 1}</span>
             </div>
-            <time>{item.dates}</time>
-          </div>
-          <p className="resume-entry-focus">{item.focus}</p>
-          <p className="resume-entry-summary">{item.summary}</p>
-          <ul className="resume-entry-bullets">
-            {item.responsibilities.map((detail) => <li key={detail}>{detail}</li>)}
-          </ul>
-          <div className="resume-entry-results" aria-label={`${item.organization} results`}>
-            {item.results.map((result) => (
-              <div className="resume-result" key={`${result.value}-${result.label}`}>
-                <strong>{result.value}</strong>
-                <span>{result.label}</span>
+            <h3>{project.title}</h3>
+            <p className="project-role">{project.role}</p>
+            <p className="project-summary">
+              {index === 0
+                ? "Turning fragmented chess histories into a complete picture of your next opponent. I built cross-platform player search, identity resolution, and Stockfish-backed preparation."
+                : "Turning a wearable camera into priority-aware spoken guidance. With my team, I combined object detection, persistent tracking, and route-aware audio to focus on what matters ahead."}
+            </p>
+            <p className="project-impact">{project.impact}</p>
+            <details className="project-details">
+              <summary>
+                Behind the build <span aria-hidden="true">+</span>
+              </summary>
+              <ul>
+                {project.bullets.map((bullet) => (
+                  <li key={bullet}>{bullet}</li>
+                ))}
+              </ul>
+              {index === 1 && (
+                <p>
+                  Co-created with Arya Kunisetty, Krishay Garg, and
+                  Hui-Peng-John-Yao.
+                </p>
+              )}
+              <p className="detail-stack">{project.stack}</p>
+            </details>
+            <ExternalLink href={project.href}>{project.linkLabel}</ExternalLink>
+          </article>
+        ))}
+      </div>
+      <div className="more-projects">
+        {projects.slice(2).map((project, index) => (
+          <article key={project.title}>
+            <span className="small-label">
+              0{index + 3} /{" "}
+              {index === 0 ? "MODEL RELIABILITY" : "MULTIMODAL EXPLORATION"}
+            </span>
+            <h3>{project.title}</h3>
+            <p>{project.summary}</p>
+            <p className="mini-impact">{project.impact}</p>
+            <details className="project-details">
+              <summary>
+                Behind the build <span aria-hidden="true">+</span>
+              </summary>
+              <p>{project.role}</p>
+              <ul>
+                {project.bullets.map((bullet) => (
+                  <li key={bullet}>{bullet}</li>
+                ))}
+              </ul>
+              <p>{project.stack}</p>
+            </details>
+            <ExternalLink href={project.href}>{project.linkLabel}</ExternalLink>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Experience() {
+  return (
+    <section
+      id="experience"
+      className="section experience-section"
+      tabIndex={-1}
+    >
+      <SectionLabel number="02">EXPERIENCE</SectionLabel>
+      <div className="section-intro">
+        <h2>
+          Good ideas.
+          <br />
+          <em>Real-world rigor.</em>
+        </h2>
+        <p>
+          Across production systems, research labs,
+          <br className="desktop-break" /> and the space in between.
+        </p>
+      </div>
+      <div className="experience-list">
+        {roles.map((role, index) => (
+          <article className="experience-entry" key={role.organization}>
+            <div className="experience-meta">
+              <span className="small-label">
+                0{index + 1} /{" "}
+                {role.track === "research" ? "RESEARCH" : "ENGINEERING"}
+              </span>
+              <h3>{role.organization}</h3>
+              <p className="role-title">{role.role}</p>
+              <p className="role-date">{role.dates}</p>
+            </div>
+            <div className="experience-body">
+              <p className="experience-focus">{role.focus}</p>
+              <p>{role.summary}</p>
+              <div className="results">
+                {role.results.map((result) => (
+                  <div key={result.value}>
+                    <strong>
+                      {result.value
+                        .replaceAll(" min", "\u00a0min")
+                        .replaceAll(" ms", "\u00a0ms")}
+                    </strong>
+                    <span>{result.label}</span>
+                  </div>
+                ))}
+              </div>
+              <details className="project-details">
+                <summary>
+                  Technical details <span aria-hidden="true">+</span>
+                </summary>
+                <ul>
+                  {role.responsibilities.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </details>
+              {role.link && (
+                <ExternalLink href={role.link}>{role.linkLabel}</ExternalLink>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function About() {
+  return (
+    <section id="campus" className="section about-section" tabIndex={-1}>
+      <SectionLabel number="03">A LITTLE MORE ABOUT ME</SectionLabel>
+      <div className="about-opening">
+        <h2>
+          A curious mind.
+          <br />
+          <em>A builder at heart.</em>
+        </h2>
+        <div>
+          <p>
+            I'm a Computer Science student at UCLA, expected to graduate in
+            2028. My work spans systems engineering, applied machine learning,
+            and products that turn complex information into something useful.
+          </p>
+          <p>
+            Beyond the code, I'm part of UCLA's builder community and computer
+            vision team—and a former US Chess Top 100 Junior.
+          </p>
+        </div>
+      </div>
+      <div className="about-columns">
+        <div>
+          <h3 className="subsection-title">Around campus</h3>
+          {campusRoles.map((role) => (
+            <article className="campus-role" key={role.title}>
+              <p className="small-label">{role.dates}</p>
+              <h4>{role.title}</h4>
+              <p className="campus-position">{role.role}</p>
+              <p>{role.summary}</p>
+              <p className="mini-impact">{role.impact}</p>
+              <details className="project-details">
+                <summary>
+                  More about this work <span aria-hidden="true">+</span>
+                </summary>
+                <ul>
+                  {role.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+                <p>{role.stack}</p>
+              </details>
+            </article>
+          ))}
+        </div>
+        <div>
+          <h3 className="subsection-title">Along the way</h3>
+          <div className="recognition-list">
+            {recognition.map(([title, context]) => (
+              <div key={title}>
+                <span className="recognition-mark" aria-hidden="true">
+                  ✧
+                </span>
+                <div>
+                  <h4>{title}</h4>
+                  <p>{context}</p>
+                </div>
               </div>
             ))}
           </div>
-          {item.link && (
-            <a href={item.link} target="_blank" rel="noreferrer" className="case-link resume-entry-link" data-blade-target>
-              {item.linkLabel} <span>↗</span>
-            </a>
-          )}
-        </article>
-      ))}
-    </div>
+        </div>
+      </div>
+      <div className="toolkit">
+        <h3 className="subsection-title">Tools of the trade</h3>
+        <div>
+          {skills.map(([title, list]) => (
+            <div className="skill-row" key={title}>
+              <h4>{title}</h4>
+              <p>{list}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
-function ProjectList({ items }: { items: Project[] }) {
+function Contact() {
   return (
-    <div className="resume-project-list">
-      {items.map((project, index) => (
-        <article
-          className="resume-project"
-          key={project.title}
-          data-blade-target
-          data-reveal
-          style={{ "--reveal-order": index % 3 } as CSSProperties}
-        >
-          <div className="resume-project-header">
-            <div>
-              <h3>{project.title}</h3>
-              <p>{project.role}</p>
-            </div>
-            <a href={project.href} target="_blank" rel="noreferrer" className="case-link resume-project-link" data-blade-target>
-              {project.linkLabel} <span>↗</span>
-            </a>
-          </div>
-          <p className="resume-project-summary">{project.summary}</p>
-          <ul className="resume-project-bullets">
-            {project.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
-          </ul>
-          <div className="resume-project-meta">
-            <strong>{project.impact}</strong>
-            <span>{project.stack}</span>
-          </div>
-        </article>
-      ))}
-    </div>
+    <section id="contact" className="section contact-section" tabIndex={-1}>
+      <div className="contour-lines" aria-hidden="true">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <span key={i} style={{ inset: `${i * 24}px ${i * 34}px` }} />
+        ))}
+      </div>
+      <SectionLabel number="04">WHAT'S NEXT?</SectionLabel>
+      <p className="contact-kicker">
+        A project, a question, or a shared curiosity.
+      </p>
+      <h2>
+        Let's build
+        <br />
+        <em>something good.</em>
+      </h2>
+      <a className="contact-email" href="mailto:mahesh523k@gmail.com">
+        mahesh523k@gmail.com
+        <Arrow diagonal />
+      </a>
+      <div className="social-links">
+        <ExternalLink href="https://github.com/MK-523">GitHub</ExternalLink>
+        <ExternalLink href="https://www.linkedin.com/in/mnkarthikeyan/">
+          LinkedIn
+        </ExternalLink>
+        <ExternalLink href="https://chessstalker.com/">
+          ChessStalker
+        </ExternalLink>
+      </div>
+    </section>
   );
 }
 
 export default function App() {
-  const [ready, setReady] = useState(false);
-
+  const [pastHero, setPastHero] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (!ready) return;
-
-    const root = document.documentElement;
-    const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reducedMotion || !("IntersectionObserver" in window)) {
-      targets.forEach((target) => target.classList.add("is-visible"));
-      return;
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add("is-visible");
-        observer.unobserve(entry.target);
-      });
-    }, { rootMargin: "0px 0px -9%", threshold: 0.08 });
-
-    targets.forEach((target) => observer.observe(target));
-    root.classList.add("reveal-ready");
-
-    return () => {
-      observer.disconnect();
-      root.classList.remove("reveal-ready");
+    const hero = document.getElementById("top");
+    if (!hero || !("IntersectionObserver" in window)) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setPastHero(!entry.isIntersecting),
+      { rootMargin: "-100px 0px 0px 0px" },
+    );
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
     };
-  }, [ready]);
-
+    const closeOutside = (event: PointerEvent) => {
+      if (!headerRef.current?.contains(event.target as Node))
+        setMenuOpen(false);
+    };
+    const closeAtDesktop = () => {
+      if (window.innerWidth > 640) setMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("pointerdown", closeOutside);
+    window.addEventListener("resize", closeAtDesktop);
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("pointerdown", closeOutside);
+      window.removeEventListener("resize", closeAtDesktop);
+    };
+  }, [menuOpen]);
   return (
     <>
-      <BladeExperience onReady={() => setReady(true)} />
-
-      <header className={ready ? "site-header is-ready" : "site-header"} aria-hidden={!ready} inert={!ready ? true : undefined}>
-        <a href="#top" className="site-name" data-blade-target>Mahesh Karthikeyan</a>
-        <nav aria-label="Primary navigation">
-          <a href="#experience" data-blade-target>Experience</a>
-          <a href="#projects" data-blade-target>Projects</a>
-          <a href="#campus" data-blade-target>Campus</a>
-          <a href="#contact" data-blade-target>Contact</a>
+      <a className="skip-link" href="#projects">
+        Skip to selected work
+      </a>
+      <header
+        ref={headerRef}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            setMenuOpen(false);
+        }}
+        className={`site-header${pastHero ? " is-solid" : ""}${menuOpen ? " menu-open" : ""}`}
+      >
+        <a className="brand" href="#top" onClick={() => setMenuOpen(false)}>
+          <span className="brand-monogram">
+            mk<span>.</span>
+          </span>
+          <span className="brand-caption">
+            MAHESH
+            <br />
+            KARTHIKEYAN
+          </span>
+        </a>
+        <button
+          ref={menuButtonRef}
+          className="menu-toggle"
+          aria-controls="primary-nav"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {menuOpen ? "Close" : "Menu"}
+          <span aria-hidden="true">{menuOpen ? "−" : "+"}</span>
+        </button>
+        <nav id="primary-nav" aria-label="Primary navigation">
+          {[
+            ["experience", "Experience"],
+            ["projects", "Projects"],
+            ["campus", "About"],
+            ["contact", "Contact"],
+          ].map(([id, label]) => (
+            <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)}>
+              {label}
+              {id === "contact" && <Arrow diagonal />}
+            </a>
+          ))}
         </nav>
       </header>
-
-      <main className={ready ? "portfolio-shell is-ready" : "portfolio-shell"} inert={!ready ? true : undefined} aria-busy={!ready}>
-        <section className="hero" id="top">
-          <p className="eyebrow">UCLA Computer Science · Expected 2028</p>
-          <div className="hero-display">
-            <h1 className="hero-name" tabIndex={-1} aria-label="Mahesh Karthikeyan">
-              <span data-text="Mahesh">Mahesh</span>
-              <span data-text="Karthikeyan">Karthikeyan</span>
-            </h1>
-            <div className="hero-role-grid" aria-label="Current roles and selected results">
-              {roleHighlights.map((item) => (
-                <article className="hero-role" key={item.organization}>
-                  <p>{item.label}</p>
-                  <h2>{item.role}</h2>
-                  <span>{item.organization}</span>
-                  <p className="hero-role-description">{item.description}</p>
-                  <strong>{item.result}</strong>
-                  <small>{item.resultLabel}</small>
-                </article>
-              ))}
-            </div>
-          </div>
-          <div className="hero-bottom">
-            <p>Also: Web Developer Intern at US Chess · Research Assistant at UC Santa Barbara</p>
-            <a href="#experience" className="text-action" data-blade-target>View experience <span>↓</span></a>
-          </div>
-        </section>
-
-        <section className="work-section resume-section" id="experience" tabIndex={-1}>
-          <SectionHeading title="Experience" />
-          <RoleList items={roles} />
-        </section>
-
-        <section className="resume-section resume-projects-section" id="projects" tabIndex={-1}>
-          <SectionHeading title="Projects" />
-          <ProjectList items={projects} />
-        </section>
-
-        <section className="resume-section campus-section" id="campus" tabIndex={-1}>
-          <SectionHeading title="Campus Involvement" />
-          <div className="resume-project-list experience-campus-list" aria-label="Campus experience">
-            {campusRoles.map((item, index) => (
-              <article
-                className="resume-project campus-entry"
-                key={item.title}
-                data-blade-target
-                data-reveal
-                style={{ "--reveal-order": index % 3 } as CSSProperties}
-              >
-                <div className="resume-project-header">
-                  <div>
-                    <h3>{item.title}</h3>
-                    <p>{item.role}</p>
-                  </div>
-                  <time>{item.dates}</time>
-                </div>
-                <p className="resume-project-summary">{item.summary}</p>
-                <ul className="resume-project-bullets">
-                  {item.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
-                </ul>
-                <div className="resume-project-meta">
-                  <strong>{item.impact}</strong>
-                  <span>{item.stack}</span>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <div className="experience-support-grid">
-            <div className="experience-support-column" role="group" aria-label="Awards and recognition">
-              {recognition.map(([title, context], index) => (
-                <div className="about-row" key={title} data-reveal style={{ "--reveal-order": index % 3 } as CSSProperties}>
-                  <h3>{title}</h3>
-                  <p>{context}</p>
-                </div>
-              ))}
-            </div>
-            <div className="experience-support-column" role="group" aria-label="Technical skills">
-              {tools.map(([title, list], index) => (
-                <div className="about-row skill-row resume-skill-row" key={title} data-reveal style={{ "--reveal-order": index % 3 } as CSSProperties}>
-                  <h3>{title}</h3>
-                  <p className="skill-list">{list}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="contact-section" id="contact" tabIndex={-1} data-reveal>
-          <p>Systems engineering · Applied ML · Research collaboration</p>
-          <h2>Email Mahesh.</h2>
-          <a href="mailto:mahesh523k@gmail.com" className="contact-link" data-blade-target>
-            mahesh523k@gmail.com <span>↗</span>
-          </a>
-          <div className="social-links">
-            <a href="https://github.com/MK-523" target="_blank" rel="noreferrer" data-blade-target>GitHub</a>
-            <a href="https://www.linkedin.com/in/mnkarthikeyan/" target="_blank" rel="noreferrer" data-blade-target>LinkedIn</a>
-            <a href="https://chessstalker.com/" target="_blank" rel="noreferrer" data-blade-target>ChessStalker</a>
-          </div>
-        </section>
+      <main>
+        <AlpineHero />
+        <Projects />
+        <Experience />
+        <About />
+        <Contact />
       </main>
-
-      <footer aria-hidden={!ready} inert={!ready ? true : undefined}>
-        <span>Mahesh Karthikeyan</span>
-        <span>UCLA CS · Systems · Product · Chess</span>
-        <span>© {new Date().getFullYear()}</span>
+      <footer>
+        <a href="#top" className="footer-name">
+          Mahesh Karthikeyan<span>© {new Date().getFullYear()}</span>
+        </a>
+        <p>UCLA CS · Systems · Product · Chess</p>
+        <a href="#top" className="back-top">
+          Back to the view <span aria-hidden="true">↑</span>
+        </a>
       </footer>
     </>
   );
