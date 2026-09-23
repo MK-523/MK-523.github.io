@@ -1,6 +1,6 @@
 # Mahesh Karthikeyan — Personal Portfolio
 
-A cinematic alpine portfolio at [mk-523.github.io](https://mk-523.github.io/), built with React, TypeScript, and Vite. GitHub Pages serves the production files checked into the root of this repository.
+An immersive forest-and-lake portfolio at [mk-523.github.io](https://mk-523.github.io/), built with React, TypeScript, and Vite. GitHub Pages serves the production files checked into the root of this repository.
 
 ## Develop and verify
 
@@ -15,17 +15,19 @@ npm run preview
 npm run format:check
 ```
 
-The production build includes TypeScript checking. Eight interaction tests cover motion preferences, visibility, storage restrictions, image failure, menu keyboard behavior, and section anchors.
+The production build includes TypeScript checking. Nine interaction tests cover device motion preferences, visibility, image failure, menu keyboard behavior, hash navigation, direct links, and focus restoration.
 
 ## Edit
 
 - `src/content.ts`: experience, projects, campus roles, recognition, and technical skills.
 - `src/App.tsx`: navigation, page sections, and original project illustrations.
-- `src/AlpineHero.tsx`: the layered scene and its motion controls.
+- `src/AlpineHero.tsx`: the responsive landscape and device-aware parallax.
 - `src/styles.css`: the complete responsive design system.
 - `public/`: self-hosted fonts, original landscape WebP variants, and static metadata.
 
-Motion runs only for fine pointers that permit animation. Reduced-motion and touch/coarse-pointer devices use a static scene. Visitors can turn motion off; the preference persists when local storage is available. The scene stops animating outside the viewport and when the browser tab is hidden. A gradient remains behind the text if an image fails.
+The landscape is the home view. Projects, Experience, Campus, Awards, About, and Contact open as independently scrollable panels, with navigation always available. URL hashes support direct links and browser Back/Forward. The original `#campus` link still opens campus involvement. Escape closes the mobile menu first, or returns an open section to the landscape. Keyboard focus follows the selected content.
+
+Parallax runs only for fine pointers that permit animation. Reduced-motion and touch/coarse-pointer devices use a static scene. Automatic mist movement settles within five seconds. Motion pauses behind an open panel, outside the viewport, and when the browser tab is hidden. A gradient remains behind the text if an image fails.
 
 See [ARTWORK.md](ARTWORK.md) for the original image prompt and asset provenance.
 

@@ -29,10 +29,10 @@ function SectionLabel({
   children: ReactNode;
 }) {
   return (
-    <p className="section-label">
-      <span>{number}</span>
+    <h2 className="section-label">
+      <span aria-hidden="true">{number}</span>
       {children}
-    </p>
+    </h2>
   );
 }
 
@@ -159,18 +159,7 @@ function VisionVisual() {
 function Projects() {
   return (
     <section id="projects" className="section projects-section" tabIndex={-1}>
-      <SectionLabel number="01">SELECTED WORK</SectionLabel>
-      <div className="section-intro">
-        <h2>
-          From curiosity
-          <br />
-          to <em>something useful.</em>
-        </h2>
-        <p>
-          Products, experiments, and the engineering
-          <br className="desktop-break" /> that brings them to life.
-        </p>
-      </div>
+      <SectionLabel number="01">Projects</SectionLabel>
       <div className="featured-projects">
         {projects.slice(0, 2).map((project, index) => (
           <article className="featured-project" key={project.title}>
@@ -249,18 +238,7 @@ function Experience() {
       className="section experience-section"
       tabIndex={-1}
     >
-      <SectionLabel number="02">EXPERIENCE</SectionLabel>
-      <div className="section-intro">
-        <h2>
-          Good ideas.
-          <br />
-          <em>Real-world rigor.</em>
-        </h2>
-        <p>
-          Across production systems, research labs,
-          <br className="desktop-break" /> and the space in between.
-        </p>
-      </div>
+      <SectionLabel number="02">Experience</SectionLabel>
       <div className="experience-list">
         {roles.map((role, index) => (
           <article className="experience-entry" key={role.organization}>
@@ -311,69 +289,21 @@ function Experience() {
 
 function About() {
   return (
-    <section id="campus" className="section about-section" tabIndex={-1}>
-      <SectionLabel number="03">A LITTLE MORE ABOUT ME</SectionLabel>
+    <section id="about" className="section about-section" tabIndex={-1}>
+      <SectionLabel number="05">About</SectionLabel>
       <div className="about-opening">
-        <h2>
-          A curious mind.
-          <br />
-          <em>A builder at heart.</em>
-        </h2>
-        <div>
-          <p>
-            I'm a Computer Science student at UCLA, expected to graduate in
-            2028. My work spans systems engineering, applied machine learning,
-            and products that turn complex information into something useful.
-          </p>
-          <p>
-            Beyond the code, I'm part of UCLA's builder community and computer
-            vision team—and a former US Chess Top 100 Junior.
-          </p>
-        </div>
-      </div>
-      <div className="about-columns">
-        <div>
-          <h3 className="subsection-title">Around campus</h3>
-          {campusRoles.map((role) => (
-            <article className="campus-role" key={role.title}>
-              <p className="small-label">{role.dates}</p>
-              <h4>{role.title}</h4>
-              <p className="campus-position">{role.role}</p>
-              <p>{role.summary}</p>
-              <p className="mini-impact">{role.impact}</p>
-              <details className="project-details">
-                <summary>
-                  More about this work <span aria-hidden="true">+</span>
-                </summary>
-                <ul>
-                  {role.bullets.map((bullet) => (
-                    <li key={bullet}>{bullet}</li>
-                  ))}
-                </ul>
-                <p>{role.stack}</p>
-              </details>
-            </article>
-          ))}
-        </div>
-        <div>
-          <h3 className="subsection-title">Along the way</h3>
-          <div className="recognition-list">
-            {recognition.map(([title, context]) => (
-              <div key={title}>
-                <span className="recognition-mark" aria-hidden="true">
-                  ✧
-                </span>
-                <div>
-                  <h4>{title}</h4>
-                  <p>{context}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <p>
+          I'm a Computer Science student at UCLA, expected to graduate in 2028.
+          My work spans systems engineering, applied machine learning, and
+          products that turn complex information into something useful.
+        </p>
+        <p>
+          Beyond the code, I'm part of UCLA's builder community and computer
+          vision team—and a former US Chess Top 100 Junior.
+        </p>
       </div>
       <div className="toolkit">
-        <h3 className="subsection-title">Tools of the trade</h3>
+        <h3 className="subsection-title">Technical skills</h3>
         <div>
           {skills.map(([title, list]) => (
             <div className="skill-row" key={title}>
@@ -387,23 +317,65 @@ function About() {
   );
 }
 
+function Campus() {
+  return (
+    <section id="campus" className="section campus-section" tabIndex={-1}>
+      <SectionLabel number="03">Campus involvement</SectionLabel>
+      <div className="campus-list">
+        {campusRoles.map((role) => (
+          <article className="campus-role" key={role.title}>
+            <div className="campus-meta">
+              <p className="small-label">{role.dates}</p>
+              <h3>{role.title}</h3>
+              <p className="campus-position">{role.role}</p>
+            </div>
+            <div>
+              <p className="campus-summary">{role.summary}</p>
+              <p className="mini-impact">{role.impact}</p>
+              <details className="project-details">
+                <summary>
+                  More about this work <span aria-hidden="true">+</span>
+                </summary>
+                <ul>
+                  {role.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+                <p>{role.stack}</p>
+              </details>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Awards() {
+  return (
+    <section id="awards" className="section awards-section" tabIndex={-1}>
+      <SectionLabel number="04">Awards & recognition</SectionLabel>
+      <div className="recognition-list">
+        {recognition.map(([title, context]) => (
+          <article key={title}>
+            <span className="recognition-mark" aria-hidden="true">
+              ✧
+            </span>
+            <div>
+              <h3>{title}</h3>
+              <p>{context}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Contact() {
   return (
     <section id="contact" className="section contact-section" tabIndex={-1}>
-      <div className="contour-lines" aria-hidden="true">
-        {[0, 1, 2, 3, 4, 5].map((i) => (
-          <span key={i} style={{ inset: `${i * 24}px ${i * 34}px` }} />
-        ))}
-      </div>
-      <SectionLabel number="04">WHAT'S NEXT?</SectionLabel>
-      <p className="contact-kicker">
-        A project, a question, or a shared curiosity.
-      </p>
-      <h2>
-        Let's build
-        <br />
-        <em>something good.</em>
-      </h2>
+      <SectionLabel number="06">Contact</SectionLabel>
       <a className="contact-email" href="mailto:mahesh523k@gmail.com">
         mahesh523k@gmail.com
         <Arrow diagonal />
@@ -421,27 +393,55 @@ function Contact() {
   );
 }
 
+const destinations = [
+  { id: "projects", label: "Projects", component: Projects },
+  { id: "experience", label: "Experience", component: Experience },
+  { id: "campus", label: "Campus", component: Campus },
+  { id: "awards", label: "Awards", component: Awards },
+  { id: "about", label: "About", component: About },
+  { id: "contact", label: "Contact", component: Contact },
+];
+
+function currentDestination() {
+  const id = window.location.hash.slice(1);
+  return destinations.find((destination) => destination.id === id) ?? null;
+}
+
 export default function App() {
-  const [pastHero, setPastHero] = useState(false);
+  const [active, setActive] = useState(currentDestination);
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previousDestination = useRef(active);
+
   useEffect(() => {
-    const hero = document.getElementById("top");
-    if (!hero || !("IntersectionObserver" in window)) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setPastHero(!entry.isIntersecting),
-      { rootMargin: "-100px 0px 0px 0px" },
-    );
-    observer.observe(hero);
-    return () => observer.disconnect();
+    const navigate = () => {
+      setActive(currentDestination());
+      setMenuOpen(false);
+    };
+    window.addEventListener("hashchange", navigate);
+    return () => window.removeEventListener("hashchange", navigate);
   }, []);
+
   useEffect(() => {
-    if (!menuOpen) return;
+    if (active) {
+      const section = panelRef.current?.querySelector<HTMLElement>("section");
+      section?.focus({ preventScroll: true });
+    } else if (previousDestination.current) {
+      document.getElementById("hero-name")?.focus({ preventScroll: true });
+    }
+    previousDestination.current = active;
+  }, [active]);
+
+  useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key !== "Escape") return;
+      if (menuOpen) {
         setMenuOpen(false);
         menuButtonRef.current?.focus();
+      } else if (active) {
+        window.location.hash = "top";
       }
     };
     const closeOutside = (event: PointerEvent) => {
@@ -449,7 +449,7 @@ export default function App() {
         setMenuOpen(false);
     };
     const closeAtDesktop = () => {
-      if (window.innerWidth > 640) setMenuOpen(false);
+      if (window.innerWidth > 760) setMenuOpen(false);
     };
     window.addEventListener("keydown", closeOnEscape);
     window.addEventListener("pointerdown", closeOutside);
@@ -459,11 +459,22 @@ export default function App() {
       window.removeEventListener("pointerdown", closeOutside);
       window.removeEventListener("resize", closeAtDesktop);
     };
-  }, [menuOpen]);
+  }, [menuOpen, active]);
+
+  const Content = active?.component;
   return (
     <>
-      <a className="skip-link" href="#projects">
-        Skip to selected work
+      <a
+        className="skip-link"
+        href="#main-content"
+        onClick={(event) => {
+          event.preventDefault();
+          document
+            .getElementById("main-content")
+            ?.focus({ preventScroll: true });
+        }}
+      >
+        Skip to content
       </a>
       <header
         ref={headerRef}
@@ -471,7 +482,7 @@ export default function App() {
           if (!event.currentTarget.contains(event.relatedTarget))
             setMenuOpen(false);
         }}
-        className={`site-header${pastHero ? " is-solid" : ""}${menuOpen ? " menu-open" : ""}`}
+        className={`site-header${active ? " is-solid" : ""}${menuOpen ? " menu-open" : ""}`}
       >
         <a className="brand" href="#top" onClick={() => setMenuOpen(false)}>
           <span className="brand-monogram">
@@ -482,6 +493,7 @@ export default function App() {
             <br />
             KARTHIKEYAN
           </span>
+          <span className="sr-only"> (home)</span>
         </a>
         <button
           ref={menuButtonRef}
@@ -490,39 +502,51 @@ export default function App() {
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(!menuOpen)}
         >
-          {menuOpen ? "Close" : "Menu"}
+          {menuOpen ? "Close menu" : "Menu"}
           <span aria-hidden="true">{menuOpen ? "−" : "+"}</span>
         </button>
         <nav id="primary-nav" aria-label="Primary navigation">
-          {[
-            ["experience", "Experience"],
-            ["projects", "Projects"],
-            ["campus", "About"],
-            ["contact", "Contact"],
-          ].map(([id, label]) => (
-            <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)}>
+          {destinations.map(({ id, label }) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              aria-current={active?.id === id ? "page" : undefined}
+              onClick={() => setMenuOpen(false)}
+            >
               {label}
               {id === "contact" && <Arrow diagonal />}
             </a>
           ))}
         </nav>
       </header>
-      <main>
-        <AlpineHero />
-        <Projects />
-        <Experience />
-        <About />
-        <Contact />
+      <main id="main-content" tabIndex={-1}>
+        <AlpineHero covered={!!active} />
+        {Content && (
+          <div className="portfolio-panel" key={active.id} ref={panelRef}>
+            <div className="panel-toolbar">
+              <span>
+                PORTFOLIO <span aria-hidden="true">/</span>{" "}
+                {active.label.toUpperCase()}
+              </span>
+              <a
+                href="#top"
+                className="panel-close"
+                aria-label="Back to landscape, close section"
+              >
+                Back to landscape <span aria-hidden="true">×</span>
+              </a>
+            </div>
+            <div className="panel-scroll">
+              <Content />
+            </div>
+          </div>
+        )}
       </main>
-      <footer>
-        <a href="#top" className="footer-name">
-          Mahesh Karthikeyan<span>© {new Date().getFullYear()}</span>
-        </a>
-        <p>UCLA CS · Systems · Product · Chess</p>
-        <a href="#top" className="back-top">
-          Back to the view <span aria-hidden="true">↑</span>
-        </a>
-      </footer>
+      {!active && (
+        <p className="home-footer">
+          © {new Date().getFullYear()} Mahesh Karthikeyan
+        </p>
+      )}
     </>
   );
 }

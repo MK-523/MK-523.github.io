@@ -5,6 +5,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -15,7 +16,7 @@ let mediaListeners: Set<() => void>;
 let observers: Array<(entries: Array<{ isIntersecting: boolean }>) => void>;
 
 beforeEach(() => {
-  localStorage.clear();
+  window.history.replaceState(null, "", "/");
   mediaMatches = true;
   mediaListeners = new Set();
   observers = [];
@@ -58,23 +59,9 @@ afterEach(() => {
 const hero = () => screen.getByRole("region", { name: "Mahesh Karthikeyan" });
 
 describe("landscape motion", () => {
-  it("lets visitors stop motion and preserves the choice after remount", () => {
-    const first = render(<AlpineHero />);
-    expect(hero().getAttribute("data-motion")).toBe("on");
-    fireEvent.click(screen.getByRole("button", { name: /Motion on:/ }));
-    expect(hero().getAttribute("data-motion")).toBe("off");
-    expect(localStorage.getItem("portfolio-motion")).toBe("off");
-    first.unmount();
-    render(<AlpineHero />);
-    expect(hero().getAttribute("data-motion")).toBe("off");
-  });
   it("uses a static scene for reduced motion or a coarse pointer and follows live preference changes", () => {
     mediaMatches = false;
     render(<AlpineHero />);
-    const toggle = screen.getByRole("button", {
-      name: /Motion off:/,
-    }) as HTMLButtonElement;
-    expect(toggle.disabled).toBe(true);
     expect(hero().getAttribute("data-animating")).toBe("false");
     expect(requestAnimationFrame).not.toHaveBeenCalled();
     act(() => {
@@ -112,22 +99,6 @@ describe("landscape motion", () => {
     fireEvent(document, new Event("visibilitychange"));
     expect(hero().getAttribute("data-animating")).toBe("true");
   });
-  it("keeps the page and toggle usable when local storage is unavailable", () => {
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-      throw new Error("Storage disabled");
-    });
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-      throw new Error("Storage disabled");
-    });
-    render(<AlpineHero />);
-    fireEvent.click(screen.getByRole("button", { name: /Motion on:/ }));
-    expect(hero().getAttribute("data-motion")).toBe("off");
-    expect(
-      screen
-        .getByRole("link", { name: "Explore my work" })
-        .getAttribute("href"),
-    ).toBe("#projects");
-  });
   it("keeps the name and actions available if both image layers fail", () => {
     const { container } = render(<AlpineHero />);
     container
@@ -153,7 +124,7 @@ describe("portfolio navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: "Menu" }));
     expect(
       screen
-        .getByRole("button", { name: "Close" })
+        .getByRole("button", { name: "Close menu" })
         .getAttribute("aria-expanded"),
     ).toBe("true");
     fireEvent.keyDown(window, { key: "Escape" });
@@ -161,25 +132,70 @@ describe("portfolio navigation", () => {
     expect(menu.getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(menu);
   });
-  it("closes the menu after navigation and preserves every existing section anchor", () => {
-    const { container } = render(<App />);
+  it("opens each section directly, separates campus from awards, and preserves old anchors", async () => {
+    render(<App />);
+    for (const [id, title] of [
+      ["projects", "Projects"],
+      ["experience", "Experience"],
+      ["campus", "Campus involvement"],
+      ["awards", "Awards & recognition"],
+      ["about", "About"],
+      ["contact", "Contact"],
+    ]) {
+      act(() => {
+        window.history.pushState(null, "", `#${id}`);
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+      });
+      const heading = await screen.findByRole("heading", {
+        level: 2,
+        name: title,
+      });
+      const section = heading.closest("section");
+      expect(section?.id).toBe(id);
+      expect(document.activeElement).toBe(section);
+      expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1);
+      if (id === "campus") {
+        expect(screen.getByText("VEST at UCLA")).toBeTruthy();
+        expect(screen.queryByText("USNCO Finalist")).toBeNull();
+      }
+      if (id === "awards") {
+        expect(screen.getByText("USNCO Finalist")).toBeTruthy();
+        expect(screen.queryByText("VEST at UCLA")).toBeNull();
+      }
+      if (id === "experience")
+        expect(screen.getByText("Summer 2026")).toBeTruthy();
+    }
+  });
+  it("opens a bookmarked section immediately and returns focus to the home heading on Escape", async () => {
+    window.history.replaceState(null, "", "#campus");
+    render(<App />);
+    expect(
+      screen.getByRole("heading", { name: "Campus involvement" }),
+    ).toBeTruthy();
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => expect(window.location.hash).toBe("#top"));
+    await waitFor(() => expect(document.activeElement?.id).toBe("hero-name"));
+    expect(
+      screen.queryByRole("heading", { name: "Campus involvement" }),
+    ).toBeNull();
+  });
+  it("closes the phone menu after a destination link is followed", async () => {
+    render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Menu" }));
-    fireEvent.click(screen.getByRole("link", { name: "About" }));
+    fireEvent.click(screen.getByRole("link", { name: /^About$/ }));
+    await screen.findByRole("heading", { name: "About" });
     expect(
       screen
         .getByRole("button", { name: "Menu" })
         .getAttribute("aria-expanded"),
     ).toBe("false");
-    for (const anchor of container.querySelectorAll<HTMLAnchorElement>(
-      'a[href^="#"]',
-    )) {
-      expect(
-        document.getElementById(anchor.hash.slice(1)),
-        anchor.hash,
-      ).not.toBeNull();
-    }
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByText("Summer 2026")).toBeTruthy();
-    expect(container.querySelector("[inert]")).toBeNull();
+  });
+  it("returns an unknown hash to the usable home view", () => {
+    window.history.replaceState(null, "", "#unknown");
+    render(<App />);
+    expect(
+      screen.getByRole("heading", { name: "Mahesh Karthikeyan" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Explore my work" })).toBeTruthy();
   });
 });

@@ -1,12 +1,19 @@
-# Alpine artwork
+# Forest lake artwork
 
-Generated with the built-in imagegen tool for this portfolio on September 23, 2026.
+Generated with the built-in imagegen tool on September 23, 2026 for this portfolio. The returned original is 1672 × 941 pixels. Responsive WebP assets are exported at 960, 1600, and 2560 pixels wide; the largest is an upscaled export, not additional source detail. Transfer sizes are approximately 104 KB, 224 KB, and 379 KB. Both scenery layers share one cached image.
 
-Production assets: `public/images/alpine-960.webp`, `public/images/alpine-1600.webp`, and `public/images/alpine-2560.webp`. The foreground and background use the same cached image, with a feathered CSS mask and separate transforms. Responsive WebP exports are approximately 54 KB, 122 KB, and 227 KB.
+Production assets: `public/images/forest-lake-960.webp`, `public/images/forest-lake-1600.webp`, and `public/images/forest-lake-2560.webp`.
 
-The original artwork contains no text. Project illustrations are original code-native SVG/CSS compositions, rather than screenshots of the products. Instrument Serif and Inter are self-hosted; their SIL Open Font Licenses are in `public/fonts/`.
+The image contains no text. Project illustrations are original SVG/CSS compositions. Instrument Serif and Inter are self-hosted; their SIL Open Font Licenses are in `public/fonts/`.
 
 ## Final generation prompt
 
-Use case: photorealistic-natural. Asset type: original cinematic website hero background, landscape 2560x1440. Primary request: A vast misty alpine valley at early sunrise, immersive photographic realism and restrained natural color. Composition: wide panoramic view from a high overlook into an immense receding valley; layered rugged mountain ridges, a distant central snow-touched peak, an S-curve of pale mist far below. Dark evergreen pine forests on lower slopes and foreground corners. Keep middle of composition calm and softly lit enough for large ivory website title placed by code, and leave open subdued sky at top for navigation. Soft warm early sun entering from upper right, cool desaturated sage and deep forest greens, gray-green shadowed mountains, a subtle luminous ivory sky. Rich atmospheric perspective, natural fine detail, cinematic analog landscape photography, believable geology, sophisticated quiet and awe, neither oversaturated nor fantasy. No text, letters, typography, UI, borders, logos, people, buildings, or watermarks. Fill entire image edge to edge. Foreground trees frame only lower corners; distant mountains remain prominent.
+Use case: photorealistic-natural.
+Asset type: Full-viewport landscape background for a personal portfolio website.
+Primary request: An exceptionally realistic, immersive alpine forest lake setting, as if the viewer is standing on the shore, with tangible foreground depth and vast natural scenery beyond.
+Scene: a still dark emerald alpine lake, softly reflected rugged distant mountains and conifer-covered slopes receding into cool early-morning mist. Close irregular pine trunks and fine natural pine branches frame the extreme left and right edges and upper corners. A few textured shoreline rocks and moss low along the bottom edges. Open middle and center-left lake area has calm, low-detail dark reflections suitable for ivory typography overlaid in the website.
+Style: premium large-format landscape photograph, believable natural geology and trees, subtle atmospheric perspective, exceptionally detailed pine needles, moss and rock, restrained natural color, crisp near edges, softly hazy distance. No illustration, no painterly surfaces, no stylized 3D geometry.
+Composition: wide cinematic 16:9 image at 3840x2160. Camera at human eye height, immersive spatial depth through foreground, middle-ground shore, background valley. Horizon in upper half. Asymmetric and naturally composed, spacious lake opening in center, not a symmetrical fantasy scene. Keep a beautiful viable center crop for phones.
+Lighting: soft morning sky through thin fog, gentle warm sunlight on distant peaks, deep forest shadows with visible detail, photographic dynamic range.
+Constraints: only landscape, no people, no buildings, no screens, no interface, no text, no logos, no watermark. Original scene, not a copy of another website. Avoid hyper-saturated teal, artificial glow, giant cinematic sun, overly perfect reflections, fantasy mountains.
 
