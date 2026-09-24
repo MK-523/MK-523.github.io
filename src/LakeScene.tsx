@@ -1,12 +1,18 @@
-import { useEffect, useRef, useState } from "react";
-import { createLakeRenderer, type LakeRenderer } from "./lake-renderer";
+import { useEffect, useRef, useState, type RefObject } from "react";
+import {
+  createLakeRenderer,
+  type LakeRenderer,
+  type LookDirection,
+} from "./lake-renderer";
 
 export default function LakeScene({
-  paused,
+  paused = false,
   progress: destination = 0,
+  lookRef,
 }: {
-  paused: boolean;
+  paused?: boolean;
   progress?: number;
+  lookRef?: RefObject<LookDirection>;
 }) {
   const destinationRef = useRef(destination);
   useEffect(() => {
@@ -36,11 +42,12 @@ export default function LakeScene({
       lastStamp = 0;
     let disposed = false,
       lost = false;
+    const look = { yaw: 0, pitch: 0 };
     const moving = () => !pausedRef.current && !reduced.matches;
     const paint = (stamp: number) => {
       frame = 0;
       if (!renderer || disposed || lost || document.hidden) return;
-      const interval = 1000 / (touch.matches ? 24 : 30);
+      const interval = 1000 / (touch.matches ? 30 : 60) - 0.5;
       if (moving() && stamp - lastFrame < interval) {
         frame = requestAnimationFrame(paint);
         return;
@@ -53,7 +60,12 @@ export default function LakeScene({
       progress = moving()
         ? progress + (target - progress) * (1 - Math.exp(-dt * 0.0018))
         : target;
-      renderer.draw(progress, elapsed);
+      if (lookRef) {
+        const blend = moving() ? 1 - Math.exp(-dt * 0.016) : 1;
+        look.yaw += (lookRef.current.yaw - look.yaw) * blend;
+        look.pitch += (lookRef.current.pitch - look.pitch) * blend;
+        renderer.draw(progress, elapsed, look);
+      } else renderer.draw(progress, elapsed);
       const second = String(Math.floor(elapsed));
       if (canvas.dataset.time !== second) canvas.dataset.time = second;
       canvas.dataset.progress = progress.toFixed(3);
@@ -111,6 +123,7 @@ export default function LakeScene({
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
     window.addEventListener("scene-preference-change", preference);
+    window.addEventListener("scene-look-change", schedule);
     document.addEventListener("visibilitychange", preference);
     reduced.addEventListener("change", preference);
     initialize();
@@ -124,10 +137,11 @@ export default function LakeScene({
       window.removeEventListener("resize", resize);
       observer.disconnect();
       window.removeEventListener("scene-preference-change", preference);
+      window.removeEventListener("scene-look-change", schedule);
       document.removeEventListener("visibilitychange", preference);
       reduced.removeEventListener("change", preference);
     };
-  }, [generation]);
+  }, [generation, lookRef]);
   return (
     <div
       className="lake-scene scene-geometry"

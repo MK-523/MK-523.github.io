@@ -111,6 +111,7 @@ svg {
 .app-shell {
   height: 100dvh;
   isolation: isolate;
+  contain: paint;
 }
 .skip-link {
   position: fixed;
@@ -124,28 +125,36 @@ svg {
 .skip-link:focus {
   top: 15px;
 }
-/* The entire rendered view contracts into a circular window, so the mountain
-   and animated water remain composed together at every size. */
+/* Transform a stable viewport-sized surface. Resizing its drawing buffer on
+   every transition frame caused visible jumps and temporary cleared frames. */
+.scene-size {
+  position: fixed;
+  width: var(--circle-size);
+  height: 1px;
+  visibility: hidden;
+  pointer-events: none;
+}
 .scene-geometry {
   position: fixed;
-  left: 0;
+  left: calc((100vw - max(100vw, 100dvh)) / 2);
   top: 0;
-  width: 100vw;
+  width: max(100vw, 100dvh);
   height: 100dvh;
-  border-radius: 0;
+  transform: translate3d(0, 0, 0) scale(1);
+  clip-path: circle(75vmax at 50% 50%);
+  will-change: transform, clip-path;
   transition:
-    width 1s cubic-bezier(0.76, 0, 0.24, 1),
-    height 1s cubic-bezier(0.76, 0, 0.24, 1),
-    left 1s cubic-bezier(0.76, 0, 0.24, 1),
-    top 1s cubic-bezier(0.76, 0, 0.24, 1),
-    border-radius 1s cubic-bezier(0.76, 0, 0.24, 1);
+    transform 1.15s cubic-bezier(0.45, 0, 0.15, 1),
+    clip-path 1.15s cubic-bezier(0.45, 0, 0.15, 1);
 }
 .is-reading .scene-geometry {
-  width: var(--circle-size);
-  height: var(--circle-size);
-  left: calc(78vw - var(--circle-size) / 2);
-  top: 25vh;
-  border-radius: 50%;
+  transform: translate3d(
+      calc(78vw - 50vw),
+      calc(25vh + var(--circle-size) / 2 - 50dvh),
+      0
+    )
+    scale(var(--scene-scale, 0.3));
+  clip-path: circle(50dvh at 50% 50%);
 }
 .lake-scene {
   z-index: 1;
@@ -179,10 +188,26 @@ svg {
 .scene-hit {
   z-index: 2;
   padding: 0;
+  cursor: grab;
+  touch-action: pinch-zoom;
+  user-select: none;
+}
+.scene-hit:active {
+  cursor: grabbing;
 }
 .scene-hit:focus-visible {
   outline-offset: -8px;
   outline-color: #dae9df;
+}
+.is-reading .scene-hit:focus-visible::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc((max(100vw, 100dvh) - 100dvh) / 2);
+  width: 100dvh;
+  height: 100dvh;
+  border: calc(2px / var(--scene-scale, 0.3)) solid #789b87;
+  border-radius: 50%;
 }
 .site-header {
   position: fixed;
@@ -237,7 +262,7 @@ svg {
   z-index: 3;
   top: 122px;
   left: var(--gutter);
-  bottom: 90px;
+  bottom: 32px;
   width: min(680px, 51vw);
   overflow: auto;
   overscroll-behavior: contain;
@@ -264,29 +289,6 @@ svg {
   width: 100%;
   padding: 16px 0 30px;
   background: white;
-}
-.circle-caption {
-  position: fixed;
-  z-index: 3;
-  top: calc(25vh + var(--circle-size) + 30px);
-  left: calc(78vw - var(--circle-size) / 2);
-  width: var(--circle-size);
-  text-align: center;
-  font-size: 9px;
-  line-height: 2.5;
-  letter-spacing: 0.18em;
-  color: #596d60;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s;
-}
-.circle-caption span {
-  letter-spacing: 0.08em;
-  color: #596d60;
-}
-.is-reading .circle-caption {
-  opacity: 1;
-  transition-delay: 0.7s;
 }
 .continue-reading {
   display: flex;
@@ -543,122 +545,9 @@ svg {
   font-size: 10px;
 }
 
-/* The same compact controls remain available in both states. */
-.journey-controls {
-  position: fixed;
-  inset: auto 0 0;
-  height: 74px;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  padding: 10px var(--gutter) max(10px, env(safe-area-inset-bottom));
-  color: white;
-  background: linear-gradient(transparent, #09232d99);
-  transition:
-    color 0.5s,
-    background 0.5s;
-}
-.is-reading .journey-controls {
-  color: #304536;
-  background: white;
-}
-.journey-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-}
-.journey-status > span:first-child {
-  opacity: 0.85;
-  font-size: 9px;
-}
-.chapter-title {
-  margin-left: 15px;
-}
-.journey-track {
-  flex: 1;
-  height: 1px;
-  background: currentColor;
-  opacity: 0.45;
-}
-.journey-track > span {
-  display: block;
-  width: 100%;
-  height: 2px;
-  background: currentColor;
-  transform-origin: left;
-  transition: transform 0.6s;
-}
-.next-chapter {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  font-size: 12px;
-  padding: 0;
-}
-.next-chapter svg,
-.previous-step svg,
 .continue-reading svg {
   width: 18px;
   height: 18px;
-}
-.previous-step {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  margin-left: -10px;
-}
-.previous-step svg {
-  transform: rotate(180deg);
-}
-.previous-step:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-.scene-settings {
-  position: relative;
-  flex-shrink: 0;
-}
-.scene-settings summary {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  list-style: none;
-}
-.scene-settings summary::-webkit-details-marker {
-  display: none;
-}
-.scene-settings > div {
-  position: absolute;
-  right: 0;
-  bottom: 57px;
-  width: 245px;
-  background: white;
-  color: #294b36;
-  padding: 22px;
-  border: 1px solid #d2dbd5;
-  box-shadow: 0 10px 30px #112d2822;
-  font-size: 12px;
-}
-.scene-settings label {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  line-height: 1.7;
-  cursor: pointer;
-}
-.scene-settings input {
-  accent-color: #456850;
-  width: 17px;
-  height: 17px;
-}
-.scene-settings p {
-  margin-top: 12px;
-  font-size: 11px;
 }
 @media (min-width: 1700px) {
   .content-viewport {
@@ -680,10 +569,12 @@ svg {
     gap: 20px;
   }
   .is-reading .scene-geometry {
-    left: calc(82vw - var(--circle-size) / 2);
-  }
-  .circle-caption {
-    left: calc(82vw - var(--circle-size) / 2);
+    transform: translate3d(
+        calc(82vw - 50vw),
+        calc(25vh + var(--circle-size) / 2 - 50dvh),
+        0
+      )
+      scale(var(--scene-scale, 0.3));
   }
 }
 @media (max-width: 700px) {
@@ -712,26 +603,23 @@ svg {
     font-size: 10px;
   }
   .is-reading .scene-geometry {
-    left: calc(100vw - var(--gutter) - var(--circle-size));
-    top: 119px;
+    transform: translate3d(
+        calc(50vw - var(--gutter) - var(--circle-size) / 2),
+        calc(119px + var(--circle-size) / 2 - 50dvh),
+        0
+      )
+      scale(var(--scene-scale, 0.12));
   }
   .content-viewport {
     top: 243px;
     left: var(--gutter);
     right: var(--gutter);
     width: auto;
-    bottom: 78px;
+    bottom: 24px;
     padding-right: 12px;
   }
   .reading-column {
     padding-top: 0;
-  }
-  .circle-caption {
-    top: 142px;
-    left: var(--gutter);
-    width: auto;
-    text-align: left;
-    font-size: 9px;
   }
   .section-heading {
     margin-bottom: 20px;
@@ -761,26 +649,6 @@ svg {
     gap: 8px;
     font-size: 11px;
   }
-  .journey-controls {
-    height: 70px;
-    gap: 13px;
-  }
-  .chapter-title,
-  .journey-track {
-    display: none;
-  }
-  .next-chapter {
-    margin-left: auto;
-    gap: 12px;
-    font-size: 11px;
-  }
-  .previous-step {
-    width: 30px;
-    margin-left: -5px;
-  }
-  .scene-settings summary {
-    width: 34px;
-  }
 }
 @media (max-height: 600px) and (max-width: 900px) {
   :root {
@@ -797,19 +665,17 @@ svg {
     gap: 18px;
   }
   .is-reading .scene-geometry {
-    top: 100px;
-    left: calc(82vw - var(--circle-size) / 2);
+    transform: translate3d(
+        calc(82vw - 50vw),
+        calc(100px + var(--circle-size) / 2 - 50dvh),
+        0
+      )
+      scale(var(--scene-scale, 0.3));
   }
   .content-viewport {
     top: 80px;
-    bottom: 68px;
+    bottom: 24px;
     width: 57vw;
-  }
-  .circle-caption {
-    top: 240px;
-    left: calc(82vw - var(--circle-size) / 2);
-    width: var(--circle-size);
-    text-align: center;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -826,9 +692,7 @@ svg {
   }
   .lake-scene,
   .site-header,
-  .journey-controls,
   .scene-hit,
-  .circle-caption,
   .continue-reading {
     display: none;
   }
