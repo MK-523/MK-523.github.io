@@ -19,17 +19,38 @@ float noise(vec2 p) {
   return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);
 }
 float clouds(vec2 p) { return noise(p)*.57+noise(p*2.03+7.)*.28+noise(p*4.1-3.)*.15; }
+// The far shore surrounds the lake rather than ending at the sides of a flat
+// image. Every horizontal ray intersects the cylindrical horizon in front of it.
+vec3 panorama(vec2 uv) {
+  float u=fract(uv.x);
+  // Unwrap derivatives too: automatic mip selection at atan's discontinuity
+  // otherwise samples the entire image and leaves a dark line at the rear.
+  vec2 dx=dFdx(uv), dy=dFdy(uv);
+  dx.x-=round(dx.x); dy.x-=round(dy.x);
+  vec3 base=textureGrad(landscape,vec2(u,clamp(uv.y,.001,.999)),dx,dy).rgb;
+  float seam=1.-smoothstep(0.,.018,min(u,1.-u));
+  vec3 neighbor=textureGrad(landscape,vec2(clamp(1.-u,.0001,.9999),clamp(uv.y,.001,.999)),dx*vec2(-1,1),dy*vec2(-1,1)).rgb;
+  return mix(base,(base+neighbor)*.5,seam);
+}
 vec3 environment(vec3 direction, vec3 origin) {
-  float distanceToShore = (-650.-origin.z)/min(direction.z,-.05);
-  vec3 atShore = origin+direction*distanceToShore;
-  vec2 uv=vec2(.5+atShore.x/1450., .639-atShore.y/604.17);
-  vec3 photograph=texture(landscape,clamp(uv,vec2(.001),vec2(.999))).rgb;
-  // Cloud banks move independently of the photographed peaks.
-  float sky=smoothstep(.52,.05,uv.y);
-  float bank=clouds(uv*vec2(5.,8.)+vec2(time*.017,-time*.003));
+  float a=max(dot(direction.xz,direction.xz),.000001);
+  float b=dot(origin.xz,direction.xz);
+  float c=dot(origin.xz,origin.xz)-650.*650.;
+  float distanceToShore=(-b+sqrt(max(b*b-a*c,0.)))/a;
+  vec3 atShore=origin+direction*distanceToShore;
+  vec2 uv=vec2(.5+atan(atShore.x,-atShore.z)/6.2831853,
+               .526-atan(atShore.y,650.)/3.14159265);
+  vec3 photograph=panorama(uv);
+  // Clouds use world coordinates, so their motion also joins across the seam.
+  vec2 cloudPosition=direction.xz/max(direction.y+.3,.12);
+  float bank=clouds(cloudPosition*.9+vec2(time*.008,-time*.003));
+  float sky=smoothstep(.38,.16,uv.y);
   float vapor=smoothstep(.42,.82,bank)*sky*.29;
   photograph=mix(photograph,vec3(.68,.73,.77),vapor);
-  float mist=exp(-pow((uv.y-.43)/.085,2.))*clouds(uv*vec2(8.,19.)+vec2(time*.011,0.))*.19;
+  // The zenith is a continuous cloudy dome, avoiding equirectangular pole pinching.
+  vec3 zenith=mix(vec3(.49,.56,.63),vec3(.71,.76,.80),bank);
+  photograph=mix(photograph,zenith,1.-smoothstep(.04,.17,uv.y));
+  float mist=exp(-pow((uv.y-.44)/.035,2.))*clouds(atShore.xz*.01+vec2(time*.014,0.))*.13;
   return mix(photograph,vec3(.60,.68,.71),mist);
 }
 vec2 waterSlope(vec2 p, float distanceToEye) {
@@ -67,14 +88,14 @@ float rainLayer(vec2 uv,float scale,float speed) {
 }
 void main() {
   vec2 screen=(gl_FragCoord.xy-resolution*.5)/resolution.y;
-  vec3 forward=normalize(vec3(sin(yaw),pitch,-cos(yaw)));
+  vec3 forward=vec3(sin(yaw)*cos(pitch),sin(pitch),-cos(yaw)*cos(pitch));
   vec3 right=normalize(cross(forward,vec3(0,1,0)));
   vec3 up=cross(right,forward);
-  vec3 ray=normalize(forward*1.16+right*screen.x+up*screen.y);
+  vec3 ray=normalize(forward*.9+right*screen.x+up*screen.y);
   vec3 result;
   float hit=-camera.y/min(ray.y,-.00001);
   vec3 point=camera+ray*hit;
-  if(ray.y<0. && point.z>-648.) {
+  if(ray.y<0. && dot(point.xz,point.xz)<648.*648.) {
     vec2 slope=waterSlope(point.xz,hit);
     vec3 normal=normalize(vec3(-slope.x,1.,-slope.y));
     vec3 reflection=reflect(ray,normal);
@@ -110,14 +131,14 @@ export function cameraAt(progress: number, seconds = 0) {
     x: 0,
     y: 2.25,
     z: 36 - distance,
-    pitch: 0.1 + distance * 0.00072,
+    pitch: 0.2 + distance * 0.001,
     yaw: 0,
   };
 }
 
 export type LookDirection = { yaw: number; pitch: number };
 export type LakeRenderer = {
-  draw: (progress: number, seconds: number, look?: LookDirection) => void;
+  draw: (progress: number, seconds: number, look?: LookDirection) => boolean;
   resize: () => void;
   dispose: () => void;
 };
@@ -134,6 +155,7 @@ export function createLakeRenderer(
     powerPreference: "low-power",
   });
   if (!gl) return null;
+  const parallel = gl.getExtension("KHR_parallel_shader_compile");
   const shaders: WebGLShader[] = [];
   const program = gl.createProgram();
   const buffer = gl.createBuffer();
@@ -163,41 +185,54 @@ export function createLakeRenderer(
       gl.attachShader(program, shader);
     }
     gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      throw new Error(
-        shaders.map((s) => gl.getShaderInfoLog(s)).join("\n") ||
-          "Landscape shader linking failed",
+    let prepared = false;
+    let uniforms: Record<string, WebGLUniformLocation | null> = {};
+    const prepare = () => {
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error(
+          shaders.map((s) => gl.getShaderInfoLog(s)).join("\n") ||
+            "Landscape shader linking failed",
+        );
+      }
+      gl.useProgram(program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 3, -1, -1, 3]),
+        gl.STATIC_DRAW,
       );
-    }
-    gl.useProgram(program);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array([-1, -1, 3, -1, -1, 3]),
-      gl.STATIC_DRAW,
-    );
-    const position = gl.getAttribLocation(program, "position");
-    gl.enableVertexAttribArray(position);
-    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(
-      gl.TEXTURE_2D,
-      gl.TEXTURE_MIN_FILTER,
-      gl.LINEAR_MIPMAP_LINEAR,
-    );
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    const uniforms = Object.fromEntries(
-      ["resolution", "time", "camera", "yaw", "pitch"].map((key) => [
-        key,
-        gl.getUniformLocation(program, key),
-      ]),
-    );
-    gl.uniform1i(gl.getUniformLocation(program, "landscape"), 0);
+      const position = gl.getAttribLocation(program, "position");
+      gl.enableVertexAttribArray(position);
+      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        image,
+      );
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_MIN_FILTER,
+        gl.LINEAR_MIPMAP_LINEAR,
+      );
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      uniforms = Object.fromEntries(
+        ["resolution", "time", "camera", "yaw", "pitch"].map((key) => [
+          key,
+          gl.getUniformLocation(program, key),
+        ]),
+      );
+      gl.uniform1i(gl.getUniformLocation(program, "landscape"), 0);
+      prepared = true;
+      resize();
+    };
     const resize = () => {
       const width = canvas.clientWidth,
         height = canvas.clientHeight;
@@ -214,21 +249,37 @@ export function createLakeRenderer(
         canvas.height = nextHeight;
       }
       gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+      if (prepared)
+        gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
     };
     resize();
+    if (!parallel) prepare();
     return {
       resize,
       draw(progress, seconds, look = { yaw: 0, pitch: 0 }) {
+        // Poll compilation without blocking clicks, scrolling, or the first
+        // photographic paint. The fallback stays visible until a real frame.
+        if (!prepared) {
+          if (
+            parallel &&
+            !gl.getProgramParameter(program, parallel.COMPLETION_STATUS_KHR)
+          )
+            return false;
+          prepare();
+        }
         const camera = cameraAt(progress, seconds);
         gl.uniform1f(uniforms.time, seconds);
         gl.uniform3f(uniforms.camera, camera.x, camera.y, camera.z);
         gl.uniform1f(uniforms.yaw, camera.yaw + look.yaw);
-        gl.uniform1f(uniforms.pitch, camera.pitch + look.pitch);
+        gl.uniform1f(
+          uniforms.pitch,
+          Math.max(-1.48, Math.min(1.48, camera.pitch + look.pitch)),
+        );
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         canvas.dataset.cameraZ = camera.z.toFixed(2);
         canvas.dataset.lookYaw = look.yaw.toFixed(3);
         canvas.dataset.lookPitch = look.pitch.toFixed(3);
+        return true;
       },
       dispose,
     };

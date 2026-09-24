@@ -8,14 +8,17 @@ import {
   Contact,
 } from "./PortfolioSections";
 import LakeScene from "./LakeScene";
-import { Arrow } from "./Icons";
 import useJourney, { chapters } from "./useJourney";
 import useLandscape from "./useLandscape";
 
 const sections = [Projects, Experience, Campus, Awards, About, Contact];
 export default function App() {
-  const { step, go, advance, viewportRef } = useJourney();
-  const { shellRef, sizeRef, lookRef, handlers } = useLandscape(advance);
+  const { step, approached, go, advance, viewportRef } = useJourney();
+  const exploring = step === 0;
+  const { shellRef, sizeRef, lookRef, handlers } = useLandscape(
+    advance,
+    exploring,
+  );
   const reading = step % 2 === 1;
   const index = Math.floor(step / 2);
   const chapter = chapters[index];
@@ -55,17 +58,32 @@ export default function App() {
       data-step={step}
     >
       <div ref={sizeRef} className="scene-size" aria-hidden="true" />
-      <LakeScene progress={index / (chapters.length - 1)} lookRef={lookRef} />
+      <LakeScene
+        progress={(index + (approached ? 0.35 : 0)) / (chapters.length - 0.65)}
+        lookRef={lookRef}
+      />
       <a className="skip-link" href="#projects">
         Skip to work
       </a>
-      <button
-        className="scene-hit scene-geometry"
-        {...handlers}
-        aria-description="Drag to look around. Click or tap to continue. Left and right arrow keys also look around."
-        aria-keyshortcuts="ArrowLeft ArrowRight"
-        aria-label={reading ? "Return to the lake" : `Enter ${chapter.label}`}
-      />
+      {exploring ? (
+        <div
+          role="group"
+          tabIndex={0}
+          className="scene-hit scene-geometry"
+          {...handlers}
+          aria-label="Explore the Himalayan lake"
+          aria-description="Drag to look around. Left and right arrow keys also look around. Scroll or press Page Down twice to begin the portfolio, or use a section link."
+          aria-keyshortcuts="ArrowLeft ArrowRight PageDown"
+        />
+      ) : (
+        <button
+          className="scene-hit scene-geometry"
+          {...handlers}
+          aria-description="Drag to look around. Click or tap to continue. Left and right arrow keys also look around."
+          aria-keyshortcuts="ArrowLeft ArrowRight"
+          aria-label={reading ? "Return to the lake" : `Enter ${chapter.label}`}
+        />
+      )}
       <header className="site-header">
         <a
           className="brand"
@@ -101,13 +119,16 @@ export default function App() {
               <Section />
             </div>
           ))}
-          <button className="continue-reading" onClick={() => advance()}>
-            Continue across the lake <Arrow />
-          </button>
         </div>
       </main>
       <p className="sr-only" role="status">
-        {reading ? chapter.label : `On the lake. Next: ${chapter.label}.`}
+        {reading
+          ? chapter.label
+          : exploring
+            ? approached
+              ? "Exploring the lake. Scroll again to open Projects."
+              : "Explore the lake. Scroll to move closer, or choose a section above."
+            : `On the lake. Next: ${chapter.label}.`}
       </p>
     </div>
   );

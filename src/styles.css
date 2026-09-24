@@ -196,8 +196,8 @@ svg {
   cursor: grabbing;
 }
 .scene-hit:focus-visible {
+  outline: 2px solid #dae9df;
   outline-offset: -8px;
-  outline-color: #dae9df;
 }
 .is-reading .scene-hit:focus-visible::after {
   content: "";
@@ -289,17 +289,6 @@ svg {
   width: 100%;
   padding: 16px 0 30px;
   background: white;
-}
-.continue-reading {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 18px 0;
-  margin: 20px 0;
-  border-top: 1px solid var(--line);
-  width: 100%;
-  font-size: 12px;
-  text-align: left;
 }
 .section-heading {
   display: flex;
@@ -545,10 +534,6 @@ svg {
   font-size: 10px;
 }
 
-.continue-reading svg {
-  width: 18px;
-  height: 18px;
-}
 @media (min-width: 1700px) {
   .content-viewport {
     width: 720px;
@@ -692,8 +677,7 @@ svg {
   }
   .lake-scene,
   .site-header,
-  .scene-hit,
-  .continue-reading {
+  .scene-hit {
     display: none;
   }
   .content-viewport {

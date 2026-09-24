@@ -9,7 +9,7 @@ import type { LookDirection } from "./lake-renderer";
 
 /** Keep the drawing surface fixed during the circle transition and handle
  * direct manipulation independently from click-to-continue navigation. */
-export default function useLandscape(advance: () => void) {
+export default function useLandscape(advance: () => void, exploring = false) {
   const shellRef = useRef<HTMLDivElement>(null);
   const sizeRef = useRef<HTMLDivElement>(null);
   const lookRef = useRef<LookDirection>({ yaw: 0, pitch: 0 });
@@ -41,12 +41,12 @@ export default function useLandscape(advance: () => void) {
   }, []);
   const look = (yaw: number, pitch: number) => {
     lookRef.current = {
-      yaw: Math.max(-0.28, Math.min(0.28, yaw)),
-      pitch: Math.max(-0.11, Math.min(0.11, pitch)),
+      yaw,
+      pitch: Math.max(-1.35, Math.min(1.35, pitch)),
     };
     window.dispatchEvent(new Event("scene-look-change"));
   };
-  const onPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+  const onPointerDown = (event: PointerEvent<HTMLElement>) => {
     if (event.button !== 0 || event.isPrimary === false) return;
     gesture.current = {
       pointer: event.pointerId,
@@ -57,31 +57,31 @@ export default function useLandscape(advance: () => void) {
     };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
-  const onPointerMove = (event: PointerEvent<HTMLButtonElement>) => {
+  const onPointerMove = (event: PointerEvent<HTMLElement>) => {
     const start = gesture.current;
     if (event.pointerId !== start.pointer) return;
     const dx = event.clientX - start.x,
       dy = event.clientY - start.y;
     if (!start.moved && Math.hypot(dx, dy) < 7) return;
     start.moved = true;
-    look(start.yaw - dx * 0.0015, start.pitch + dy * 0.0009);
+    look(start.yaw - dx * 0.0035, start.pitch + dy * 0.0025);
   };
-  const onPointerUp = (event: PointerEvent<HTMLButtonElement>) => {
+  const onPointerUp = (event: PointerEvent<HTMLElement>) => {
     if (event.pointerId !== gesture.current.pointer) return;
     gesture.current.pointer = -1;
     if (event.currentTarget.hasPointerCapture(event.pointerId))
       event.currentTarget.releasePointerCapture(event.pointerId);
   };
-  const onClick = (event: MouseEvent<HTMLButtonElement>) => {
+  const onClick = (event: MouseEvent<HTMLElement>) => {
     event.stopPropagation();
     if (gesture.current.moved && event.detail !== 0) {
       gesture.current.moved = false;
       event.preventDefault();
       return;
     }
-    advance();
+    if (!exploring) advance();
   };
-  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
     look(
