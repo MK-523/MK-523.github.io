@@ -24,6 +24,12 @@ export default function LakeScene({
   const pausedRef = useRef(paused);
   const [ready, setReady] = useState(false);
   const [generation, setGeneration] = useState(0);
+  const [explored, setExplored] = useState(false);
+  useEffect(() => {
+    const explore = () => setExplored(true);
+    window.addEventListener("scene-look-change", explore, { once: true });
+    return () => window.removeEventListener("scene-look-change", explore);
+  }, []);
   useEffect(() => {
     pausedRef.current = paused;
     window.dispatchEvent(new Event("scene-preference-change"));
@@ -32,6 +38,11 @@ export default function LakeScene({
     const canvas = canvasRef.current,
       image = imageRef.current;
     if (!canvas || !image) return;
+    const detailImages = Array.from(
+      canvas.parentElement!.querySelectorAll<HTMLImageElement>(
+        ".mountain-detail",
+      ),
+    );
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const touch = window.matchMedia("(pointer: coarse)");
     let renderer: LakeRenderer | null = null;
@@ -109,7 +120,7 @@ export default function LakeScene({
       if (!image.complete || !image.naturalWidth || disposed || lost) return;
       try {
         renderer?.dispose();
-        renderer = createLakeRenderer(canvas, image);
+        renderer = createLakeRenderer(canvas, image, detailImages);
         if (renderer) {
           canvas.dataset.renderer = "webgl2";
           schedule();
@@ -131,6 +142,7 @@ export default function LakeScene({
     };
     const contextRestored = () => setGeneration((value) => value + 1);
     image.addEventListener("load", initialize);
+    detailImages.forEach((detail) => detail.addEventListener("load", schedule));
     canvas.addEventListener("webglcontextlost", contextLost);
     canvas.addEventListener("webglcontextrestored", contextRestored);
     window.addEventListener("resize", resize);
@@ -146,6 +158,9 @@ export default function LakeScene({
       cancelAnimationFrame(frame);
       renderer?.dispose();
       image.removeEventListener("load", initialize);
+      detailImages.forEach((detail) =>
+        detail.removeEventListener("load", schedule),
+      );
       canvas.removeEventListener("webglcontextlost", contextLost);
       canvas.removeEventListener("webglcontextrestored", contextRestored);
       window.removeEventListener("resize", resize);
@@ -169,17 +184,44 @@ export default function LakeScene({
         alt=""
         fetchPriority="high"
       />
-      <img
-        ref={imageRef}
-        className="environment-texture"
-        src="/images/himalayas-surround-1774.webp"
-        width="1774"
-        height="887"
-        alt=""
-        hidden
-        fetchPriority="high"
-      />
+      <picture hidden>
+        <source
+          type="image/avif"
+          srcSet="/images/himalayas-surround-1774.avif"
+        />
+        <img
+          ref={imageRef}
+          className="environment-texture"
+          src="/images/himalayas-surround-1774.webp"
+          width="1774"
+          height="887"
+          alt=""
+          hidden
+          decoding="async"
+          fetchPriority="low"
+        />
+      </picture>
       <canvas ref={canvasRef} className="lake-canvas" />
+      {["front", "right", "back", "left"].map((side, i) => (
+        <picture key={side} hidden>
+          <source
+            type="image/avif"
+            srcSet={
+              i === 0 || explored ? `/images/mountains-${side}.avif` : undefined
+            }
+          />
+          <img
+            className="mountain-detail"
+            src={
+              i === 0 || explored ? `/images/mountains-${side}.webp` : undefined
+            }
+            alt=""
+            hidden
+            decoding="async"
+            fetchPriority="low"
+          />
+        </picture>
+      ))}
       <div className="scene-shade" />
     </div>
   );

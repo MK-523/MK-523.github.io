@@ -37,3 +37,33 @@ Input image: visual reference for geology, natural photography, atmosphere, and 
 Scene: from the center of a vast cold turquoise glacial lake in the high Himalayas above the treeline. Realistic Khumbu/Gokyo-like snow-covered mountain pyramids, moraines, glaciers and dark rocky ridges surround the viewer in EVERY horizontal direction. The tallest beautiful snow pyramid is centered horizontally, with varied distant ranges all the way around. Overcast silver-gray clouds, diffuse morning sunlight, a little mist between mountains, naturally muted expedition photography. No forest.
 Projection and framing are critical: a true 360 x 180 degree latitude-longitude environment map, suitable for mapping onto the inside of a sphere. Full sky zenith along the top edge; nadir lake along the bottom edge. The distant WATERLINE MUST be perfectly horizontal at exactly 50 percent image height (the image equator). Every mountain and shoreline is in the upper half; the entire lower half is uninterrupted lake water. Mountain peaks have varied elevations between 18 and 40 degrees above the horizon. Natural equirectangular distortion, not a rectilinear lens. The leftmost and rightmost edges MUST join continuously: matching gray sky, matching low distant rocky ridges, matching horizon height, matching water and brightness, no discontinuity at the wrap seam. No nearby objects anywhere, no large foreground rocks, no boats, no people, no buildings, no flags, no text, no watermark.
 Photorealistic detail and believable geology. Preserve the reference's quiet cold mountain atmosphere. This is a production environment texture, not a website mockup.
+
+## Current mountain detail revision
+
+Generated September 23, 2026 with the built-in imagegen tool, reference-image edit mode.
+
+The old 1774 × 887 whole-sphere panorama supplied only about 532 × 257 pixels for each 108° mountain view. Four restored terrain sections now supply approximately 1806 × 871 pixels per view: about 3.4 times the linear source resolution. Their horizontal overlaps blend in the renderer. The original panorama supplies the upper sky and fallback.
+
+The generated sections reconstruct detail and are Himalayan-inspired artwork, not real photographs or a geographically exact mountain range. A preliminary whole-panorama edit still returned 1774 × 887 pixels and was not selected.
+
+## Selected assets
+
+| Direction | Native dimensions | AVIF bytes | WebP bytes | Generated source |
+| --- | --- | ---: | ---: | --- |
+| Front | 1806 × 871 | 213953 | 378340 | exec-3b59f613-63ca-43b9-b986-28fa2f221c6a.png |
+| Right | 1806 × 871 | 191210 | 344394 | exec-a7deade7-87dc-4c77-a3cd-26fc19d7d61e.png |
+| Back | 1805 × 871 | 203729 | 357436 | exec-64744e6f-1fb7-4da2-bc46-94582273415f.png |
+| Left | 1804 × 872 | 202084 | 356578 | exec-6fc4568a-4345-4802-80c6-038403442ea6.png |
+
+Saved project assets: `public/images/mountains-{front,right,back,left}.{avif,webp}`.
+Deliverable WebP copies: `public/images/mountains-front.webp`, `public/images/mountains-right.webp`, `public/images/mountains-back.webp`, `public/images/mountains-left.webp`.
+
+Input references were overlapping crops of the original `himalayas-surround-1774.webp`, centered at horizontal coordinates 0.5, 0.75, 0.0 (wrapped), and 0.25. Each covers 30% of panorama width and vertical coordinates 0.25–0.54. No generated image was upscaled after generation. Export: AVIF quality 65, WebP quality 88.
+
+Initial AVIF-capable loading: 83,670-byte primary fallback + 109,317-byte base panorama + 213,953-byte front detail = **406,940 bytes**. WebP fallback totals 695,550 bytes. Side and rear details load only after looking around; the primary fallback is the only preloaded image.
+
+## Exact prompt used for all four terrain edits
+
+Use case: photorealistic-natural.
+Edit target: the attached cropped mountain photograph, a small segment of a 360-degree Himalayan environment.
+Primary request: restore this small source as a large, extremely detailed photographic mountain image. Fill the entire output with EXACTLY the same crop. Keep the same aspect ratio, exact framing, positions, silhouettes and sizes of all mountains, shoreline height, lighting and colors. Do not zoom out, add extra sky or water, or move any feature. Reconstruct fine natural rock strata, granite fissures, snow gullies, glacier crevasses, moraine rubble and clear atmospheric detail. Sharp expedition landscape photography with deep focus and natural microcontrast, not painting, CGI or a sharpened low-resolution image. The viewer should see crisp individual rocky ridges and snow patterns at full screen. Keep the outer edges and their geometry faithful because this image must join neighboring views. No text, watermark, people, architecture or new objects. Produce the largest native landscape image available, with densely resolved detail, preserving this approximately 2.07:1 crop.

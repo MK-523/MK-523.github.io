@@ -89,6 +89,35 @@ function tick(time: number) {
 }
 
 describe("living landscape", () => {
+  it("defers side and rear detail downloads until visitors look around", () => {
+    reduced = true;
+    const view = render(<App />);
+    const details = Array.from(
+      view.container.querySelectorAll<HTMLImageElement>(".mountain-detail"),
+    );
+    expect(details[0].getAttribute("src")).toBe("/images/mountains-front.webp");
+    expect(details.slice(1).every((image) => !image.getAttribute("src"))).toBe(
+      true,
+    );
+    expect(
+      details
+        .slice(1)
+        .every(
+          (image) => !image.previousElementSibling?.getAttribute("srcset"),
+        ),
+    ).toBe(true);
+    fireEvent.keyDown(
+      screen.getByRole("group", { name: "Explore the Himalayan lake" }),
+      { key: "ArrowRight" },
+    );
+    expect(details.every((image) => image.getAttribute("src"))).toBe(true);
+    expect(
+      details.every((image) =>
+        image.previousElementSibling?.getAttribute("srcset")?.endsWith(".avif"),
+      ),
+    ).toBe(true);
+    expect(window.location.hash).toBe("");
+  });
   it("animates after image readiness and releases GPU resources on unmount", () => {
     const view = render(<LakeScene paused={false} />);
     loadImage(view.container);

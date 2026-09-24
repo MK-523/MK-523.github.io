@@ -7,6 +7,11 @@ void main() { gl_Position = vec4(position, 0., 1.); }
 const fragment = `#version 300 es
 precision highp float;
 uniform sampler2D landscape;
+uniform sampler2D detailFront;
+uniform sampler2D detailRight;
+uniform sampler2D detailBack;
+uniform sampler2D detailLeft;
+uniform vec4 detailReady;
 uniform vec2 resolution;
 uniform float time;
 uniform vec3 camera;
@@ -21,6 +26,15 @@ float noise(vec2 p) {
 float clouds(vec2 p) { return noise(p)*.57+noise(p*2.03+7.)*.28+noise(p*4.1-3.)*.15; }
 // The far shore surrounds the lake rather than ending at the sides of a flat
 // image. Every horizontal ray intersects the cylindrical horizon in front of it.
+vec4 mountainTile(sampler2D tile, vec2 uv, vec2 dx, vec2 dy, float center, float ready) {
+  float offset=fract(uv.x-center+.5)-.5;
+  float weight=(1.-smoothstep(.115,.15,abs(offset)))*ready;
+  vec2 local=vec2(.5+offset/.3,(uv.y-.25)/.29);
+  weight*=smoothstep(0.,.09,local.y)*(1.-smoothstep(.975,1.,local.y));
+  if(weight<=0.) return vec4(0.);
+  vec3 sampleColor=textureGrad(tile,clamp(local,vec2(.001),vec2(.999)),dx/vec2(.3,.29),dy/vec2(.3,.29)).rgb;
+  return vec4(sampleColor*weight,weight);
+}
 vec3 panorama(vec2 uv) {
   float u=fract(uv.x);
   // Unwrap derivatives too: automatic mip selection at atan's discontinuity
@@ -30,7 +44,14 @@ vec3 panorama(vec2 uv) {
   vec3 base=textureGrad(landscape,vec2(u,clamp(uv.y,.001,.999)),dx,dy).rgb;
   float seam=1.-smoothstep(0.,.018,min(u,1.-u));
   vec3 neighbor=textureGrad(landscape,vec2(clamp(1.-u,.0001,.9999),clamp(uv.y,.001,.999)),dx*vec2(-1,1),dy*vec2(-1,1)).rgb;
-  return mix(base,(base+neighbor)*.5,seam);
+  base=mix(base,(base+neighbor)*.5,seam);
+  // Each overlapping terrain tile spends its pixels on one mountain view,
+  // instead of magnifying a small patch of a whole-sphere image.
+  vec4 detail=mountainTile(detailFront,uv,dx,dy,.5,detailReady.x)
+             +mountainTile(detailRight,uv,dx,dy,.75,detailReady.y)
+             +mountainTile(detailBack,uv,dx,dy,0.,detailReady.z)
+             +mountainTile(detailLeft,uv,dx,dy,.25,detailReady.w);
+  return mix(base,detail.rgb/max(detail.a,.0001),min(detail.a,1.));
 }
 vec3 environment(vec3 direction, vec3 origin) {
   float a=max(dot(direction.xz,direction.xz),.000001);
@@ -146,6 +167,7 @@ export type LakeRenderer = {
 export function createLakeRenderer(
   canvas: HTMLCanvasElement,
   image: HTMLImageElement,
+  detailImages: HTMLImageElement[] = [],
 ): LakeRenderer | null {
   const gl = canvas.getContext("webgl2", {
     alpha: true,
@@ -160,15 +182,18 @@ export function createLakeRenderer(
   const program = gl.createProgram();
   const buffer = gl.createBuffer();
   const texture = gl.createTexture();
-  if (!program || !buffer || !texture) {
+  const detailTextures = Array.from({ length: 4 }, () => gl.createTexture());
+  if (!program || !buffer || !texture || detailTextures.some((t) => !t)) {
     gl.deleteProgram(program);
     gl.deleteBuffer(buffer);
     gl.deleteTexture(texture);
+    detailTextures.forEach((t) => gl.deleteTexture(t));
     return null;
   }
   const dispose = () => {
     gl.deleteBuffer(buffer);
     gl.deleteTexture(texture);
+    detailTextures.forEach((t) => gl.deleteTexture(t));
     shaders.forEach((shader) => gl.deleteShader(shader));
     gl.deleteProgram(program);
   };
@@ -186,6 +211,7 @@ export function createLakeRenderer(
     }
     gl.linkProgram(program);
     let prepared = false;
+    const uploaded = [0, 0, 0, 0];
     let uniforms: Record<string, WebGLUniformLocation | null> = {};
     const prepare = () => {
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
@@ -224,12 +250,38 @@ export function createLakeRenderer(
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.generateMipmap(gl.TEXTURE_2D);
       uniforms = Object.fromEntries(
-        ["resolution", "time", "camera", "yaw", "pitch"].map((key) => [
-          key,
-          gl.getUniformLocation(program, key),
-        ]),
+        ["resolution", "time", "camera", "yaw", "pitch", "detailReady"].map(
+          (key) => [key, gl.getUniformLocation(program, key)],
+        ),
       );
       gl.uniform1i(gl.getUniformLocation(program, "landscape"), 0);
+      ["detailFront", "detailRight", "detailBack", "detailLeft"].forEach(
+        (name, i) => {
+          gl.activeTexture(gl.TEXTURE1 + i);
+          gl.bindTexture(gl.TEXTURE_2D, detailTextures[i]);
+          gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            1,
+            1,
+            0,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            new Uint8Array([0, 0, 0, 255]),
+          );
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+          gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_MIN_FILTER,
+            gl.LINEAR_MIPMAP_LINEAR,
+          );
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+          gl.generateMipmap(gl.TEXTURE_2D);
+          gl.uniform1i(gl.getUniformLocation(program, name), i + 1);
+        },
+      );
       prepared = true;
       resize();
     };
@@ -239,8 +291,8 @@ export function createLakeRenderer(
       const scale = Math.min(
         window.devicePixelRatio || 1,
         1.25,
-        1440 / width,
-        1000 / height,
+        (window.matchMedia("(pointer: coarse)").matches ? 1440 : 1920) / width,
+        (window.matchMedia("(pointer: coarse)").matches ? 1000 : 1200) / height,
       );
       const nextWidth = Math.max(1, Math.round(width * scale));
       const nextHeight = Math.max(1, Math.round(height * scale));
@@ -267,6 +319,23 @@ export function createLakeRenderer(
             return false;
           prepare();
         }
+        for (let i = 0; i < Math.min(4, detailImages.length); i++) {
+          const detail = detailImages[i];
+          if (uploaded[i] || !detail.complete || !detail.naturalWidth) continue;
+          gl.activeTexture(gl.TEXTURE1 + i);
+          gl.bindTexture(gl.TEXTURE_2D, detailTextures[i]);
+          gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            detail,
+          );
+          gl.generateMipmap(gl.TEXTURE_2D);
+          uploaded[i] = 1;
+        }
+        gl.uniform4fv(uniforms.detailReady, uploaded);
         const camera = cameraAt(progress, seconds);
         gl.uniform1f(uniforms.time, seconds);
         gl.uniform3f(uniforms.camera, camera.x, camera.y, camera.z);
@@ -279,6 +348,9 @@ export function createLakeRenderer(
         canvas.dataset.cameraZ = camera.z.toFixed(2);
         canvas.dataset.lookYaw = look.yaw.toFixed(3);
         canvas.dataset.lookPitch = look.pitch.toFixed(3);
+        canvas.dataset.detailTiles = String(
+          uploaded.reduce((a, b) => a + b, 0),
+        );
         return true;
       },
       dispose,
