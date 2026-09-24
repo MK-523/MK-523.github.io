@@ -19,20 +19,21 @@ The build includes TypeScript checking. Interaction tests cover animation lifecy
 
 ## Experience and editing
 
-The opening is an unobstructed landscape. Click the scene, scroll, swipe, or use the compact journey controls to open Projects on a white page while the entire scene contracts into a small circular window. Continue to expand the scene and travel across the lake, then enter Experience at the next stop. Campus, Awards, About, and Contact follow in their own stops. Direct section links remain available at all sizes, including the original `#campus` anchor.
+The opening is an unobstructed landscape, with a camera that continuously moves forward toward the mountains. Each successive section takes the camera farther across the lake. Click or tap the scene, or scroll, to open Projects on a white page while the entire scene contracts into a small circular window. Continue to expand the scene and travel across the lake, then enter Experience at the next stop. Drag the landscape with a mouse or touch to look around; a tap or click without dragging advances. Left and right arrow keys also adjust the view when the landscape is focused. The circle transition scales and clips one fixed-size rendering surface, so it does not repeatedly resize or clear the canvas. Campus, Awards, About, and Contact follow in their own stops. Direct section links remain available at all sizes, including the original `#campus` anchor.
 
-Long sections scroll within the white reading area. A new scroll gesture at its boundary advances the journey; scrolling outside the reading area or clicking the circle/white space also advances. Trackpad momentum cannot skip stops. Previous view and upward scrolling reverse the sequence. Escape returns from reading to the same lake stop. URL hashes preserve reading and travel states for direct links and browser Back/Forward. Focus follows the active section, and inactive content is removed from the keyboard and accessibility order.
+Long sections scroll within the white reading area. A new scroll gesture at its boundary advances the journey; scrolling outside the reading area or clicking the circle/white space also advances. Trackpad momentum cannot skip stops. Upward scrolling reverses the sequence. Escape returns from reading to the same lake stop. URL hashes preserve reading and travel states for direct links and browser Back/Forward. Focus follows the active section, and inactive content is removed from the keyboard and accessibility order.
 
 - `src/content.ts`: existing projects, experience, campus, awards, and skills.
 - `src/PortfolioSections.tsx`: readable work lists and contact destinations.
 - `src/App.tsx`: the scene/reading composition and controls.
+- `src/useLandscape.ts`: drag/tap separation, keyboard look controls, and fixed-surface circle sizing.
 - `src/useJourney.ts`: alternating travel/reading state, input handling, hashes, and focus.
 - `src/LakeScene.tsx`: image readiness, animation scheduling, motion preferences, and GPU lifecycle.
 - `src/lake-renderer.ts`: camera travel, reflected water, wind waves, rain ripples, mist, clouds, and diagonal drizzle.
 - `src/styles.css`: responsive white reading pages and the contracting landscape circle.
 - `public/`: self-hosted fonts, original artwork, and static metadata.
 
-The renderer runs at a maximum of 30 frames/second (24 for coarse pointers), caps resolution, and stops in hidden tabs. Scene settings can pause animation. System reduced motion disables weather, camera animation, and CSS transitions while preserving every interaction. Image/GPU failure retains a photographic or gradient fallback. Content never depends on the renderer loading. No backend, external public API, or added runtime dependency is used.
+The renderer runs at a maximum of 60 frames/second (30 for coarse pointers), caps resolution, and stops in hidden tabs. System reduced motion disables weather, camera animation, and CSS transitions while preserving every interaction. Image/GPU failure retains a photographic or gradient fallback. Content never depends on the renderer loading. No backend, external public API, or added runtime dependency is used.
 
 The landscape is original Himalayan-inspired artwork, with procedural water and weather over a panoramic backdrop. See [ARTWORK.md](ARTWORK.md) for the generation prompt and provenance.
 

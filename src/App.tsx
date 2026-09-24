@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import type { MouseEvent } from "react";
 import {
   Projects,
   Experience,
@@ -10,22 +10,15 @@ import {
 import LakeScene from "./LakeScene";
 import { Arrow } from "./Icons";
 import useJourney, { chapters } from "./useJourney";
+import useLandscape from "./useLandscape";
 
 const sections = [Projects, Experience, Campus, Awards, About, Contact];
 export default function App() {
   const { step, go, advance, viewportRef } = useJourney();
-  const [paused, setPaused] = useState(false);
-  const [reduced, setReduced] = useState(false);
+  const { shellRef, sizeRef, lookRef, handlers } = useLandscape(advance);
   const reading = step % 2 === 1;
   const index = Math.floor(step / 2);
   const chapter = chapters[index];
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduced(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
   const navigate = (event: MouseEvent<HTMLDivElement>) => {
     if (
       event.button !== 0 ||
@@ -43,7 +36,7 @@ export default function App() {
       if (
         reading &&
         !(event.target as Element).closest(
-          "a, button, input, summary, .content-viewport, .site-header, .journey-controls",
+          "a, button, input, summary, .content-viewport, .site-header",
         )
       )
         advance();
@@ -56,20 +49,22 @@ export default function App() {
   };
   return (
     <div
+      ref={shellRef}
       className={`app-shell ${reading ? "is-reading" : "is-traveling"}`}
       onClick={navigate}
       data-step={step}
     >
-      <LakeScene paused={paused} progress={index / (chapters.length - 1)} />
+      <div ref={sizeRef} className="scene-size" aria-hidden="true" />
+      <LakeScene progress={index / (chapters.length - 1)} lookRef={lookRef} />
       <a className="skip-link" href="#projects">
         Skip to work
       </a>
       <button
         className="scene-hit scene-geometry"
-        onClick={() => advance()}
-        aria-label={
-          reading ? "Continue across the lake" : `Enter ${chapter.label}`
-        }
+        {...handlers}
+        aria-description="Drag to look around. Click or tap to continue. Left and right arrow keys also look around."
+        aria-keyshortcuts="ArrowLeft ArrowRight"
+        aria-label={reading ? "Return to the lake" : `Enter ${chapter.label}`}
       />
       <header className="site-header">
         <a
@@ -111,63 +106,6 @@ export default function App() {
           </button>
         </div>
       </main>
-      <div className="circle-caption" aria-hidden="true">
-        THE HIMALAYAS
-        <br />
-        <span>0{index + 1} / 06</span>
-      </div>
-      <aside className="journey-controls" aria-label="Journey navigation">
-        <button
-          className="previous-step"
-          onClick={() => advance(-1)}
-          disabled={step === 0}
-          aria-label="Previous view"
-        >
-          <Arrow />
-        </button>
-        <span className="journey-status">
-          0{index + 1}
-          <span> / 06</span>
-          <span className="chapter-title">{chapter.label}</span>
-        </span>
-        <span className="journey-track" aria-hidden="true">
-          <span style={{ transform: `scaleX(${(step + 1) / 12})` }} />
-        </span>
-        <button className="next-chapter" onClick={() => advance()}>
-          {reading ? "Continue journey" : `View ${chapter.label}`}
-          <Arrow />
-        </button>
-        <details className="scene-settings">
-          <summary aria-label="Scene settings">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M3 7h18M3 17h18M8 4v6m8 4v6"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-            </svg>
-          </summary>
-          <div>
-            <label>
-              <input
-                type="checkbox"
-                checked={!paused && !reduced}
-                disabled={reduced}
-                onChange={(event) => setPaused(!event.target.checked)}
-              />
-              Animate the landscape
-            </label>
-            {reduced && <p>Reduced motion follows your device setting.</p>}
-          </div>
-        </details>
-      </aside>
       <p className="sr-only" role="status">
         {reading ? chapter.label : `On the lake. Next: ${chapter.label}.`}
       </p>

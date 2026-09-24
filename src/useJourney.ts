@@ -62,8 +62,7 @@ export default function useJourney() {
       down: boolean;
     } | null = null;
     const isControl = (target: EventTarget | null) =>
-      target instanceof Element &&
-      !!target.closest("input, textarea, select, .scene-settings");
+      target instanceof Element && !!target.closest("input, textarea, select");
     const canReadScroll = (target: EventTarget | null, direction: number) => {
       const panel = viewportRef.current;
       if (
@@ -147,7 +146,11 @@ export default function useJourney() {
       if (!event.repeat && Date.now() >= lockUntil.current) advance(direction);
     };
     const touchstart = (event: TouchEvent) => {
-      if (event.touches.length !== 1 || isControl(event.target)) {
+      if (
+        event.touches.length !== 1 ||
+        isControl(event.target) ||
+        (event.target instanceof Element && event.target.closest(".scene-hit"))
+      ) {
         touchStart = null;
         return;
       }

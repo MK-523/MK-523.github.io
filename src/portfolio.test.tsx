@@ -10,7 +10,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import LakeScene from "./LakeScene";
-import { createLakeRenderer } from "./lake-renderer";
+import { createLakeRenderer, type LookDirection } from "./lake-renderer";
 import { chapters } from "./useJourney";
 
 vi.mock("./lake-renderer", () => ({ createLakeRenderer: vi.fn() }));
@@ -18,7 +18,8 @@ let reduced = false;
 let listeners: Set<() => void>;
 let frames: Map<number, FrameRequestCallback>;
 let nextFrame = 0;
-let draw = vi.fn<(progress: number, seconds: number) => void>();
+let draw =
+  vi.fn<(progress: number, seconds: number, look?: LookDirection) => void>();
 let dispose = vi.fn<() => void>();
 beforeEach(() => {
   window.history.replaceState(null, "", "/");
@@ -55,6 +56,9 @@ beforeEach(() => {
       disconnect() {}
     },
   );
+  HTMLElement.prototype.setPointerCapture = vi.fn();
+  HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
+  HTMLElement.prototype.releasePointerCapture = vi.fn();
   draw = vi.fn();
   dispose = vi.fn();
   vi.mocked(createLakeRenderer).mockReturnValue({
@@ -143,7 +147,7 @@ describe("living landscape", () => {
     expect(view.container.querySelector("canvas")?.dataset.renderer).toBe(
       "fallback",
     );
-    fireEvent.click(screen.getByRole("button", { name: "View Projects" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enter Projects" }));
     expect(screen.getByRole("heading", { name: "ChessStalker" })).toBeTruthy();
     fireEvent.click(screen.getByRole("link", { name: "Experience" }));
     expect(screen.getByRole("heading", { name: "Flex" })).toBeTruthy();
@@ -199,19 +203,61 @@ describe("alternating journey navigation", () => {
   it("alternates a reading stop with lake travel before showing the next section", () => {
     const view = render(<App />);
     expect(screen.queryByRole("heading", { name: "ChessStalker" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "View Projects" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enter Projects" }));
     expect(window.location.hash).toBe("#projects");
     expect(document.activeElement?.id).toBe("projects");
     expect(screen.getByRole("heading", { name: "ChessStalker" })).toBeTruthy();
     expect(
       view.container.firstElementChild?.classList.contains("is-reading"),
     ).toBe(true);
-    fireEvent.click(screen.getByRole("button", { name: "Continue journey" }));
+    fireEvent.click(screen.getByRole("button", { name: "Return to the lake" }));
     expect(window.location.hash).toBe("#lake-experience");
     expect(screen.queryByRole("heading", { name: "Flex" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "View Experience" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enter Experience" }));
     expect(screen.getByRole("heading", { name: "Flex" })).toBeTruthy();
     expect(window.location.hash).toBe("#experience");
+  });
+  it("looks around on drag without advancing, then accepts a normal click", () => {
+    const view = render(<App />);
+    loadImage(view.container);
+    tick(100);
+    const scene = screen.getByRole("button", { name: "Enter Projects" });
+    fireEvent.pointerDown(scene, {
+      pointerId: 1,
+      button: 0,
+      clientX: 600,
+      clientY: 300,
+      isPrimary: true,
+    });
+    fireEvent.pointerMove(scene, { pointerId: 1, clientX: 420, clientY: 330 });
+    fireEvent.pointerUp(scene, { pointerId: 1, clientX: 420, clientY: 330 });
+    fireEvent.click(scene, { detail: 1 });
+    tick(150);
+    expect(window.location.hash).toBe("");
+    expect(draw.mock.calls.at(-1)?.[2]?.yaw).toBeGreaterThan(0);
+    fireEvent.pointerDown(scene, {
+      pointerId: 2,
+      button: 0,
+      clientX: 600,
+      clientY: 300,
+      isPrimary: true,
+    });
+    fireEvent.pointerUp(scene, { pointerId: 2, clientX: 600, clientY: 300 });
+    fireEvent.click(scene, { detail: 1 });
+    expect(window.location.hash).toBe("#projects");
+  });
+  it("supports keyboard look with reduced motion without starting continuous animation", () => {
+    reduced = true;
+    const view = render(<App />);
+    loadImage(view.container);
+    tick(100);
+    fireEvent.keyDown(screen.getByRole("button", { name: "Enter Projects" }), {
+      key: "ArrowRight",
+    });
+    tick(150);
+    expect(draw.mock.calls.at(-1)?.[2]?.yaw).toBe(0.035);
+    expect(frames.size).toBe(0);
+    expect(window.location.hash).toBe("");
   });
   it("opens direct links and follows browser Back/Forward without depending on motion", () => {
     reduced = true;
@@ -224,7 +270,7 @@ describe("alternating journey navigation", () => {
     });
     expect(document.activeElement?.id).toBe("top");
     expect(
-      screen.getByRole("button", { name: "View Experience" }),
+      screen.getByRole("button", { name: "Enter Experience" }),
     ).toBeTruthy();
     act(() => {
       window.history.replaceState(null, "", "#experience");
@@ -304,7 +350,7 @@ describe("alternating journey navigation", () => {
   it("keeps all navigation usable with image failure and returns home after Contact", () => {
     const view = render(<App />);
     fireEvent.error(view.container.querySelector("img")!);
-    fireEvent.click(screen.getByRole("button", { name: "View Projects" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enter Projects" }));
     expect(document.activeElement?.id).toBe("projects");
     fireEvent.click(screen.getByRole("link", { name: "Contact" }));
     expect(
@@ -312,8 +358,8 @@ describe("alternating journey navigation", () => {
         .getByRole("link", { name: "mahesh523k@gmail.com" })
         .getAttribute("href"),
     ).toBe("mailto:mahesh523k@gmail.com");
-    fireEvent.click(screen.getByRole("button", { name: "Continue journey" }));
+    fireEvent.click(screen.getByRole("button", { name: "Return to the lake" }));
     expect(window.location.hash).toBe("#top");
-    expect(screen.getByRole("button", { name: "View Projects" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Enter Projects" })).toBeTruthy();
   });
 });

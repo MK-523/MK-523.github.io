@@ -99,19 +99,25 @@ void main() {
 }
 `;
 
-export function cameraAt(progress: number) {
+export function cameraAt(progress: number, seconds = 0) {
   const p = Math.max(0, Math.min(1, progress));
+  const elapsed = Math.max(0, seconds);
+  // Advance even between interactions. Approach the far shore smoothly without
+  // ever crossing the photographic horizon or looping back to the start.
+  const drift = (140 * elapsed) / (elapsed + 60);
+  const distance = p * 180 + drift * (1 - p * 0.25);
   return {
-    x: Math.sin(p * Math.PI * 1.6) * 34,
-    y: 2.25 + Math.sin(p * Math.PI) * 0.3,
-    z: 36 - p * 146,
-    pitch: 0.1 + p * 0.1,
-    yaw: Math.sin(p * Math.PI * 2 - 0.35) * 0.105,
+    x: 0,
+    y: 2.25,
+    z: 36 - distance,
+    pitch: 0.1 + distance * 0.00072,
+    yaw: 0,
   };
 }
 
+export type LookDirection = { yaw: number; pitch: number };
 export type LakeRenderer = {
-  draw: (progress: number, seconds: number) => void;
+  draw: (progress: number, seconds: number, look?: LookDirection) => void;
   resize: () => void;
   dispose: () => void;
 };
@@ -201,21 +207,28 @@ export function createLakeRenderer(
         1440 / width,
         1000 / height,
       );
-      canvas.width = Math.max(1, Math.round(width * scale));
-      canvas.height = Math.max(1, Math.round(height * scale));
+      const nextWidth = Math.max(1, Math.round(width * scale));
+      const nextHeight = Math.max(1, Math.round(height * scale));
+      if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+        canvas.width = nextWidth;
+        canvas.height = nextHeight;
+      }
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
     };
     resize();
     return {
       resize,
-      draw(progress, seconds) {
-        const camera = cameraAt(progress);
+      draw(progress, seconds, look = { yaw: 0, pitch: 0 }) {
+        const camera = cameraAt(progress, seconds);
         gl.uniform1f(uniforms.time, seconds);
         gl.uniform3f(uniforms.camera, camera.x, camera.y, camera.z);
-        gl.uniform1f(uniforms.yaw, camera.yaw);
-        gl.uniform1f(uniforms.pitch, camera.pitch);
+        gl.uniform1f(uniforms.yaw, camera.yaw + look.yaw);
+        gl.uniform1f(uniforms.pitch, camera.pitch + look.pitch);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
+        canvas.dataset.cameraZ = camera.z.toFixed(2);
+        canvas.dataset.lookYaw = look.yaw.toFixed(3);
+        canvas.dataset.lookPitch = look.pitch.toFixed(3);
       },
       dispose,
     };
