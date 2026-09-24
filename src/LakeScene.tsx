@@ -60,12 +60,26 @@ export default function LakeScene({
       progress = moving()
         ? progress + (target - progress) * (1 - Math.exp(-dt * 0.0018))
         : target;
-      if (lookRef) {
-        const blend = moving() ? 1 - Math.exp(-dt * 0.016) : 1;
-        look.yaw += (lookRef.current.yaw - look.yaw) * blend;
-        look.pitch += (lookRef.current.pitch - look.pitch) * blend;
-        renderer.draw(progress, elapsed, look);
-      } else renderer.draw(progress, elapsed);
+      let painted = false;
+      try {
+        if (lookRef) {
+          const blend = moving() ? 1 - Math.exp(-dt * 0.016) : 1;
+          look.yaw += (lookRef.current.yaw - look.yaw) * blend;
+          look.pitch += (lookRef.current.pitch - look.pitch) * blend;
+          painted = renderer.draw(progress, elapsed, look);
+        } else painted = renderer.draw(progress, elapsed);
+      } catch {
+        renderer.dispose();
+        renderer = null;
+        canvas.dataset.renderer = "fallback";
+        delete canvas.dataset.painted;
+        setReady(false);
+        return;
+      }
+      if (!painted) {
+        frame = requestAnimationFrame(paint);
+        return;
+      }
       const second = String(Math.floor(elapsed));
       if (canvas.dataset.time !== second) canvas.dataset.time = second;
       canvas.dataset.progress = progress.toFixed(3);
@@ -149,13 +163,20 @@ export default function LakeScene({
       data-ready={ready}
     >
       <img
-        ref={imageRef}
-        src="/images/himalayas-1920.webp"
-        srcSet="/images/himalayas-960.webp 960w, /images/himalayas-1920.webp 1920w"
-        sizes="100vw"
-        width="1920"
-        height="800"
+        src="/images/himalayas-960.webp"
+        width="960"
+        height="400"
         alt=""
+        fetchPriority="high"
+      />
+      <img
+        ref={imageRef}
+        className="environment-texture"
+        src="/images/himalayas-surround-1774.webp"
+        width="1774"
+        height="887"
+        alt=""
+        hidden
         fetchPriority="high"
       />
       <canvas ref={canvasRef} className="lake-canvas" />

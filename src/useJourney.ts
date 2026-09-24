@@ -26,18 +26,32 @@ export function hashFromStep(step: number) {
 export default function useJourney() {
   const [step, setStep] = useState(() => stepFromHash(window.location.hash));
   const stepRef = useRef(step);
+  const [approached, setApproached] = useState(step > 0);
+  const approachedRef = useRef(approached);
   const viewportRef = useRef<HTMLDivElement>(null);
   const lockUntil = useRef(0);
   const go = useCallback((value: number, record = true) => {
     const next = Math.max(0, value > lastStep ? 0 : value);
     lockUntil.current = Date.now() + 1100;
     stepRef.current = next;
+    approachedRef.current = next > 0;
+    setApproached(next > 0);
     setStep(next);
     if (record && window.location.hash !== hashFromStep(next))
       window.history.pushState(null, "", hashFromStep(next));
   }, []);
   const advance = useCallback(
-    (direction = 1) => go(stepRef.current + direction),
+    (direction = 1) => {
+      // The first deliberate scroll is only a camera approach. Opening clicks
+      // are reserved for exploration; no timer can reveal content for the user.
+      if (stepRef.current === 0 && direction > 0 && !approachedRef.current) {
+        approachedRef.current = true;
+        setApproached(true);
+        lockUntil.current = Date.now() + 1100;
+        return;
+      }
+      go(stepRef.current + direction);
+    },
     [go],
   );
 
@@ -199,5 +213,5 @@ export default function useJourney() {
       window.removeEventListener("hashchange", hash);
     };
   }, [advance, go]);
-  return { step, go, advance, viewportRef };
+  return { step, approached, go, advance, viewportRef };
 }

@@ -19,7 +19,7 @@ let listeners: Set<() => void>;
 let frames: Map<number, FrameRequestCallback>;
 let nextFrame = 0;
 let draw =
-  vi.fn<(progress: number, seconds: number, look?: LookDirection) => void>();
+  vi.fn<(progress: number, seconds: number, look?: LookDirection) => boolean>();
 let dispose = vi.fn<() => void>();
 beforeEach(() => {
   window.history.replaceState(null, "", "/");
@@ -59,7 +59,7 @@ beforeEach(() => {
   HTMLElement.prototype.setPointerCapture = vi.fn();
   HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
   HTMLElement.prototype.releasePointerCapture = vi.fn();
-  draw = vi.fn();
+  draw = vi.fn(() => true);
   dispose = vi.fn();
   vi.mocked(createLakeRenderer).mockReturnValue({
     draw,
@@ -73,7 +73,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 function loadImage(container: HTMLElement) {
-  const image = container.querySelector("img")!;
+  const image = container.querySelector(".environment-texture")!;
   Object.defineProperties(image, {
     complete: { value: true, configurable: true },
     naturalWidth: { value: 1920, configurable: true },
@@ -98,6 +98,36 @@ describe("living landscape", () => {
     expect(draw.mock.calls[1][1]).toBeGreaterThan(draw.mock.calls[0][1]);
     view.unmount();
     expect(dispose).toHaveBeenCalled();
+    expect(frames.size).toBe(0);
+  });
+  it("keeps the fallback visible while shaders compile, including reduced motion", () => {
+    reduced = true;
+    draw.mockReturnValueOnce(false).mockReturnValueOnce(false);
+    const view = render(<LakeScene />);
+    loadImage(view.container);
+    tick(100);
+    expect(view.container.firstElementChild?.getAttribute("data-ready")).toBe(
+      "false",
+    );
+    tick(150);
+    expect(frames.size).toBe(1);
+    tick(200);
+    expect(view.container.firstElementChild?.getAttribute("data-ready")).toBe(
+      "true",
+    );
+    expect(frames.size).toBe(0);
+  });
+  it("retains the fallback if asynchronous shader setup fails", () => {
+    draw.mockImplementationOnce(() => {
+      throw new Error("Shader failed");
+    });
+    const view = render(<LakeScene />);
+    loadImage(view.container);
+    tick(100);
+    expect(view.container.querySelector("canvas")?.dataset.renderer).toBe(
+      "fallback",
+    );
+    expect(dispose).toHaveBeenCalledOnce();
     expect(frames.size).toBe(0);
   });
   it("stops the frame loop in hidden tabs and resumes without a time jump", () => {
@@ -147,7 +177,7 @@ describe("living landscape", () => {
     expect(view.container.querySelector("canvas")?.dataset.renderer).toBe(
       "fallback",
     );
-    fireEvent.click(screen.getByRole("button", { name: "Enter Projects" }));
+    fireEvent.click(screen.getByRole("link", { name: "Projects" }));
     expect(screen.getByRole("heading", { name: "ChessStalker" })).toBeTruthy();
     fireEvent.click(screen.getByRole("link", { name: "Experience" }));
     expect(screen.getByRole("heading", { name: "Flex" })).toBeTruthy();
@@ -203,7 +233,7 @@ describe("alternating journey navigation", () => {
   it("alternates a reading stop with lake travel before showing the next section", () => {
     const view = render(<App />);
     expect(screen.queryByRole("heading", { name: "ChessStalker" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Enter Projects" }));
+    fireEvent.click(screen.getByRole("link", { name: "Projects" }));
     expect(window.location.hash).toBe("#projects");
     expect(document.activeElement?.id).toBe("projects");
     expect(screen.getByRole("heading", { name: "ChessStalker" })).toBeTruthy();
@@ -217,11 +247,13 @@ describe("alternating journey navigation", () => {
     expect(screen.getByRole("heading", { name: "Flex" })).toBeTruthy();
     expect(window.location.hash).toBe("#experience");
   });
-  it("looks around on drag without advancing, then accepts a normal click", () => {
+  it("keeps opening drags and clicks in exploration until a section is chosen", () => {
     const view = render(<App />);
     loadImage(view.container);
     tick(100);
-    const scene = screen.getByRole("button", { name: "Enter Projects" });
+    const scene = screen.getByRole("group", {
+      name: "Explore the Himalayan lake",
+    });
     fireEvent.pointerDown(scene, {
       pointerId: 1,
       button: 0,
@@ -244,16 +276,47 @@ describe("alternating journey navigation", () => {
     });
     fireEvent.pointerUp(scene, { pointerId: 2, clientX: 600, clientY: 300 });
     fireEvent.click(scene, { detail: 1 });
+    expect(window.location.hash).toBe("");
+    expect(screen.queryByRole("heading", { name: "ChessStalker" })).toBeNull();
+    fireEvent.click(screen.getByRole("link", { name: "Projects" }));
     expect(window.location.hash).toBe("#projects");
+  });
+  it("lets repeated drags turn all the way around without entering a section", () => {
+    reduced = true;
+    const view = render(<App />);
+    loadImage(view.container);
+    tick(100);
+    const scene = screen.getByRole("group", {
+      name: "Explore the Himalayan lake",
+    });
+    for (let pointerId = 1; pointerId <= 5; pointerId++) {
+      fireEvent.pointerDown(scene, {
+        pointerId,
+        button: 0,
+        clientX: 800,
+        clientY: 300,
+        isPrimary: true,
+      });
+      fireEvent.pointerMove(scene, { pointerId, clientX: 300, clientY: 300 });
+      fireEvent.pointerUp(scene, { pointerId });
+      fireEvent.click(scene, { detail: 1 });
+      tick(100 + pointerId * 50);
+    }
+    expect(draw.mock.calls.at(-1)?.[2]?.yaw).toBeGreaterThan(Math.PI * 2);
+    expect(window.location.hash).toBe("");
+    expect(frames.size).toBe(0);
   });
   it("supports keyboard look with reduced motion without starting continuous animation", () => {
     reduced = true;
     const view = render(<App />);
     loadImage(view.container);
     tick(100);
-    fireEvent.keyDown(screen.getByRole("button", { name: "Enter Projects" }), {
-      key: "ArrowRight",
-    });
+    fireEvent.keyDown(
+      screen.getByRole("group", { name: "Explore the Himalayan lake" }),
+      {
+        key: "ArrowRight",
+      },
+    );
     tick(150);
     expect(draw.mock.calls.at(-1)?.[2]?.yaw).toBe(0.035);
     expect(frames.size).toBe(0);
@@ -283,13 +346,17 @@ describe("alternating journey navigation", () => {
     vi.spyOn(Date, "now").mockImplementation(() => now);
     render(<App />);
     fireEvent.wheel(window, { deltaY: 60 });
-    expect(window.location.hash).toBe("#projects");
+    expect(window.location.hash).toBe("");
+    expect(screen.queryByRole("heading", { name: "ChessStalker" })).toBeNull();
     for (let i = 0; i < 20; i++) {
       now += 100;
       fireEvent.wheel(window, { deltaY: 80 });
     }
-    expect(window.location.hash).toBe("#projects");
+    expect(window.location.hash).toBe("");
     now += 300;
+    fireEvent.wheel(window, { deltaY: 60 });
+    expect(window.location.hash).toBe("#projects");
+    now += 1200;
     fireEvent.wheel(window, { deltaY: 60 });
     expect(window.location.hash).toBe("#lake-experience");
   });
@@ -324,8 +391,17 @@ describe("alternating journey navigation", () => {
     vi.spyOn(Date, "now").mockImplementation(() => now);
     render(<App />);
     fireEvent.keyDown(window, { key: "PageDown" });
+    expect(window.location.hash).toBe("");
+    now += 1200;
+    fireEvent.keyDown(window, { key: "PageDown" });
     expect(window.location.hash).toBe("#projects");
     fireEvent.keyDown(window, { key: "Escape" });
+    expect(window.location.hash).toBe("#top");
+    now += 1200;
+    fireEvent.touchStart(window, { touches: [{ clientX: 180, clientY: 600 }] });
+    fireEvent.touchEnd(window, {
+      changedTouches: [{ clientX: 180, clientY: 400 }],
+    });
     expect(window.location.hash).toBe("#top");
     now += 1200;
     fireEvent.touchStart(window, { touches: [{ clientX: 180, clientY: 600 }] });
@@ -349,8 +425,10 @@ describe("alternating journey navigation", () => {
   });
   it("keeps all navigation usable with image failure and returns home after Contact", () => {
     const view = render(<App />);
-    fireEvent.error(view.container.querySelector("img")!);
-    fireEvent.click(screen.getByRole("button", { name: "Enter Projects" }));
+    view.container
+      .querySelectorAll("img")
+      .forEach((image) => fireEvent.error(image));
+    fireEvent.click(screen.getByRole("link", { name: "Projects" }));
     expect(document.activeElement?.id).toBe("projects");
     fireEvent.click(screen.getByRole("link", { name: "Contact" }));
     expect(
@@ -360,6 +438,8 @@ describe("alternating journey navigation", () => {
     ).toBe("mailto:mahesh523k@gmail.com");
     fireEvent.click(screen.getByRole("button", { name: "Return to the lake" }));
     expect(window.location.hash).toBe("#top");
-    expect(screen.getByRole("button", { name: "Enter Projects" })).toBeTruthy();
+    expect(
+      screen.getByRole("group", { name: "Explore the Himalayan lake" }),
+    ).toBeTruthy();
   });
 });
