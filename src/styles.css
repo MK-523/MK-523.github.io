@@ -251,6 +251,44 @@ svg {
 .site-header nav a[aria-current] {
   border-color: currentColor;
 }
+.scene-caption {
+  position: fixed;
+  z-index: 3;
+  left: var(--gutter);
+  bottom: max(24px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border: 1px solid #ffffff26;
+  border-radius: 20px;
+  background: #10272bcc;
+  color: #f3f6ef;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+.scene-caption-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #b9c9c4;
+}
+.scene-caption-live {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .app-shell:has(.lake-scene[data-ready="true"]) .scene-caption-live {
+    display: inline;
+  }
+  .app-shell:has(.lake-scene[data-ready="true"]) .scene-caption-static {
+    display: none;
+  }
+  .app-shell:has(.lake-scene[data-ready="true"]) .scene-caption-dot {
+    background: #bee2c4;
+  }
+}
 .lake-home {
   position: absolute;
   width: 1px;

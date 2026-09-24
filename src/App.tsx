@@ -104,6 +104,15 @@ export default function App() {
           ))}
         </nav>
       </header>
+      <p
+        className="scene-caption"
+        hidden={reading}
+        title="Interactive Himalayan-inspired artwork, rendered in your browser."
+      >
+        <span className="scene-caption-dot" aria-hidden="true" />
+        <span className="scene-caption-live">Live-rendered view</span>
+        <span className="scene-caption-static">Landscape view</span>
+      </p>
       <main>
         <section
           id="top"
