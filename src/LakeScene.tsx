@@ -21,6 +21,7 @@ export default function LakeScene({
   }, [destination]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const skyRef = useRef<HTMLImageElement>(null);
   const pausedRef = useRef(paused);
   const [ready, setReady] = useState(false);
   const [generation, setGeneration] = useState(0);
@@ -38,6 +39,7 @@ export default function LakeScene({
     const canvas = canvasRef.current,
       image = imageRef.current;
     if (!canvas || !image) return;
+    const skyImage = skyRef.current;
     const detailImages = Array.from(
       canvas.parentElement!.querySelectorAll<HTMLImageElement>(
         ".mountain-detail",
@@ -120,7 +122,7 @@ export default function LakeScene({
       if (!image.complete || !image.naturalWidth || disposed || lost) return;
       try {
         renderer?.dispose();
-        renderer = createLakeRenderer(canvas, image, detailImages);
+        renderer = createLakeRenderer(canvas, image, detailImages, skyImage);
         if (renderer) {
           canvas.dataset.renderer = "webgl2";
           schedule();
@@ -142,6 +144,7 @@ export default function LakeScene({
     };
     const contextRestored = () => setGeneration((value) => value + 1);
     image.addEventListener("load", initialize);
+    skyImage?.addEventListener("load", schedule);
     detailImages.forEach((detail) => detail.addEventListener("load", schedule));
     canvas.addEventListener("webglcontextlost", contextLost);
     canvas.addEventListener("webglcontextrestored", contextRestored);
@@ -158,6 +161,7 @@ export default function LakeScene({
       cancelAnimationFrame(frame);
       renderer?.dispose();
       image.removeEventListener("load", initialize);
+      skyImage?.removeEventListener("load", schedule);
       detailImages.forEach((detail) =>
         detail.removeEventListener("load", schedule),
       );
@@ -193,6 +197,20 @@ export default function LakeScene({
           ref={imageRef}
           className="environment-texture"
           src="/images/himalayas-surround-1774.webp"
+          width="1774"
+          height="887"
+          alt=""
+          hidden
+          decoding="async"
+          fetchPriority="low"
+        />
+      </picture>
+      <picture hidden>
+        <source type="image/avif" srcSet="/images/himalayan-clouds.avif" />
+        <img
+          ref={skyRef}
+          className="cloud-texture"
+          src="/images/himalayan-clouds.webp"
           width="1774"
           height="887"
           alt=""

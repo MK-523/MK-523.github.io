@@ -129,6 +129,34 @@ describe("living landscape", () => {
     expect(dispose).toHaveBeenCalled();
     expect(frames.size).toBe(0);
   });
+  it("paints a late cloud image once without restarting reduced-motion weather", () => {
+    reduced = true;
+    const view = render(<LakeScene />);
+    loadImage(view.container);
+    tick(100);
+    expect(frames.size).toBe(0);
+    const sky = view.container.querySelector(".cloud-texture")!;
+    expect(vi.mocked(createLakeRenderer).mock.calls[0][3]).toBe(sky);
+    fireEvent.load(sky);
+    expect(frames.size).toBe(1);
+    tick(500);
+    expect(draw).toHaveBeenLastCalledWith(0, 0);
+    expect(frames.size).toBe(0);
+    expect(createLakeRenderer).toHaveBeenCalledOnce();
+  });
+  it("keeps the scene and work accessible when the cloud image fails", () => {
+    const view = render(<App />);
+    loadImage(view.container);
+    tick(100);
+    fireEvent.error(view.container.querySelector(".cloud-texture")!);
+    tick(200);
+    expect(
+      view.container.querySelector(".lake-scene")?.getAttribute("data-ready"),
+    ).toBe("true");
+    fireEvent.click(screen.getByRole("link", { name: "Projects" }));
+    expect(screen.getByRole("heading", { name: "ChessStalker" })).toBeTruthy();
+    expect(dispose).not.toHaveBeenCalled();
+  });
   it("keeps the fallback visible while shaders compile, including reduced motion", () => {
     reduced = true;
     draw.mockReturnValueOnce(false).mockReturnValueOnce(false);

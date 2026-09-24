@@ -1,5 +1,7 @@
-/** A single-pass lake: world-space water, a photographed Himalayan horizon,
- * reflected clouds, wind waves, raindrop rings, and depth-layered drizzle. */
+import { createSkylineTexture } from "./skyline";
+
+/** A single-pass lake with independently advected sky, drifting valley mist,
+ * moving cloud shadows, reflective water, wind waves, and diagonal drizzle. */
 const vertex = `#version 300 es
 in vec2 position;
 void main() { gl_Position = vec4(position, 0., 1.); }
@@ -7,6 +9,9 @@ void main() { gl_Position = vec4(position, 0., 1.); }
 const fragment = `#version 300 es
 precision highp float;
 uniform sampler2D landscape;
+uniform sampler2D skyline;
+uniform sampler2D cloudTexture;
+uniform float skyReady;
 uniform sampler2D detailFront;
 uniform sampler2D detailRight;
 uniform sampler2D detailBack;
@@ -24,34 +29,86 @@ float noise(vec2 p) {
   return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);
 }
 float clouds(vec2 p) { return noise(p)*.57+noise(p*2.03+7.)*.28+noise(p*4.1-3.)*.15; }
-// The far shore surrounds the lake rather than ending at the sides of a flat
-// image. Every horizontal ray intersects the cylindrical horizon in front of it.
-vec4 mountainTile(sampler2D tile, vec2 uv, vec2 dx, vec2 dy, float center, float ready) {
-  float offset=fract(uv.x-center+.5)-.5;
-  float weight=(1.-smoothstep(.115,.15,abs(offset)))*ready;
-  vec2 local=vec2(.5+offset/.3,(uv.y-.25)/.29);
-  weight*=smoothstep(0.,.09,local.y)*(1.-smoothstep(.975,1.,local.y));
-  if(weight<=0.) return vec4(0.);
-  vec3 sampleColor=textureGrad(tile,clamp(local,vec2(.001),vec2(.999)),dx/vec2(.3,.29),dy/vec2(.3,.29)).rgb;
-  return vec4(sampleColor*weight,weight);
+// Ridge masks are tied to the artwork, never to the camera or moving sky.
+float skyMask(vec2 uv, float row) {
+  float ridge=texture(skyline,vec2(clamp(uv.x,0.,1.),(row+.5)/5.)).r;
+  return 1.-smoothstep(ridge-.06,ridge-.012,uv.y);
 }
-vec3 panorama(vec2 uv) {
+vec3 surround(vec2 uv) {
   float u=fract(uv.x);
-  // Unwrap derivatives too: automatic mip selection at atan's discontinuity
-  // otherwise samples the entire image and leaves a dark line at the rear.
   vec2 dx=dFdx(uv), dy=dFdy(uv);
   dx.x-=round(dx.x); dy.x-=round(dy.x);
   vec3 base=textureGrad(landscape,vec2(u,clamp(uv.y,.001,.999)),dx,dy).rgb;
   float seam=1.-smoothstep(0.,.018,min(u,1.-u));
   vec3 neighbor=textureGrad(landscape,vec2(clamp(1.-u,.0001,.9999),clamp(uv.y,.001,.999)),dx*vec2(-1,1),dy*vec2(-1,1)).rgb;
-  base=mix(base,(base+neighbor)*.5,seam);
-  // Each overlapping terrain tile spends its pixels on one mountain view,
-  // instead of magnifying a small patch of a whole-sphere image.
-  vec4 detail=mountainTile(detailFront,uv,dx,dy,.5,detailReady.x)
-             +mountainTile(detailRight,uv,dx,dy,.75,detailReady.y)
-             +mountainTile(detailBack,uv,dx,dy,0.,detailReady.z)
-             +mountainTile(detailLeft,uv,dx,dy,.25,detailReady.w);
-  return mix(base,detail.rgb/max(detail.a,.0001),min(detail.a,1.));
+  return mix(base,(base+neighbor)*.5,seam);
+}
+vec4 mountainTile(sampler2D tile, vec2 uv, vec2 dx, vec2 dy, float center, float ready, float row, out float sky) {
+  float offset=fract(uv.x-center+.5)-.5;
+  float weight=(1.-smoothstep(.115,.15,abs(offset)))*ready;
+  vec2 local=vec2(.5+offset/.3,(uv.y-.25)/.29);
+  weight*=smoothstep(0.,.09,local.y)*(1.-smoothstep(.975,1.,local.y));
+  sky=0.;
+  if(weight<=0.) return vec4(0.);
+  sky=skyMask(local,row)*weight;
+  vec3 sampleColor=textureGrad(tile,clamp(local,vec2(.001),vec2(.999)),dx/vec2(.3,.29),dy/vec2(.3,.29)).rgb;
+  return vec4(sampleColor*weight,weight);
+}
+vec4 panorama(vec2 uv) {
+  vec2 dx=dFdx(uv), dy=dFdy(uv);
+  dx.x-=round(dx.x); dy.x-=round(dy.x);
+  vec3 base=surround(uv);
+  float baseSky=skyMask(vec2(fract(uv.x),uv.y),0.);
+  float frontSky, rightSky, backSky, leftSky;
+  vec4 detail=mountainTile(detailFront,uv,dx,dy,.5,detailReady.x,1.,frontSky)
+             +mountainTile(detailRight,uv,dx,dy,.75,detailReady.y,2.,rightSky)
+             +mountainTile(detailBack,uv,dx,dy,0.,detailReady.z,3.,backSky)
+             +mountainTile(detailLeft,uv,dx,dy,.25,detailReady.w,4.,leftSky);
+  float blend=min(detail.a,1.);
+  vec3 terrain=mix(base,detail.rgb/max(detail.a,.0001),blend);
+  float sky=mix(baseSky,(frontSky+rightSky+backSky+leftSky)/max(detail.a,.0001),blend);
+  return vec4(terrain,sky);
+}
+// A separate cloud-only texture travels behind stationary ridges and appears
+// in the same world-space reflections. No terrain pixels enter the moving sky.
+vec3 movingSky(vec3 direction, vec2 uv) {
+  vec2 dome=direction.xz/max(direction.y+.45,.2);
+  vec2 wind=vec2(time*.018,-time*.006);
+  float vapor=clouds(dome*1.9+wind);
+  vec2 skyUV=vec2(uv.x*2.+.37+time*.0013,clamp(uv.y*2.+.012*(vapor-.5),.01,.99));
+  vec2 dx=dFdx(skyUV), dy=dFdy(skyUV);
+  dx.x-=round(dx.x); dy.x-=round(dy.x);
+  float u=fract(skyUV.x);
+  vec3 sky=textureGrad(cloudTexture,vec2(u,skyUV.y),dx,dy).rgb;
+  float seam=1.-smoothstep(0.,.04,min(u,1.-u));
+  vec3 other=textureGrad(cloudTexture,vec2(clamp(1.-u,.001,.999),skyUV.y),dx*vec2(-1,1),dy*vec2(-1,1)).rgb;
+  sky=mix(sky,(sky+other)*.5,seam);
+  // The high layer moves at a different speed and gently evolves in density.
+  float high=clouds(dome*3.1+wind*.43+13.);
+  float veil=smoothstep(.48,.8,high)*.19;
+  sky=mix(sky,vec3(.79,.82,.84),veil);
+  vec3 zenith=mix(vec3(.41,.49,.58),vec3(.76,.80,.84),smoothstep(.22,.75,vapor));
+  return mix(sky,zenith,1.-smoothstep(.04,.16,uv.y));
+}
+float sunlight(vec2 position) {
+  // The same moving cloud cover lights the mountains and the water below.
+  float cover=clouds(position*.0028+vec2(time*.014,-time*.005));
+  return smoothstep(.28,.74,cover);
+}
+vec3 valleyMist(vec3 color, vec3 direction, vec3 origin, vec3 atShore) {
+  // Two altitudes and wind speeds give wisps depth, rather than a gray overlay.
+  vec2 wind=vec2(time*.027,-time*.009);
+  float height=atShore.y;
+  float lift=clouds(atShore.xz*.004+wind*.36)*31.;
+  float bank=exp(-pow((height-205.-lift)/64.,2.));
+  float strands=clouds(atShore.xz*.012+vec2(height*.018,0.)+wind);
+  float far=bank*smoothstep(.29,.73,strands)*.34;
+  float nearDistance=155.;
+  vec3 nearPoint=origin+direction*nearDistance;
+  float low=exp(-pow((nearPoint.y-5.)/13.,2.));
+  float wisps=clouds(nearPoint.xz*.027+vec2(time*.046,-time*.018));
+  float near=low*smoothstep(.43,.82,wisps)*.19;
+  return mix(color,vec3(.68,.75,.78),1.-(1.-far)*(1.-near));
 }
 vec3 environment(vec3 direction, vec3 origin) {
   float a=max(dot(direction.xz,direction.xz),.000001);
@@ -61,20 +118,15 @@ vec3 environment(vec3 direction, vec3 origin) {
   vec3 atShore=origin+direction*distanceToShore;
   vec2 uv=vec2(.5+atan(atShore.x,-atShore.z)/6.2831853,
                .526-atan(atShore.y,650.)/3.14159265);
-  vec3 photograph=panorama(uv);
-  // Clouds use world coordinates, so their motion also joins across the seam.
-  vec2 cloudPosition=direction.xz/max(direction.y+.3,.12);
-  float bank=clouds(cloudPosition*.9+vec2(time*.008,-time*.003));
-  float sky=smoothstep(.38,.16,uv.y);
-  float vapor=smoothstep(.42,.82,bank)*sky*.29;
-  photograph=mix(photograph,vec3(.68,.73,.77),vapor);
-  // The zenith is a continuous cloudy dome, avoiding equirectangular pole pinching.
-  vec3 zenith=mix(vec3(.49,.56,.63),vec3(.71,.76,.80),bank);
-  photograph=mix(photograph,zenith,1.-smoothstep(.04,.17,uv.y));
-  float mist=exp(-pow((uv.y-.44)/.035,2.))*clouds(atShore.xz*.01+vec2(time*.014,0.))*.13;
-  return mix(photograph,vec3(.60,.68,.71),mist);
+  vec4 view=panorama(uv);
+  float sun=sunlight(atShore.xz+vec2(atShore.y*.65,0.));
+  vec3 lit=view.rgb*mix(vec3(.87,.91,.96),vec3(1.10,1.07,1.02),sun);
+  vec3 result=lit;
+  if(view.a*skyReady>.001) result=mix(lit,movingSky(direction,uv),view.a*skyReady);
+  return valleyMist(result,direction,origin,atShore);
 }
 vec2 waterSlope(vec2 p, float distanceToEye) {
+  float gust=.92+.12*sin(time*.19)+.06*sin(time*.071);
   vec2 slope=vec2(0.);
   slope+=vec2(.43,.16)*cos(dot(p,vec2(.43,.16))-time*.78)*.065;
   slope+=vec2(-.22,.76)*cos(dot(p,vec2(-.22,.76))+time*1.13)*.031;
@@ -95,10 +147,10 @@ vec2 waterSlope(vec2 p, float distanceToEye) {
     float envelope=exp(-abs(ring)*32.)*smoothstep(0.,.08,age)*(1.-age);
     slope+=normalize(delta+vec2(.0001))*cos(ring*95.)*envelope*.027*detail;
   }
-  return slope;
+  return slope*gust;
 }
 float rainLayer(vec2 uv,float scale,float speed) {
-  vec2 p=vec2(uv.x+uv.y*.29,uv.y)*vec2(62.,8.)*scale;
+  vec2 p=vec2(uv.x+uv.y*(.29+.035*sin(time*.11)),uv.y)*vec2(62.,8.)*scale;
   p.y+=time*speed;
   vec2 cell=floor(p), f=fract(p);
   float seed=hash(cell);
@@ -126,7 +178,9 @@ void main() {
     vec3 glacial=vec3(.045,.28,.31);
     result=mix(glacial,reflected,fresnel);
     float light=pow(max(dot(normal,normalize(vec3(-.5,1.,.3))),0.),20.);
-    result+=vec3(.16,.22,.24)*light*.14;
+    float sun=sunlight(point.xz);
+    result*=.95+.10*sun;
+    result+=vec3(.26,.25,.21)*light*(.08+.13*sun);
     float haze=smoothstep(110.,650.,hit)*.24;
     result=mix(result,vec3(.37,.50,.54),haze);
   } else {
@@ -168,6 +222,7 @@ export function createLakeRenderer(
   canvas: HTMLCanvasElement,
   image: HTMLImageElement,
   detailImages: HTMLImageElement[] = [],
+  skyImage?: HTMLImageElement | null,
 ): LakeRenderer | null {
   const gl = canvas.getContext("webgl2", {
     alpha: true,
@@ -182,17 +237,30 @@ export function createLakeRenderer(
   const program = gl.createProgram();
   const buffer = gl.createBuffer();
   const texture = gl.createTexture();
+  const ridgeTexture = gl.createTexture();
+  const skyTexture = gl.createTexture();
   const detailTextures = Array.from({ length: 4 }, () => gl.createTexture());
-  if (!program || !buffer || !texture || detailTextures.some((t) => !t)) {
+  if (
+    !program ||
+    !buffer ||
+    !texture ||
+    !ridgeTexture ||
+    !skyTexture ||
+    detailTextures.some((t) => !t)
+  ) {
     gl.deleteProgram(program);
     gl.deleteBuffer(buffer);
     gl.deleteTexture(texture);
+    gl.deleteTexture(ridgeTexture);
+    gl.deleteTexture(skyTexture);
     detailTextures.forEach((t) => gl.deleteTexture(t));
     return null;
   }
   const dispose = () => {
     gl.deleteBuffer(buffer);
     gl.deleteTexture(texture);
+    gl.deleteTexture(ridgeTexture);
+    gl.deleteTexture(skyTexture);
     detailTextures.forEach((t) => gl.deleteTexture(t));
     shaders.forEach((shader) => gl.deleteShader(shader));
     gl.deleteProgram(program);
@@ -212,6 +280,7 @@ export function createLakeRenderer(
     gl.linkProgram(program);
     let prepared = false;
     const uploaded = [0, 0, 0, 0];
+    let skyUploaded = false;
     let uniforms: Record<string, WebGLUniformLocation | null> = {};
     const prepare = () => {
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
@@ -250,9 +319,15 @@ export function createLakeRenderer(
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.generateMipmap(gl.TEXTURE_2D);
       uniforms = Object.fromEntries(
-        ["resolution", "time", "camera", "yaw", "pitch", "detailReady"].map(
-          (key) => [key, gl.getUniformLocation(program, key)],
-        ),
+        [
+          "resolution",
+          "time",
+          "camera",
+          "yaw",
+          "pitch",
+          "detailReady",
+          "skyReady",
+        ].map((key) => [key, gl.getUniformLocation(program, key)]),
       );
       gl.uniform1i(gl.getUniformLocation(program, "landscape"), 0);
       ["detailFront", "detailRight", "detailBack", "detailLeft"].forEach(
@@ -282,6 +357,48 @@ export function createLakeRenderer(
           gl.uniform1i(gl.getUniformLocation(program, name), i + 1);
         },
       );
+      const ridge = createSkylineTexture();
+      gl.activeTexture(gl.TEXTURE5);
+      gl.bindTexture(gl.TEXTURE_2D, ridgeTexture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        ridge.width,
+        ridge.height,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        ridge.pixels,
+      );
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.uniform1i(gl.getUniformLocation(program, "skyline"), 5);
+      gl.activeTexture(gl.TEXTURE6);
+      gl.bindTexture(gl.TEXTURE_2D, skyTexture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        1,
+        1,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        new Uint8Array([140, 155, 170, 255]),
+      );
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_MIN_FILTER,
+        gl.LINEAR_MIPMAP_LINEAR,
+      );
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.uniform1i(gl.getUniformLocation(program, "cloudTexture"), 6);
       prepared = true;
       resize();
     };
@@ -335,6 +452,21 @@ export function createLakeRenderer(
           gl.generateMipmap(gl.TEXTURE_2D);
           uploaded[i] = 1;
         }
+        if (!skyUploaded && skyImage?.complete && skyImage.naturalWidth) {
+          gl.activeTexture(gl.TEXTURE6);
+          gl.bindTexture(gl.TEXTURE_2D, skyTexture);
+          gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            skyImage,
+          );
+          gl.generateMipmap(gl.TEXTURE_2D);
+          skyUploaded = true;
+        }
+        gl.uniform1f(uniforms.skyReady, skyUploaded ? 1 : 0);
         gl.uniform4fv(uniforms.detailReady, uploaded);
         const camera = cameraAt(progress, seconds);
         gl.uniform1f(uniforms.time, seconds);
@@ -345,6 +477,7 @@ export function createLakeRenderer(
           Math.max(-1.48, Math.min(1.48, camera.pitch + look.pitch)),
         );
         gl.drawArrays(gl.TRIANGLES, 0, 3);
+        canvas.dataset.sky = skyUploaded ? "animated" : "fallback";
         canvas.dataset.cameraZ = camera.z.toFixed(2);
         canvas.dataset.lookYaw = look.yaw.toFixed(3);
         canvas.dataset.lookPitch = look.pitch.toFixed(3);

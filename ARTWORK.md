@@ -67,3 +67,22 @@ Initial AVIF-capable loading: 83,670-byte primary fallback + 109,317-byte base p
 Use case: photorealistic-natural.
 Edit target: the attached cropped mountain photograph, a small segment of a 360-degree Himalayan environment.
 Primary request: restore this small source as a large, extremely detailed photographic mountain image. Fill the entire output with EXACTLY the same crop. Keep the same aspect ratio, exact framing, positions, silhouettes and sizes of all mountains, shoreline height, lighting and colors. Do not zoom out, add extra sky or water, or move any feature. Reconstruct fine natural rock strata, granite fissures, snow gullies, glacier crevasses, moraine rubble and clear atmospheric detail. Sharp expedition landscape photography with deep focus and natural microcontrast, not painting, CGI or a sharpened low-resolution image. The viewer should see crisp individual rocky ridges and snow patterns at full screen. Keep the outer edges and their geometry faithful because this image must join neighboring views. No text, watermark, people, architecture or new objects. Produce the largest native landscape image available, with densely resolved detail, preserving this approximately 2.07:1 crop.
+
+
+# Animated Himalayan weather
+
+September 24, 2026. Built-in imagegen, new-image generation mode. Selected source: `exec-f6b586b0-d5f2-4ea1-8df2-436b294b0151.png`.
+
+The new cloud-only texture is independent of the mountain artwork. The renderer drifts it behind conservative ridge masks, with a second procedural cloud layer, two mist altitudes, moving cloud shadows, reflected light, wind-modulated waves and diagonal drizzle. The existing free exploration, full rotation and circle transitions remain intact. This is animated Himalayan-inspired artwork, not live camera footage or measured weather.
+
+Project assets:
+- `public/images/himalayan-clouds.avif`: native 1774 × 887, quality 60, 97,205 bytes.
+- `public/images/himalayan-clouds.webp`: 1024 × 512 WebP compatibility export, quality 76, 49,864 bytes.
+
+Copies of both assets are saved alongside these notes. Initial imagery totals 504,145 bytes with AVIF, or 745,414 bytes with WebP compatibility. Only the original primary fallback is preloaded; the cloud image loads at low priority and is optional. No backend, external API, stream, or new runtime dependency was added.
+
+## Exact generation prompt
+
+Use case: photorealistic-natural.
+Asset type: dedicated moving sky texture for a realistic Himalayan lake environment.
+Create an original extremely realistic expedition photograph of ONLY a cloud-filled high-altitude sky, with absolutely no terrain. Wide 2:1 panoramic composition, largest native resolution available. Layered silver-gray stratocumulus and soft sculpted cumulus cloud banks with fine natural vapor filaments, cool blue-gray shadows, soft warm ivory sunlight filtering through small openings. Gentle storm clearing, atmospheric and serene. Cloud detail throughout the entire frame, photographed looking slightly upward; no horizon line or perspective convergence. Natural billowing cloud volumes with believable fine scale texture, not long vertical streaks, not a painted or rendered sky. Balanced diffuse illumination, no visible sun disk, no dramatic orange sunset. Clouds must fill all four edges and join naturally at the left/right edges for slow horizontal panning. No mountains, land, water, people, birds, objects, text, logos, or watermark. The output is a cloud-only photographic texture for an animated background, not a website mockup.
