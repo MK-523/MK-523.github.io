@@ -69,6 +69,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -89,6 +90,49 @@ function tick(time: number) {
 }
 
 describe("living landscape", () => {
+  it("updates clock lighting in reduced motion without advancing weather", () => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    vi.setSystemTime(new Date("2026-09-25T00:00:00+05:45"));
+    reduced = true;
+    const view = render(<LakeScene />);
+    loadImage(view.container);
+    tick(100);
+    expect(
+      view.container.firstElementChild?.getAttribute("data-lighting"),
+    ).toBe("night");
+    expect(frames.size).toBe(0);
+    vi.setSystemTime(new Date("2026-09-25T12:00:00+05:45"));
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
+    tick(200);
+    expect(
+      view.container.firstElementChild?.getAttribute("data-lighting"),
+    ).toBe("day");
+    expect(draw).toHaveBeenLastCalledWith(0, 0);
+    expect(frames.size).toBe(0);
+    view.unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("refreshes the time of day after a hidden tab resumes", () => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    vi.setSystemTime(new Date("2026-09-25T12:00:00+05:45"));
+    const view = render(<LakeScene />);
+    loadImage(view.container);
+    tick(100);
+    tick(150);
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+    fireEvent(document, new Event("visibilitychange"));
+    expect(vi.getTimerCount()).toBe(0);
+    vi.setSystemTime(new Date("2026-09-25T23:00:00+05:45"));
+    hidden.mockReturnValue(false);
+    fireEvent(document, new Event("visibilitychange"));
+    tick(5000);
+    expect(
+      view.container.firstElementChild?.getAttribute("data-lighting"),
+    ).toBe("night");
+    expect(draw.mock.calls.at(-1)?.[1]).toBe(0.05);
+  });
   it("defers side and rear detail downloads until visitors look around", () => {
     reduced = true;
     const view = render(<App />);

@@ -107,7 +107,7 @@ export default function App() {
       <p
         className="scene-caption"
         hidden={reading}
-        title="Interactive Himalayan-inspired artwork, rendered in your browser."
+        title="Interactive Himalayan-inspired artwork. Lighting follows Nepal time; weather and moonlight are simulated."
       >
         <span className="scene-caption-dot" aria-hidden="true" />
         <span className="scene-caption-live">Live-rendered view</span>

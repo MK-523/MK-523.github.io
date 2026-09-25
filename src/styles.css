@@ -162,15 +162,23 @@ svg {
   overflow: hidden;
   background: linear-gradient(#87989d, #25444b 50%, #0d3840);
 }
-.lake-scene > img,
+.scene-fallback,
 .lake-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
 }
-.lake-scene > img {
+.scene-fallback {
+  background: linear-gradient(#87989d, #25444b 50%, #0d3840);
+  filter: brightness(var(--fallback-brightness, 1))
+    saturate(var(--fallback-saturation, 1)) sepia(var(--fallback-warmth, 0));
+  transition: filter 2s linear;
+}
+.scene-fallback > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   object-position: 57% 50%;
 }
 .lake-canvas {
