@@ -1,4 +1,5 @@
 import { createSkylineTexture } from "./skyline";
+import { sceneLighting } from "./daylight";
 
 /** A single-pass lake with independently advected sky, drifting valley mist,
  * moving cloud shadows, reflective water, wind waves, and diagonal drizzle. */
@@ -22,6 +23,8 @@ uniform float time;
 uniform vec3 camera;
 uniform float yaw;
 uniform float pitch;
+uniform float daylight;
+uniform float twilight;
 out vec4 color;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -159,6 +162,18 @@ float rainLayer(vec2 uv,float scale,float speed) {
   float trail=smoothstep(.05,.1,f.y)*(1.-smoothstep(.17,.42,f.y));
   return line*trail*step(.77,seed)*(.35+seed*.65);
 }
+vec3 timeOfDay(vec3 value, vec3 ray) {
+  float luminance=dot(value,vec3(.2126,.7152,.0722));
+  // Soft simulated moonlight preserves snow detail without retaining bright
+  // daylight cloud highlights. Apply this after water/rain so all light agrees.
+  vec3 moonlit=pow(max(luminance,0.),.95)*vec3(.24,.34,.51)+vec3(.003,.006,.012);
+  vec3 warm=value*vec3(1.13,.79,.59)+vec3(.025,.006,0.);
+  vec3 daytime=mix(value,warm,twilight*.78);
+  vec3 result=mix(moonlit,daytime,daylight);
+  float horizon=exp(-pow(ray.y/.34,2.));
+  result+=vec3(.09,.027,.006)*horizon*twilight*daylight;
+  return result;
+}
 void main() {
   vec2 screen=(gl_FragCoord.xy-resolution*.5)/resolution.y;
   vec3 forward=vec3(sin(yaw)*cos(pitch),sin(pitch),-cos(yaw)*cos(pitch));
@@ -191,7 +206,7 @@ void main() {
   float rain=rainLayer(rainUV,1.,12.)*.14+rainLayer(rainUV+17.,.61,8.)*.11;
   result=mix(result,vec3(.77,.85,.87),rain);
   float vignette=1.-.13*pow(length(screen*vec2(.65,.8)),1.4);
-  color=vec4(result*vignette,1.);
+  color=vec4(timeOfDay(result,ray)*vignette,1.);
 }
 `;
 
@@ -327,6 +342,8 @@ export function createLakeRenderer(
           "pitch",
           "detailReady",
           "skyReady",
+          "daylight",
+          "twilight",
         ].map((key) => [key, gl.getUniformLocation(program, key)]),
       );
       gl.uniform1i(gl.getUniformLocation(program, "landscape"), 0);
@@ -469,6 +486,9 @@ export function createLakeRenderer(
         gl.uniform1f(uniforms.skyReady, skyUploaded ? 1 : 0);
         gl.uniform4fv(uniforms.detailReady, uploaded);
         const camera = cameraAt(progress, seconds);
+        const lighting = sceneLighting();
+        gl.uniform1f(uniforms.daylight, lighting.daylight);
+        gl.uniform1f(uniforms.twilight, lighting.twilight);
         gl.uniform1f(uniforms.time, seconds);
         gl.uniform3f(uniforms.camera, camera.x, camera.y, camera.z);
         gl.uniform1f(uniforms.yaw, camera.yaw + look.yaw);
@@ -478,6 +498,8 @@ export function createLakeRenderer(
         );
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         canvas.dataset.sky = skyUploaded ? "animated" : "fallback";
+        canvas.dataset.lighting = lighting.period;
+        canvas.dataset.nepalTime = lighting.nepalTime;
         canvas.dataset.cameraZ = camera.z.toFixed(2);
         canvas.dataset.lookYaw = look.yaw.toFixed(3);
         canvas.dataset.lookPitch = look.pitch.toFixed(3);

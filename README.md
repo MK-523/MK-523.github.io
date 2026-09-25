@@ -29,6 +29,7 @@ Long sections scroll within the white reading area. A new scroll gesture at its 
 - `src/useLandscape.ts`: drag/tap separation, keyboard look controls, and fixed-surface circle sizing.
 - `src/useJourney.ts`: alternating travel/reading state, input handling, hashes, and focus.
 - `src/LakeScene.tsx`: image readiness, animation scheduling, motion preferences, and GPU lifecycle.
+- `src/daylight.ts`: Nepal clock and approximate seasonal solar lighting for the Khumbu region.
 - `src/lake-renderer.ts`: camera travel, reflected water, wind waves, rain ripples, mist, clouds, and diagonal drizzle.
 - `src/skyline.ts`: conservative artwork ridge envelopes that keep the animated sky separate from rock and snow.
 - `src/styles.css`: responsive white reading pages and the contracting landscape circle.
@@ -37,6 +38,16 @@ Long sections scroll within the white reading area. A new scroll gesture at its 
 Shader compilation is polled asynchronously where supported, keeping the fallback and navigation responsive until the first rendered frame. The renderer runs at a maximum of 60 frames/second (30 for coarse pointers), caps resolution, and stops in hidden tabs. System reduced motion disables weather, camera animation, and CSS transitions while preserving every interaction. Image/GPU failure retains a photographic or gradient fallback. Content never depends on the renderer loading. No backend, external public API, or added runtime dependency is used.
 
 The landscape is original Himalayan-inspired artwork, with procedural water and weather inside a surrounding photographic horizon. It supports unlimited horizontal turns, with seamless texture derivatives and a softly blended wrap boundary; the mountains are a panoramic environment rather than scanned 3D terrain. Four overlapping mountain-detail textures provide about 3.4 times the previous source resolution per direction. AVIF is preferred with WebP fallbacks. A separate cloud-only texture now drifts behind protected mountain outlines. A second high cloud layer, two valley mist altitudes, moving cloud shadows and wind gusts evolve continuously and appear in the water reflections. Initial landscape imagery totals 504,145 bytes (745,414 with the lower-resolution WebP cloud fallback); side and rear details wait until visitors look around. Only the primary fallback is preloaded. Desktop rendering supports 1920 × 1200 while mobile retains its lower GPU budget. See [ARTWORK.md](ARTWORK.md) for the generation prompt and provenance.
+
+## Nepal day and night
+
+Lighting follows the current date and time in Nepal (UTC+05:45), independently of the visitor's time zone. Approximate solar elevation at 27.98° N, 86.69° E drives continuous daylight and twilight blends, using [NOAA's general solar equations](https://gml.noaa.gov/grad/solcalc/solareqns.PDF). The reference point controls the lighting schedule; the artwork is not an exact geographic reconstruction. Nearby terrain obstruction and atmospheric refraction are not modeled as an exact sunrise forecast.
+
+Dawn and dusk warm the scenery, daylight retains the original colors, and night uses soft simulated moonlight. Water, mist, and drizzle share the same lighting. Moonlight is artistic, not a calculation of the actual lunar position or phase. Weather remains simulated; no feed, API, backend, or extra image downloads are used. The device clock supplies the current time.
+
+The active renderer samples the clock once per second. Reduced motion keeps weather and camera animation frozen while refreshing a still frame every 30 seconds. The image/gradient fallback also follows the clock. Hidden tabs stop both timers and drawing, then refresh the lighting when visible again.
+
+For visual QA only, the Vite development server accepts an ISO timestamp in `sceneTime`, for example `http://127.0.0.1:5173/?sceneTime=2026-09-25T00:00:00%2B05:45#top`. Try 05:45, 12:00, and 17:30 for dawn, noon, and evening. This clock override is removed from production builds.
 
 ## Publish through the existing GitHub Pages configuration
 

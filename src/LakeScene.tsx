@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from "react";
+import { sceneLighting } from "./daylight";
 import {
   createLakeRenderer,
   type LakeRenderer,
@@ -26,6 +33,29 @@ export default function LakeScene({
   const [ready, setReady] = useState(false);
   const [generation, setGeneration] = useState(0);
   const [explored, setExplored] = useState(false);
+  const [lighting, setLighting] = useState(sceneLighting);
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | undefined;
+    const refresh = () => {
+      setLighting(sceneLighting());
+      // Reduced motion still follows the clock with one still frame. Weather
+      // and camera time remain frozen; no continuous frame loop is restarted.
+      window.dispatchEvent(new Event("scene-light-change"));
+    };
+    const visibility = () => {
+      clearInterval(timer);
+      if (!document.hidden) {
+        refresh();
+        timer = setInterval(refresh, 30_000);
+      }
+    };
+    document.addEventListener("visibilitychange", visibility);
+    visibility();
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", visibility);
+    };
+  }, []);
   useEffect(() => {
     const explore = () => setExplored(true);
     window.addEventListener("scene-look-change", explore, { once: true });
@@ -153,6 +183,7 @@ export default function LakeScene({
     observer.observe(canvas);
     window.addEventListener("scene-preference-change", preference);
     window.addEventListener("scene-look-change", schedule);
+    window.addEventListener("scene-light-change", schedule);
     document.addEventListener("visibilitychange", preference);
     reduced.addEventListener("change", preference);
     initialize();
@@ -171,6 +202,7 @@ export default function LakeScene({
       observer.disconnect();
       window.removeEventListener("scene-preference-change", preference);
       window.removeEventListener("scene-look-change", schedule);
+      window.removeEventListener("scene-light-change", schedule);
       document.removeEventListener("visibilitychange", preference);
       reduced.removeEventListener("change", preference);
     };
@@ -180,14 +212,24 @@ export default function LakeScene({
       className="lake-scene scene-geometry"
       aria-hidden="true"
       data-ready={ready}
+      data-lighting={lighting.period}
+      style={
+        {
+          "--fallback-brightness": 0.25 + 0.75 * lighting.daylight,
+          "--fallback-saturation": 0.55 + 0.45 * lighting.daylight,
+          "--fallback-warmth": 0.45 * lighting.twilight,
+        } as CSSProperties
+      }
     >
-      <img
-        src="/images/himalayas-960.webp"
-        width="960"
-        height="400"
-        alt=""
-        fetchPriority="high"
-      />
+      <div className="scene-fallback">
+        <img
+          src="/images/himalayas-960.webp"
+          width="960"
+          height="400"
+          alt=""
+          fetchPriority="high"
+        />
+      </div>
       <picture hidden>
         <source
           type="image/avif"
