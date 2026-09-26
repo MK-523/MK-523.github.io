@@ -76,7 +76,8 @@ export default function useJourney() {
       down: boolean;
     } | null = null;
     const isControl = (target: EventTarget | null) =>
-      target instanceof Element && !!target.closest("input, textarea, select");
+      target instanceof Element &&
+      !!target.closest("input, textarea, select, .weather-station");
     const canReadScroll = (target: EventTarget | null, direction: number) => {
       const panel = viewportRef.current;
       if (

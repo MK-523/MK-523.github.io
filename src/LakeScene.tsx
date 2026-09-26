@@ -6,6 +6,7 @@ import {
   type RefObject,
 } from "react";
 import { sceneLighting } from "./daylight";
+import type { WeatherVisuals } from "./weather";
 import {
   createLakeRenderer,
   type LakeRenderer,
@@ -16,11 +17,18 @@ export default function LakeScene({
   paused = false,
   progress: destination = 0,
   lookRef,
+  weather,
 }: {
   paused?: boolean;
   progress?: number;
   lookRef?: RefObject<LookDirection>;
+  weather?: WeatherVisuals;
 }) {
+  const weatherRef = useRef(weather);
+  useEffect(() => {
+    weatherRef.current = weather;
+    window.dispatchEvent(new Event("scene-light-change"));
+  }, [weather]);
   const destinationRef = useRef(destination);
   useEffect(() => {
     destinationRef.current = destination;
@@ -109,8 +117,13 @@ export default function LakeScene({
           const blend = moving() ? 1 - Math.exp(-dt * 0.016) : 1;
           look.yaw += (lookRef.current.yaw - look.yaw) * blend;
           look.pitch += (lookRef.current.pitch - look.pitch) * blend;
-          painted = renderer.draw(progress, elapsed, look);
-        } else painted = renderer.draw(progress, elapsed);
+          painted = weatherRef.current
+            ? renderer.draw(progress, elapsed, look, weatherRef.current)
+            : renderer.draw(progress, elapsed, look);
+        } else
+          painted = weatherRef.current
+            ? renderer.draw(progress, elapsed, undefined, weatherRef.current)
+            : renderer.draw(progress, elapsed);
       } catch {
         renderer.dispose();
         renderer = null;
