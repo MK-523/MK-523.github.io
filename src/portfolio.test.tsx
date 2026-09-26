@@ -12,6 +12,7 @@ import App from "./App";
 import LakeScene from "./LakeScene";
 import { createLakeRenderer, type LookDirection } from "./lake-renderer";
 import { chapters } from "./useJourney";
+import { fallbackWeather } from "./weather";
 
 vi.mock("./lake-renderer", () => ({ createLakeRenderer: vi.fn() }));
 let reduced = false;
@@ -22,6 +23,7 @@ let draw =
   vi.fn<(progress: number, seconds: number, look?: LookDirection) => boolean>();
 let dispose = vi.fn<() => void>();
 beforeEach(() => {
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Offline test")));
   window.history.replaceState(null, "", "/");
   reduced = false;
   listeners = new Set();
@@ -90,6 +92,35 @@ function tick(time: number) {
 }
 
 describe("living landscape", () => {
+  it("updates weather in a still frame without resetting the reduced-motion scene", () => {
+    reduced = true;
+    const view = render(<LakeScene weather={fallbackWeather} />);
+    loadImage(view.container);
+    tick(100);
+    const snow = { cloud: 1, wind: 0.2, rain: 0, snow: 0.7, mist: 0.8 };
+    view.rerender(<LakeScene weather={snow} />);
+    tick(200);
+    expect(draw).toHaveBeenLastCalledWith(0, 0, undefined, snow);
+    expect(createLakeRenderer).toHaveBeenCalledTimes(1);
+    expect(frames.size).toBe(0);
+  });
+  it("keeps weather-panel scrolling and keyboard input out of the journey", () => {
+    const view = render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Connecting weather" }));
+    const panel = screen.getByRole("region", { name: "Live weather details" });
+    fireEvent.wheel(panel, { deltaY: 90 });
+    fireEvent.keyDown(panel, { key: "PageDown" });
+    expect(
+      view.container.querySelector(".app-shell")?.getAttribute("data-step"),
+    ).toBe("0");
+    expect(
+      screen.getByText(/Explore the lake. Scroll to move closer/),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: "Projects" }));
+    expect(
+      screen.queryByRole("region", { name: "Live weather details" }),
+    ).toBeNull();
+  });
   it("updates clock lighting in reduced motion without advancing weather", () => {
     vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
     vi.setSystemTime(new Date("2026-09-25T00:00:00+05:45"));

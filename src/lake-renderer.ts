@@ -1,5 +1,6 @@
 import { createSkylineTexture } from "./skyline";
 import { sceneLighting } from "./daylight";
+import { fallbackWeather, type WeatherVisuals } from "./weather";
 
 /** A single-pass lake with independently advected sky, drifting valley mist,
  * moving cloud shadows, reflective water, wind waves, and diagonal drizzle. */
@@ -25,6 +26,9 @@ uniform float yaw;
 uniform float pitch;
 uniform float daylight;
 uniform float twilight;
+uniform vec4 weather; // cloud cover, wind, rain, snow
+uniform float mist;
+uniform float weatherFlow;
 out vec4 color;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -76,9 +80,9 @@ vec4 panorama(vec2 uv) {
 // in the same world-space reflections. No terrain pixels enter the moving sky.
 vec3 movingSky(vec3 direction, vec2 uv) {
   vec2 dome=direction.xz/max(direction.y+.45,.2);
-  vec2 wind=vec2(time*.018,-time*.006);
+  vec2 wind=vec2(weatherFlow*.018,-weatherFlow*.006);
   float vapor=clouds(dome*1.9+wind);
-  vec2 skyUV=vec2(uv.x*2.+.37+time*.0013,clamp(uv.y*2.+.012*(vapor-.5),.01,.99));
+  vec2 skyUV=vec2(uv.x*2.+.37+weatherFlow*.0013,clamp(uv.y*2.+.012*(vapor-.5),.01,.99));
   vec2 dx=dFdx(skyUV), dy=dFdy(skyUV);
   dx.x-=round(dx.x); dy.x-=round(dy.x);
   float u=fract(skyUV.x);
@@ -91,16 +95,19 @@ vec3 movingSky(vec3 direction, vec2 uv) {
   float veil=smoothstep(.48,.8,high)*.19;
   sky=mix(sky,vec3(.79,.82,.84),veil);
   vec3 zenith=mix(vec3(.41,.49,.58),vec3(.76,.80,.84),smoothstep(.22,.75,vapor));
-  return mix(sky,zenith,1.-smoothstep(.04,.16,uv.y));
+  vec3 clouded=mix(sky,zenith,1.-smoothstep(.04,.16,uv.y));
+  vec3 clearSky=mix(vec3(.60,.72,.81),vec3(.20,.41,.63),smoothstep(0.,.9,direction.y));
+  float coverage=smoothstep(1.-weather.x-.14,1.-weather.x+.14,vapor);
+  return mix(clearSky,clouded,coverage);
 }
 float sunlight(vec2 position) {
   // The same moving cloud cover lights the mountains and the water below.
-  float cover=clouds(position*.0028+vec2(time*.014,-time*.005));
-  return smoothstep(.28,.74,cover);
+  float cover=clouds(position*.0028+vec2(weatherFlow*.014,-weatherFlow*.005));
+  return mix(1.,smoothstep(.28,.74,cover)*.7,weather.x);
 }
 vec3 valleyMist(vec3 color, vec3 direction, vec3 origin, vec3 atShore) {
   // Two altitudes and wind speeds give wisps depth, rather than a gray overlay.
-  vec2 wind=vec2(time*.027,-time*.009);
+  vec2 wind=vec2(weatherFlow*.027,-weatherFlow*.009);
   float height=atShore.y;
   float lift=clouds(atShore.xz*.004+wind*.36)*31.;
   float bank=exp(-pow((height-205.-lift)/64.,2.));
@@ -109,9 +116,9 @@ vec3 valleyMist(vec3 color, vec3 direction, vec3 origin, vec3 atShore) {
   float nearDistance=155.;
   vec3 nearPoint=origin+direction*nearDistance;
   float low=exp(-pow((nearPoint.y-5.)/13.,2.));
-  float wisps=clouds(nearPoint.xz*.027+vec2(time*.046,-time*.018));
+  float wisps=clouds(nearPoint.xz*.027+vec2(weatherFlow*.046,-weatherFlow*.018));
   float near=low*smoothstep(.43,.82,wisps)*.19;
-  return mix(color,vec3(.68,.75,.78),1.-(1.-far)*(1.-near));
+  return mix(color,vec3(.68,.75,.78),(1.-(1.-far)*(1.-near))*mist);
 }
 vec3 environment(vec3 direction, vec3 origin) {
   float a=max(dot(direction.xz,direction.xz),.000001);
@@ -148,12 +155,12 @@ vec2 waterSlope(vec2 p, float distanceToEye) {
     float age=fract(time*.46+hash(id+13.));
     float ring=radius-age*.68;
     float envelope=exp(-abs(ring)*32.)*smoothstep(0.,.08,age)*(1.-age);
-    slope+=normalize(delta+vec2(.0001))*cos(ring*95.)*envelope*.027*detail;
+    slope+=normalize(delta+vec2(.0001))*cos(ring*95.)*envelope*.027*detail*weather.z;
   }
-  return slope*gust;
+  return slope*gust*(.3+weather.y*1.9);
 }
 float rainLayer(vec2 uv,float scale,float speed) {
-  vec2 p=vec2(uv.x+uv.y*(.29+.035*sin(time*.11)),uv.y)*vec2(62.,8.)*scale;
+  vec2 p=vec2(uv.x+uv.y*(.12+weather.y*.45+.035*sin(time*.11)),uv.y)*vec2(62.,8.)*scale;
   p.y+=time*speed;
   vec2 cell=floor(p), f=fract(p);
   float seed=hash(cell);
@@ -161,6 +168,15 @@ float rainLayer(vec2 uv,float scale,float speed) {
   float line=1.-smoothstep(width,width*2.,abs(f.x-(.2+hash(cell+4.)*.6)));
   float trail=smoothstep(.05,.1,f.y)*(1.-smoothstep(.17,.42,f.y));
   return line*trail*step(.77,seed)*(.35+seed*.65);
+}
+float snowLayer(vec2 uv,float scale,float speed) {
+  vec2 p=uv*scale+vec2(weatherFlow*.2,time*speed);
+  p.x+=sin(p.y*.4+time*.3)*.14;
+  vec2 cell=floor(p), f=fract(p);
+  vec2 center=.2+.6*vec2(hash(cell),hash(cell+17.));
+  float radius=mix(.035,.09,hash(cell+37.));
+  float edge=max(fwidth(p.x),.018);
+  return (1.-smoothstep(radius,radius+edge,length(f-center)))*step(.48,hash(cell+51.));
 }
 vec3 timeOfDay(vec3 value, vec3 ray) {
   float luminance=dot(value,vec3(.2126,.7152,.0722));
@@ -204,7 +220,11 @@ void main() {
   // Two focal depths keep the drizzle fine, sparse, and diagonal.
   vec2 rainUV=gl_FragCoord.xy/resolution.y;
   float rain=rainLayer(rainUV,1.,12.)*.14+rainLayer(rainUV+17.,.61,8.)*.11;
-  result=mix(result,vec3(.77,.85,.87),rain);
+  result=mix(result,vec3(.77,.85,.87),rain*weather.z);
+  if(weather.w>.001) {
+    float snow=snowLayer(rainUV,19.,1.2)*.50+snowLayer(rainUV+7.,32.,.65)*.32;
+    result=mix(result,vec3(.89,.93,.95),snow*weather.w);
+  }
   float vignette=1.-.13*pow(length(screen*vec2(.65,.8)),1.4);
   color=vec4(timeOfDay(result,ray)*vignette,1.);
 }
@@ -228,7 +248,12 @@ export function cameraAt(progress: number, seconds = 0) {
 
 export type LookDirection = { yaw: number; pitch: number };
 export type LakeRenderer = {
-  draw: (progress: number, seconds: number, look?: LookDirection) => boolean;
+  draw: (
+    progress: number,
+    seconds: number,
+    look?: LookDirection,
+    weather?: WeatherVisuals,
+  ) => boolean;
   resize: () => void;
   dispose: () => void;
 };
@@ -344,6 +369,9 @@ export function createLakeRenderer(
           "skyReady",
           "daylight",
           "twilight",
+          "weather",
+          "mist",
+          "weatherFlow",
         ].map((key) => [key, gl.getUniformLocation(program, key)]),
       );
       gl.uniform1i(gl.getUniformLocation(program, "landscape"), 0);
@@ -440,9 +468,17 @@ export function createLakeRenderer(
     };
     resize();
     if (!parallel) prepare();
+    const conditions = { ...fallbackWeather };
+    let previousSeconds = 0;
+    let flow = 0;
     return {
       resize,
-      draw(progress, seconds, look = { yaw: 0, pitch: 0 }) {
+      draw(
+        progress,
+        seconds,
+        look = { yaw: 0, pitch: 0 },
+        targetWeather = fallbackWeather,
+      ) {
         // Poll compilation without blocking clicks, scrolling, or the first
         // photographic paint. The fallback stays visible until a real frame.
         if (!prepared) {
@@ -487,6 +523,23 @@ export function createLakeRenderer(
         gl.uniform4fv(uniforms.detailReady, uploaded);
         const camera = cameraAt(progress, seconds);
         const lighting = sceneLighting();
+        const delta = Math.max(0, Math.min(0.08, seconds - previousSeconds));
+        previousSeconds = seconds;
+        // Slow changes keep a new weather report from popping the scenery.
+        // A static frame uses current conditions without starting an animation.
+        const blend = delta ? 1 - Math.exp(-delta / 4) : 1;
+        for (const key of Object.keys(conditions) as (keyof WeatherVisuals)[])
+          conditions[key] += (targetWeather[key] - conditions[key]) * blend;
+        flow += delta * (0.25 + conditions.wind * 2);
+        gl.uniform4f(
+          uniforms.weather,
+          conditions.cloud,
+          conditions.wind,
+          conditions.rain,
+          conditions.snow,
+        );
+        gl.uniform1f(uniforms.mist, conditions.mist);
+        gl.uniform1f(uniforms.weatherFlow, flow);
         gl.uniform1f(uniforms.daylight, lighting.daylight);
         gl.uniform1f(uniforms.twilight, lighting.twilight);
         gl.uniform1f(uniforms.time, seconds);
@@ -500,6 +553,9 @@ export function createLakeRenderer(
         canvas.dataset.sky = skyUploaded ? "animated" : "fallback";
         canvas.dataset.lighting = lighting.period;
         canvas.dataset.nepalTime = lighting.nepalTime;
+        canvas.dataset.weatherCloud = conditions.cloud.toFixed(3);
+        canvas.dataset.weatherRain = conditions.rain.toFixed(3);
+        canvas.dataset.weatherSnow = conditions.snow.toFixed(3);
         canvas.dataset.cameraZ = camera.z.toFixed(2);
         canvas.dataset.lookYaw = look.yaw.toFixed(3);
         canvas.dataset.lookPitch = look.pitch.toFixed(3);

@@ -10,9 +10,13 @@ import {
 import LakeScene from "./LakeScene";
 import useJourney, { chapters } from "./useJourney";
 import useLandscape from "./useLandscape";
+import useWeather from "./useWeather";
+import WeatherStatus from "./WeatherStatus";
+import { fallbackWeather, weatherVisuals } from "./weather";
 
 const sections = [Projects, Experience, Campus, Awards, About, Contact];
 export default function App() {
+  const weather = useWeather();
   const { step, approached, go, advance, viewportRef } = useJourney();
   const exploring = step === 0;
   const { shellRef, sizeRef, lookRef, handlers } = useLandscape(
@@ -59,6 +63,11 @@ export default function App() {
     >
       <div ref={sizeRef} className="scene-size" aria-hidden="true" />
       <LakeScene
+        weather={
+          weather.status === "live" && weather.reading
+            ? weatherVisuals(weather.reading)
+            : fallbackWeather
+        }
         progress={(index + (approached ? 0.35 : 0)) / (chapters.length - 0.65)}
         lookRef={lookRef}
       />
@@ -104,15 +113,7 @@ export default function App() {
           ))}
         </nav>
       </header>
-      <p
-        className="scene-caption"
-        hidden={reading}
-        title="Interactive Himalayan-inspired artwork. Lighting follows Nepal time; weather and moonlight are simulated."
-      >
-        <span className="scene-caption-dot" aria-hidden="true" />
-        <span className="scene-caption-live">Live-rendered view</span>
-        <span className="scene-caption-static">Landscape view</span>
-      </p>
+      <WeatherStatus weather={weather} hidden={reading} />
       <main>
         <section
           id="top"

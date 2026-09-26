@@ -259,15 +259,18 @@ svg {
 .site-header nav a[aria-current] {
   border-color: currentColor;
 }
-.scene-caption {
+.weather-station {
   position: fixed;
   z-index: 3;
   left: var(--gutter);
   bottom: max(24px, env(safe-area-inset-bottom));
+}
+.scene-caption {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 11px;
+  padding: 10px 13px;
+  min-height: 44px;
   border: 1px solid #ffffff26;
   border-radius: 20px;
   background: #10272bcc;
@@ -275,7 +278,7 @@ svg {
   font-size: 11px;
   line-height: 1.5;
   letter-spacing: 0.02em;
-  pointer-events: none;
+  cursor: pointer;
 }
 .scene-caption-dot {
   width: 5px;
@@ -283,19 +286,56 @@ svg {
   border-radius: 50%;
   background: #b9c9c4;
 }
-.scene-caption-live {
-  display: none;
+.weather-station[data-status="live"] .scene-caption-dot {
+  background: #bee2c4;
 }
-@media (prefers-reduced-motion: no-preference) {
-  .app-shell:has(.lake-scene[data-ready="true"]) .scene-caption-live {
-    display: inline;
-  }
-  .app-shell:has(.lake-scene[data-ready="true"]) .scene-caption-static {
-    display: none;
-  }
-  .app-shell:has(.lake-scene[data-ready="true"]) .scene-caption-dot {
-    background: #bee2c4;
-  }
+.weather-details {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  width: min(320px, calc(100vw - var(--gutter) * 2));
+  max-height: calc(100dvh - 200px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 22px;
+  border: 1px solid #ffffff26;
+  border-radius: 14px;
+  background: #11262bf5;
+  color: #f3f6ef;
+  box-shadow: 0 12px 40px #00111840;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.weather-details p {
+  margin: 0 0 12px;
+}
+.weather-details p:last-child {
+  margin-bottom: 0;
+}
+.weather-location {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.weather-details .weather-condition {
+  font-size: 34px;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+.weather-condition span {
+  font-size: 13px;
+  margin-left: 8px;
+}
+.weather-note {
+  padding-top: 12px;
+  border-top: 1px solid #ffffff26;
+}
+.weather-source {
+  color: #bdcbc8;
+  font-size: 11px;
+}
+.weather-source a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .lake-home {
   position: absolute;
