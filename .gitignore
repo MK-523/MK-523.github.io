@@ -3,3 +3,6 @@ dist/
 .npm-cache/
 .npm-home/
 .DS_Store
+
+# Local screenshots, review notes, and Library metadata
+qa/

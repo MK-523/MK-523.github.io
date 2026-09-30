@@ -1,71 +1,68 @@
-# Mahesh Karthikeyan — Personal Portfolio
+# Mahesh’s explorable portfolio park
 
-A living Himalayan lake journey at [mk-523.github.io](https://mk-523.github.io/), built with React, TypeScript, Vite, and a small custom WebGL2 renderer. GitHub Pages serves the generated production files committed at the repository root.
+A full-screen illustrated park built with React, TypeScript, and Vite. Walk a small explorer through a 3000 × 2200 landscape with six portfolio destinations, an orchard, waterfall, stone circle, island pavilion, connected trail loops and two bridges. The world is the website; content opens in focused overlays.
 
-## Develop and verify
+## Local preview
 
 Requires Node.js 22.12+ or 24+.
 
 ```sh
 npm ci
-npm run dev
-npm test
-npm run build
-npm run preview
-npm run format:check
+npm run dev -- --host 127.0.0.1
 ```
 
-The build includes TypeScript checking. Interaction tests cover animation lifecycle, visibility, device motion preferences, image/GPU failure, alternating navigation, wheel momentum, reading scroll, keyboard and touch input, hashes, and focus.
-
-## Experience and editing
-
-The opening is an unobstructed landscape, with a camera that continuously moves forward toward the mountains. Each successive section takes the camera farther across the lake. The opening is free exploration: clicks and drags do not reveal content, and no timer opens a section. The first scroll or Page Down moves farther across the lake. A second deliberate gesture opens Projects on a white page while the entire scene contracts into a small circular window. Section links bypass this approach immediately. Later stops alternate between the lake and content with a click or scroll. Drag with a mouse or touch to look around the full 360-degree horizon and up toward the sky or down toward the water. On touch devices, use the section links to leave opening exploration; swiping the landscape is reserved for looking around. Left and right arrow keys also adjust the view when the landscape is focused. The circle transition scales and clips one fixed-size rendering surface, so it does not repeatedly resize or clear the canvas. Campus, Awards, About, and Contact follow in their own stops. Direct section links remain available at all sizes, including the original `#campus` anchor.
-
-Long sections scroll within the white reading area. A new scroll gesture at its boundary advances the journey; scrolling outside the reading area or clicking the circle/white space also advances. Trackpad momentum cannot skip stops. Upward scrolling reverses the sequence. Escape returns from reading to the same lake stop. URL hashes preserve reading and travel states for direct links and browser Back/Forward. Focus follows the active section, and inactive content is removed from the keyboard and accessibility order.
-
-- `src/content.ts`: existing projects, experience, campus, awards, and skills.
-- `src/PortfolioSections.tsx`: readable work lists and contact destinations.
-- `src/App.tsx`: the scene/reading composition and controls.
-- `src/useLandscape.ts`: drag/tap separation, keyboard look controls, and fixed-surface circle sizing.
-- `src/useJourney.ts`: alternating travel/reading state, input handling, hashes, and focus.
-- `src/LakeScene.tsx`: image readiness, animation scheduling, motion preferences, and GPU lifecycle.
-- `src/daylight.ts`: Nepal clock and approximate seasonal solar lighting for the Khumbu region.
-- `src/weather.ts`, `src/useWeather.ts`: current-weather parsing, freshness, refreshes, and visual parameters.
-- `src/WeatherStatus.tsx`: compact weather status, timestamp, source attribution, and connection fallback.
-- `src/lake-renderer.ts`: camera travel, reflected water, wind waves, rain ripples, mist, clouds, and diagonal drizzle.
-- `src/skyline.ts`: conservative artwork ridge envelopes that keep the animated sky separate from rock and snow.
-- `src/styles.css`: responsive white reading pages and the contracting landscape circle.
-- `public/`: self-hosted fonts, original artwork, and static metadata.
-
-Shader compilation is polled asynchronously where supported, keeping the fallback and navigation responsive until the first rendered frame. The renderer runs at a maximum of 60 frames/second (30 for coarse pointers), caps resolution, and stops in hidden tabs. System reduced motion disables weather, camera animation, and CSS transitions while preserving every interaction. Image/GPU failure retains a photographic or gradient fallback. Content never depends on the renderer loading. The site stays static with no backend or added runtime dependency; current weather uses the public Open-Meteo API.
-
-The landscape is original Himalayan-inspired artwork, with procedural water and weather inside a surrounding photographic horizon. It supports unlimited horizontal turns, with seamless texture derivatives and a softly blended wrap boundary; the mountains are a panoramic environment rather than scanned 3D terrain. Four overlapping mountain-detail textures provide about 3.4 times the previous source resolution per direction. AVIF is preferred with WebP fallbacks. A separate cloud-only texture now drifts behind protected mountain outlines. A second high cloud layer, two valley mist altitudes, moving cloud shadows and wind gusts evolve continuously and appear in the water reflections. Initial landscape imagery totals 504,145 bytes (745,414 with the lower-resolution WebP cloud fallback); side and rear details wait until visitors look around. Only the primary fallback is preloaded. Desktop rendering supports 1920 × 1200 while mobile retains its lower GPU budget. See [ARTWORK.md](ARTWORK.md) for the generation prompt and provenance.
-
-## Nepal day and night
-
-Lighting follows the current date and time in Nepal (UTC+05:45), independently of the visitor's time zone. Approximate solar elevation at 27.98° N, 86.69° E drives continuous daylight and twilight blends, using [NOAA's general solar equations](https://gml.noaa.gov/grad/solcalc/solareqns.PDF). The reference point controls the lighting schedule; the artwork is not an exact geographic reconstruction. Nearby terrain obstruction and atmospheric refraction are not modeled as an exact sunrise forecast.
-
-Dawn and dusk warm the scenery, daylight retains the original colors, and night uses soft simulated moonlight. Water, mist, and precipitation share the same lighting. Moonlight is artistic, not a calculation of the actual lunar position or phase. The device clock supplies the current time; a separate current-weather connection supplies atmospheric conditions without extra image downloads.
-
-The active renderer samples the clock once per second. Reduced motion keeps weather and camera animation frozen while refreshing a still frame every 30 seconds. The image/gradient fallback also follows the clock. Hidden tabs stop both timers and drawing, then refresh the lighting when visible again.
-
-For visual QA only, the Vite development server accepts an ISO timestamp in `sceneTime`, for example `http://127.0.0.1:5173/?sceneTime=2026-09-25T00:00:00%2B05:45#top`. Try 05:45, 12:00, and 17:30 for dawn, noon, and evening. This clock override is removed from production builds.
-
-## Live weather
-
-The compact **Live weather** badge refers to current weather data, not live video. Opening it shows the source, temperature, conditions, wind, cloud cover, and the model timestamp in Nepal time. The scene remains original Himalayan-inspired artwork rather than a camera feed or exact digital replica of the reference point. Clouds, mist, wind-driven waves, rain impacts, drizzle, and snow respond to the data with smooth transitions. Atmospheric motion phases are integrated continuously so refreshed wind values do not jump the sky.
-
-The keyless [Open-Meteo Forecast API](https://open-meteo.com/en/docs) supplies temperature, humidity, cloud cover, wind speed, rain, showers, and snowfall at 27.98° N, 86.69° E in the Khumbu region. These are current **weather model estimates**, not readings from an on-site camera or weather station. For this region, 15-minute current values can be interpolated from hourly model data; the terrain and precipitation appearance are artistic adaptations. Accumulation values are normalized using the returned interval. Data attribution and the [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/) are linked in the disclosure. The free API supports noncommercial use; a commercial use case would require reviewing [provider pricing](https://open-meteo.com/en/pricing).
-
-Weather loads after the initial paint, refreshes every 15 minutes, times out after eight seconds, and retries failures after a minute. Requests and timers stop in hidden tabs. On return, expired data loses the live label before fetching again. Samples older than 45 minutes or more than five minutes in the future, invalid fields, and unexpected units are rejected. Any failed connection switches the badge to **Weather offline** and smoothly restores simulated conditions; the portfolio and Nepal lighting remain usable. There is no geolocation request, API key, account, persistent cache, or visitor location collection. Requests omit credentials and referrers. Reduced motion repaints current weather once without restarting animation. In GPU fallback, the badge still exposes live numeric weather data, while the photographic fallback only follows time of day.
-
-## Publish through the existing GitHub Pages configuration
+Preview: http://127.0.0.1:5173/
 
 ```sh
 npm test
+npm run build
+npm run format:check
+```
+
+The build runs TypeScript checks and writes ignored `dist/`. `npm run preview -- --host 127.0.0.1` serves that production build.
+
+## Explore
+
+- WASD / arrows: walk. E / Enter near a place: visit. Escape: stop walking or close a panel.
+- Click or tap the landscape: walk there. Click a place sign: find a safe route, walk there, and open its content.
+- Mobile direction buttons: hold to walk; release or cancel to stop.
+- Directory: open any section immediately, or choose “Walk there.” No content is locked behind progress.
+- Map: open the full park map; tap any point or choose a named destination to walk there. Four optional collectibles sit off the main routes and are collected by walking near them.
+- Recenter: return to the entrance. Motion control: stop ambient animation. Live system reduced-motion preferences take priority.
+- The workshop contains four projects; the greenhouse contains experience; the reading grove contains about/skills; the postbox contains contact links; the campsite contains community; the lookout contains milestones.
+
+The camera follows the character within the world. Buildings, tree trunks, and the pond block movement; the bridge is traversable. Click movement uses grid pathfinding and line-of-sight smoothing. Progress counts each of six portfolio places and each optional collectible once during the current page visit; no storage or account is required. Attraction labels and functional controls remain; decorative captions, welcome prose, and the bottom-center route banner have been removed.
+
+Dialogs support focus cycling, Escape, backdrop and explicit close, and focus return. Project details focus their heading and return focus to their card. Offscreen signs are excluded from keyboard tab order; Directory remains reachable. Existing anchors `#projects`, `#experience`, `#about`, `#contact`, `#campus`, and `#awards` open the respective panel directly.
+
+## Edit
+
+- `src/App.tsx`: game loop, camera, navigation, HUD, mobile controls, dialogs, progress and motion preferences.
+- `src/park.ts`: world layout, collision geometry, proximity and pathfinding.
+- `src/ParkArt.tsx`: original SVG scenery, buildings, trees and character.
+- `src/ParkExpansion.tsx`: orchard, waterfall, stone circle, island pavilion and expanded trails.
+- `src/ParkMap.tsx`: shared minimap and interactive destination map, derived from the world geometry.
+- `src/ParkPanel.tsx`: portfolio content overlays and project details.
+- `src/styles.css`: responsive world, HUD, panels and animation.
+- `src/content.ts`: original factual portfolio content, unchanged.
+- `src/park.test.ts` and `src/park-ui.test.tsx`: movement, routes, collisions, content access, focus and motion tests.
+
+No resume existed in the source, so no resume button or generated resume has been added. Experience is directly accessible.
+
+## Preserved work
+
+The field-guide iteration is preserved in `src/FieldGuide.tsx`, `src/field-guide.css`, `src/NatureWorld.tsx`, and its tests. The original lake implementation is preserved in `src/LakeJourney.tsx` and its existing supporting modules/tests. Neither previous interface is mounted by the production entry point. The new app reuses only the small sprout icon from `NatureWorld`.
+
+The historical image assets remain on disk, while the park itself is rendered as SVG. The social preview retains the existing Himalayan image.
+
+## GitHub Pages
+
+GitHub Pages serves the root of `main` at https://mk-523.github.io/ . Source files live in `src/`; the local production build is generated in ignored `dist/`.
+
+```sh
+npm test
+npm run format:check
 npm run stage:pages
 ```
 
-`stage:pages` builds and copies `dist/` into the repository root. It replaces generated asset folders without modifying source files. Commit the source and generated files together, then merge into `main`. The existing GitHub Pages configuration publishes from `main` at `/`.
-
-Use only GitHub account `MK-523`. To roll back, revert the change on `main` so source and generated files are restored together.
+`stage:pages` runs the production build and copies its generated output into the repository root. Commit the source and generated output together, then push to `main` to trigger the existing GitHub Pages deployment. Keep local QA screenshots, review notes and metadata out of the repository; `qa/` is ignored.

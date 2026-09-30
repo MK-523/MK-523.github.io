@@ -8,7 +8,7 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import App from "./App";
+import App from "./LakeJourney";
 import LakeScene from "./LakeScene";
 import { createLakeRenderer, type LookDirection } from "./lake-renderer";
 import { chapters } from "./useJourney";
